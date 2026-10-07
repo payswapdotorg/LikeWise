@@ -60,6 +60,15 @@ W10A + W10B + W10C
 
 Each wave is internally parallel. The TL can authorize a wave only when dependencies are satisfied.
 
+## Current bootstrap dispatch
+
+- Repository anchor SHA: `8e4c6cf489da92f1a602cccab2b8516f7247ea68`
+- YOU-000: GitHub issue #1
+- YOU-101: GitHub issue #2
+- YOU-102: GitHub issue #3
+- YOU-103: GitHub issue #4
+- Status: READY FOR TL EXECUTION
+
 ## T0 — TL baseline and contract freeze
 
 - T0.1 repository audit
