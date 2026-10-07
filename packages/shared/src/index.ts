@@ -306,3 +306,6 @@ export * from "./clientConfig.js";
 export * from "./pluginStoreOrdering.js";
 export * from "./session-debug.js";
 export { redactFeedbackText } from "./feedbackPrivacy.js";
+
+// YOU wave-1 frozen contracts (T0 TL freeze) — docs/you/CONTRACTS.md
+export * from "./you/contract.js";

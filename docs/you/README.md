@@ -10,19 +10,20 @@ When implementing YOU, use this order:
 2. `docs/you/README.md`
 3. `docs/you/ARCHITECTURE.md`
 4. `docs/you/CONTRACTS.md`
-5. `docs/you/SECURITY.md`
-6. `docs/you/EDITING_INTERCHANGE.md`
-7. `docs/you/LAB.md`
-8. `docs/you/ARENA.md`
-9. `docs/you/PROVIDER_ECOSYSTEM.md`
-10. `docs/you/IMPLEMENTATION_PLAN.md`
-11. `docs/you/TASK_LEDGER.md`
-12. `docs/you/WORK_ORDERS.md`
-13. `docs/you/OPERATOR_ACCEPTANCE.md`
-14. `docs/you/REPO_MAP.md`
-15. `docs/you/DECISIONS.md`
-16. tests and live code evidence
-17. live GitHub branch/PR/CI state
+5. `docs/you/FIXTURES.md`
+6. `docs/you/SECURITY.md`
+7. `docs/you/EDITING_INTERCHANGE.md`
+8. `docs/you/LAB.md`
+9. `docs/you/ARENA.md`
+10. `docs/you/PROVIDER_ECOSYSTEM.md`
+11. `docs/you/IMPLEMENTATION_PLAN.md`
+12. `docs/you/TASK_LEDGER.md`
+13. `docs/you/WORK_ORDERS.md`
+14. `docs/you/OPERATOR_ACCEPTANCE.md`
+15. `docs/you/REPO_MAP.md`
+16. `docs/you/DECISIONS.md`
+17. tests and live code evidence
+18. live GitHub branch/PR/CI state
 
 Conversation history is not an implementation dependency.
 
