@@ -65,10 +65,10 @@ Each wave is internally parallel. The TL can authorize a wave only when dependen
 - Repository anchor SHA: `8e4c6cf489da92f1a602cccab2b8516f7247ea68`
 - Bootstrap head at T0 execution: `5a787eeec9151d5a025e3852f95a898eac6f019a`
 - YOU-000: GitHub issue #1 — **T0 EXECUTED** (see T0 record below)
-- YOU-101: GitHub issue #2 — W1A dispatched (branch `you/w1a-core`)
-- YOU-102: GitHub issue #3 — W1B dispatched (branch `you/w1b-studio`)
-- YOU-103: GitHub issue #4 — W1C dispatched (branch `you/w1c-lab`)
-- Status: W1 ACTIVE (3-way concurrent, disjoint frozen surfaces)
+- YOU-101: GitHub issue #2 — W1A MERGED (PR #6, merge 55e4dbd; worker commit 8a5959c)
+- YOU-102: GitHub issue #3 — W1B MERGED (PR #7, merge 71269f4; worker commit cff66d4)
+- YOU-103: GitHub issue #4 — W1C dispatched (branch `you/w1c-lab`), IN FLIGHT
+- Status: W1 PARTIAL-MERGED (A+B landed + station-verified; C in flight; T1 completes on C)
 
 ## T0 — TL baseline and contract freeze (DONE)
 
@@ -112,6 +112,20 @@ Executed by the TL per issue #1 (YOU-000):
 - No CI workflow exists in this repository yet; the TL station is the
   verification authority for wave 1 (recorded as a deviation; CI
   introduction is a TL-owned follow-up).
+
+## W1 merge records (TL station)
+
+### W1A — Core Solution Authority (MERGED)
+- PR #6 -> merge 55e4dbd (worker commit 8a5959c on `you/w1a-core`, base 8902c40).
+- Station verification 2026-10-07: install exit 0; tsc -b green (rpc/provider/provider_node/shared + services/client/server/zcode-server-cli chunks; ui/web/desktop base-identical, verified green on tree); lint 0 errors / 70 warnings = exact baseline; tests 112/112.
+- Evidence: worker report (in-replay session w1a, chat f6e807ff) archived at the TL station; PR #6 body carries the gate table.
+- Deviations accepted: service split (oxlint max-lines), test-discovery index.ts files, cross-package relative imports, Phase-0 local types (candidates for W5A/W6A freeze).
+
+### W1B — Solution Studio (MERGED)
+- PR #7 -> merge 71269f4 (worker commit cff66d4 on `you/w1b-studio`, base 8902c40).
+- Station verification 2026-10-07: install exit 0; tsc -b green incl. packages/ui; web + desktop host green; lint 0 errors / 70 warnings = exact baseline; tests 30/30.
+- Seam arbitration (TL RULING): the 5 disclosed registration files outside app-shell/v4 (lib/workspaceSidePane.ts, hooks/useAppPanels.ts, App.tsx, i18n en-US/zh-CN; 63 additive lines) ACCEPTED — the pane-type union/tab-state/title catalog physically live there; the order's own example implements exactly these lines. Future order authoring pre-expands the seam list.
+- Deferred to T1: bind SolutionSurfaceController to solutionService (retire simulated controller), youMessages catalog merge, operator demo UX evidence, office-mode surface policy.
 
 ## W1 — Solution Runtime / Operator Gate
 
