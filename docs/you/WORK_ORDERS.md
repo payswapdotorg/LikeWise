@@ -35,25 +35,44 @@ If a shared contract needs modification, stop and request a TL contract update r
 
 ## W1A — Core Solution Authority
 
+Branch: `you/w1a-core`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch (the T0 merge).
+
 Objective:
 Implement the canonical Solution domain/application-service foundation and deterministic fixture.
 
-Write:
-`packages/shared/src/you/**`
-and TL-approved dedicated core/service paths.
+Frozen write surface (wave 1):
+- `packages/shared/src/you/**` — EXCEPT `you/contract.ts` is TL-frozen
+  (implement around it; request a TL contract update if a change is needed);
+- `packages/services/src/you/**` (new subtree only).
+
+Zero edits to any other existing file. In particular: no edits to
+`packages/shared/src/index.ts` (the you entrypoint re-export is already
+wired by T0), no edits to `zcode-protocol`, no package manifest or root
+lockfile changes, no new dependencies.
 
 Do not write:
 UI, editor integration, Lab implementation.
 
 Acceptance:
-- typed Solution protocol;
-- immutable versions;
-- deterministic state;
-- feedback event;
-- candidate ChangeSet;
-- tests.
+- typed Solution protocol runtime (host-command / runtime-event handling
+  per `contract.ts`);
+- immutable SolutionVersion chain (acceptance of a ChangeSet creates the
+  next version; no in-place mutation);
+- deterministic fixture state per `docs/you/FIXTURES.md` (injected clock +
+  rng, seeded synthetic human, measurable quality deltas);
+- FeedbackRequest / EvidenceRequest flow;
+- candidate ChangeSet proposal + verification;
+- append-only SolutionEvent ledger;
+- tests (node:test; station runs `pnpm exec tsx --test`) covering:
+  protocol round-trips, version immutability, fixture determinism
+  (byte-identical replay), event-ledger append-only, feedback/evidence
+  flow, and the deterministic-improvement delta.
 
 ## W1B — Solution Studio
+
+Branch: `you/w1b-studio`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch (the T0 merge).
 
 Objective:
 Make Solution a native ZCode workspace surface with excellent UX.
@@ -61,9 +80,16 @@ Make Solution a native ZCode workspace surface with excellent UX.
 Read first:
 `DESIGN.md`, `packages/ui/src/app-shell/*`, `packages/ui/src/v4/*`, existing Preview/Artifact/Browser surfaces.
 
-Write:
-`packages/ui/src/you/**`
-and dedicated UX tests.
+Frozen write surface (wave 1):
+- `packages/ui/src/you/**` (free);
+- minimal registration-only seams in `packages/ui/src/app-shell/**` and
+  `packages/ui/src/v4/**` — allowed ONLY where strictly required to
+  register the native Solution pane/tab; no behavior changes to existing
+  panes; every seam edit is disclosed per-file in the delivery report;
+- dedicated UX tests under the you subtree.
+
+Contract imports: types from `@zcode/shared` (frozen `you/contract.ts`).
+Do not redeclare contract types locally; do not modify `contract.ts`.
 
 Acceptance:
 - native pane/tab;
@@ -74,25 +100,45 @@ Acceptance:
 - version compare;
 - export/open-in-editor;
 - loading/error states;
-- operator demo.
+- operator demo (deterministic, explicitly labeled simulated).
 
 Do not introduce a new global docking library.
+Do not modify Worker A or C implementation surfaces. Do not change root
+lockfiles or add dependencies without a TL contract update request.
 
 ## W1C — Technology/Editor/Lab Foundation
+
+Branch: `you/w1c-lab`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch (the T0 merge).
 
 Objective:
 Create provider-neutral editor and organization capability infrastructure.
 
-Write:
-TL-approved C-lane packages under `packages/you-lab/**` plus dedicated fixtures.
+Frozen write surface (wave 1):
+- `packages/you-lab/**` — a NEW isolated package `@zcode/you-lab`
+  (structure mirrors `packages/model-option-map`: `package.json` +
+  `tsconfig.json` + `src`). Zero runtime dependencies; devDependencies
+  limited to `typescript`. The package carries its own
+  `typecheck` script (`tsc -p tsconfig.json --noEmit`). The TL registers it
+  in the root typecheck project list and reconciles the lockfile at T1.
+
+Zero edits to any file outside `packages/you-lab/**`. No root manifest,
+lockfile or workspace changes. Map onto the frozen
+`@zcode/shared` you contract at the adapter seam (import types from
+`@zcode/shared`; do not redeclare or modify them).
 
 Acceptance:
-- technology registry;
+- technology registry (provider-neutral profiles with
+  license/maintenance/compatibility evidence for the candidate set:
+  Three.js/R3F, glTF-Transform, three-vrm, SVG-Edit, Excalidraw, OpenReel,
+  OpenTimelineIO, Blender, OpenUSD);
 - editor capability profile;
 - editor adapter seam;
-- deterministic Organization Compiler;
-- mock candidates;
-- benchmark structure.
+- deterministic Organization Compiler (intent -> capability decomposition
+  -> candidate organization; deterministic given the fixture inputs);
+- mock editor candidates;
+- benchmark structure (deterministic fixtures, golden expectations,
+  node:test).
 
 ## W2A — Evidence Authority
 

@@ -224,3 +224,26 @@ Never:
 - silently fall back to an unrelated model/editor;
 - label a research-only model production eligible.
 
+
+## Wave-1 contract freeze (v1)
+
+Frozen by the TL at T0 for Work Orders W1A / W1B / W1C.
+
+- The machine authority for the frozen wave-1 contracts is
+  `packages/shared/src/you/contract.ts` (exported through the
+  `@zcode/shared` public entry). The prose above is the design authority;
+  where they disagree, the TL amends both in one change.
+- Frozen in this wave: the canonical object field sets
+  (Solution/SolutionVersion/SolutionStateSnapshot, Solution protocol
+  messages, FeedbackRequest, EvidenceRequest, EditSession, ChangeSet,
+  CapabilityGap, ArenaEscalationRef, SolutionEvent, typed YouError),
+  state ownership, versioning and error semantics.
+- Workers MUST NOT modify `packages/shared/src/you/contract.ts`. A worker
+  that needs a contract change stops and requests a TL contract update in
+  its delivery report; the TL amends the freeze and re-dispatches.
+- Wave-1 consumption: Worker B imports contract types from `@zcode/shared`.
+  Worker A implements runtime/services/fixtures around them. Worker C keeps
+  provider-neutral shapes inside `packages/you-lab` and maps onto the frozen
+  contract at the seam.
+- Identifiers stay opaque; immutable records are never overwritten; events
+  are append-only; deterministic fixture mode follows `FIXTURES.md`.
