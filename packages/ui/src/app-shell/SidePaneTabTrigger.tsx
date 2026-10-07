@@ -14,6 +14,7 @@ import {
   NotepadTextIcon,
   PackageIcon,
   PaletteIcon,
+  PersonStandingIcon,
   SquareTerminalIcon,
   TerminalIcon,
   WaypointsIcon,
@@ -328,6 +329,11 @@ export function SidePaneTabIcon({ tab }: { tab: WorkspaceSidePaneTab }) {
     return <BugIcon className="size-3.5" />;
   }
 
+  // YOU Solution surface（W1B）：与 Browser/Artifact 同级的 workspace 表面，固定人形图标。
+  if (tab.type === "solution") {
+    return <PersonStandingIcon className="size-3.5" />;
+  }
+
   if (tab.type === "terminal" || tab.type === "bash-output") {
     return <SquareTerminalIcon className="size-3.5" />;
   }
@@ -534,6 +540,11 @@ export function getSidePaneTabTitle(
 
   if (tab.type === "developer-tools") {
     return formatMessage({ id: "developerTools.title" });
+  }
+
+  // YOU Solution surface（W1B）：标题走中央文案表（you.solution.tabTitle）。
+  if (tab.type === "solution") {
+    return formatMessage({ id: "you.solution.tabTitle" });
   }
 
   if (tab.type === "terminal" || tab.type === "bash-output") {

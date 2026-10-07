@@ -5,16 +5,20 @@ export type OpenTabLauncherItemId =
   | "review"
   | "terminal"
   | "browser"
-  | "developer-tools";
+  | "developer-tools"
+  | "solution";
 
 export function resolveOpenTabLauncherItemIds({
   developerToolsEnabled,
   hasReviewTab,
+  hasSolutionTab,
   canOpenSelectionSideConversation = false,
   supportsEmbeddedBrowser = true,
 }: {
   developerToolsEnabled: boolean;
   hasReviewTab: boolean;
+  /** YOU Solution tab 已开时不再提供入口（幂等聚焦语义）。 */
+  hasSolutionTab: boolean;
   canOpenSelectionSideConversation?: boolean;
   supportsEmbeddedBrowser?: boolean;
 }): OpenTabLauncherItemId[] {
@@ -36,6 +40,10 @@ export function resolveOpenTabLauncherItemIds({
 
   if (developerToolsEnabled) {
     itemIds.push("developer-tools");
+  }
+
+  if (!hasSolutionTab) {
+    itemIds.push("solution");
   }
 
   return itemIds;

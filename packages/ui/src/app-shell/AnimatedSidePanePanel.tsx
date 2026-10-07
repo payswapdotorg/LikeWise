@@ -50,6 +50,7 @@ import { WorkflowRunDirectorySidePane } from "@/app-shell/WorkflowRunDirectorySi
 import { WorkflowActorSessionSidePane } from "@/app-shell/WorkflowActorSessionSidePane.js";
 import { WorkflowWorkspaceSidePane } from "@/app-shell/WorkflowWorkspaceSidePane.js";
 import { WorkflowArtifactSidePane } from "@/app-shell/WorkflowArtifactSidePane.js";
+import { SolutionSurface } from "@/you/SolutionSurface.js";
 import {
   getSidePaneTabTitle,
   SidePaneTabDragOverlay,
@@ -94,6 +95,7 @@ import {
   FileDiffIcon,
   GlobeIcon,
   MessageSquareTextIcon,
+  PersonStandingIcon,
   PlusIcon,
   SquareTerminalIcon,
   type LucideIcon,
@@ -313,6 +315,7 @@ export function AnimatedSidePanePanel({
   onOpenBrowserTab,
   onOpenWhiteboard: _onOpenWhiteboard,
   onOpenDeveloperTools,
+  onOpenSolution,
   onOpenTerminalTab,
   onOpenReviewTab,
   onOpenSelectionSideConversation,
@@ -378,6 +381,8 @@ export function AnimatedSidePanePanel({
   onOpenBrowserTab: () => void;
   onOpenWhiteboard: () => void;
   onOpenDeveloperTools: () => void;
+  /** YOU Solution surface（W1B）：幂等打开/聚焦 Solution tab。 */
+  onOpenSolution: () => void;
   onOpenTerminalTab: () => void;
   onOpenReviewTab: () => void;
   onOpenSelectionSideConversation: () => void;
@@ -448,6 +453,7 @@ export function AnimatedSidePanePanel({
   const previousIsVisibleRef = useRef(isVisible);
   const panelLayout = resolveAnimatedSidePanePanelLayout();
   const hasReviewTab = visibleTabs.some((tab) => tab.type === "git");
+  const hasSolutionTab = tabs.some((tab) => tab.type === "solution");
   const canOpenSelectionSideConversation = shouldOfferSelectionSideConversation({
     activeTaskId,
   });
@@ -757,6 +763,17 @@ export function AnimatedSidePanePanel({
             <span>{intl.formatMessage({ id: "developerTools.title" })}</span>
           </DropdownMenuItem>
         ) : null}
+        {!hasSolutionTab ? (
+          <DropdownMenuItem
+            data-side-pane-add-item="solution"
+            onSelect={() => {
+              onOpenSolution();
+            }}
+          >
+            <PersonStandingIcon className="size-4" />
+            <span>{intl.formatMessage({ id: "you.solution.tabTitle" })}</span>
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -791,11 +808,18 @@ export function AnimatedSidePanePanel({
       icon: BugIcon,
       onOpen: onOpenDeveloperTools,
     },
+    solution: {
+      id: "solution",
+      label: intl.formatMessage({ id: "you.solution.tabTitle" }),
+      icon: PersonStandingIcon,
+      onOpen: onOpenSolution,
+    },
   };
   const openTabLauncherItems: OpenTabLauncherItem[] = resolveOpenTabLauncherItemIds({
     canOpenSelectionSideConversation,
     developerToolsEnabled,
     hasReviewTab,
+    hasSolutionTab,
     supportsEmbeddedBrowser,
   })
     .filter((itemId) => !isOfficeMode || (itemId !== "terminal" && itemId !== "review"))
@@ -885,6 +909,7 @@ export function AnimatedSidePanePanel({
         developerToolsTitle: intl.formatMessage({
           id: "developerTools.title",
         }),
+        solutionTitle: intl.formatMessage({ id: "you.solution.tabTitle" }),
         terminalTitle: intl.formatMessage({ id: "terminal.title" }),
         subagentTypeLabel: intl.formatMessage({ id: "sidePane.subagent" }),
         subagentDirectoryTitle: intl.formatMessage({
@@ -1262,6 +1287,13 @@ export function AnimatedSidePanePanel({
                             isVisible={isVisible && tab.id === visibleActiveTabId}
                             isWindowsDesktop={isWindowsDesktop}
                             onOpenBrowserUrl={onOpenBrowserUrl}
+                          />
+                        ) : tab.type === "solution" ? (
+                          <SolutionSurface
+                            key={tab.id}
+                            tab={tab}
+                            workspaceKey={workspaceKey}
+                            isActive={isVisible && tab.id === visibleActiveTabId}
                           />
                         ) : (
                           <HumanBrowserView

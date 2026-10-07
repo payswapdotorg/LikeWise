@@ -1,0 +1,356 @@
+// YOU Solution Studio — Solution 表面本地文案表（W1B）。
+//
+// 说明（deviation，见交付报告）：repo 的中央文案表（i18n/locales/*.ts）在 W1B 冻结写
+// 面之外；为保持 you/ 子树自包含，面板文案放在本文件，遵循中央表同款
+// `{key}` 占位符语义，并随 useZCodeIntl 的 locale 解析（zh-CN / en-US）。
+// 例外：tab 标题 "you.solution.tabTitle" 同时存在于中央表（SidePaneTabTrigger /
+// launcher 消费中央 intl）与本表（表面头部消费本地 intl）——两处文案保持同步。
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
+
+const enUS: Record<string, string> = {
+  "you.solution.tabTitle": "Solution",
+  "you.solution.simulatedBadge": "Deterministic simulated scene",
+  "you.solution.loading": "Loading solution…",
+  "you.solution.errorTitle": "Solution failed to load",
+  "you.solution.retry": "Retry",
+  "you.solution.version": "v{version}",
+  "you.solution.intent": "Intent",
+  "you.solution.panel.viewport": "Viewport",
+  "you.solution.panel.inspector": "Inspect",
+  "you.solution.panel.feedback": "Feedback",
+  "you.solution.panel.compare": "Compare",
+  "you.solution.panel.export": "Export",
+  "you.solution.panel.takeover": "Takeover",
+  "you.solution.panel.demo": "Demo",
+  "you.solution.viewport.hint": "Drag to orbit · Shift-drag to pan · Scroll to zoom · Click to select",
+  "you.solution.viewport.keyboardHint":
+    "Keyboard: arrows orbit · +/− zoom · 0 reset · list below selects",
+  "you.solution.viewport.reset": "Reset camera",
+  "you.solution.viewport.regions": "Regions",
+  "you.solution.viewport.quality": "Quality overlay",
+  "you.solution.viewport.noSelection": "Nothing selected",
+  "you.solution.viewport.selectInScene": "Select an object in the scene or a region above.",
+  "you.solution.viewport.camera": "camera",
+  "you.solution.viewport.qualityCaption":
+    "Fixture quality scores — simulated, not a scientific measurement.",
+  "you.solution.inspector.title": "Inspector",
+  "you.solution.inspector.empty": "Select an object, region, or deficiency to inspect it.",
+  "you.solution.inspector.transform": "Transform",
+  "you.solution.inspector.attributes": "Attributes",
+  "you.solution.inspector.quality": "Quality map",
+  "you.solution.inspector.version": "Version",
+  "you.solution.inspector.lineage": "Lineage",
+  "you.solution.inspector.provenance": "Provenance",
+  "you.solution.inspector.events": "Event log",
+  "you.solution.feedback.title": "Feedback",
+  "you.solution.feedback.needSelection": "Select a region or object first",
+  "you.solution.feedback.needSelectionHint":
+    "Pick a region chip or click an object in the viewport, then describe the deficiency.",
+  "you.solution.feedback.category": "Category",
+  "you.solution.feedback.comment": "What is wrong?",
+  "you.solution.feedback.commentPlaceholder": "Describe the deficiency…",
+  "you.solution.feedback.action": "Requested action",
+  "you.solution.feedback.actionPlaceholder": "e.g. Refine geometry",
+  "you.solution.feedback.submit": "Submit feedback",
+  "you.solution.feedback.submitted": "Canonical FeedbackRequest",
+  "you.solution.feedback.evidence": "Evidence request",
+  "you.solution.feedback.requestEvidence": "Request targeted evidence",
+  "you.solution.feedback.attachEvidence": "Attach fixture evidence (simulated)",
+  "you.solution.feedback.evidenceAttached": "Fixture evidence attached — synthetic only.",
+  "you.solution.feedback.improvement": "Deterministic improvement",
+  "you.solution.feedback.propose": "Propose improvement",
+  "you.solution.feedback.accept": "Accept",
+  "you.solution.feedback.reject": "Reject",
+  "you.solution.feedback.beforeAfter": "Before / after",
+  "you.solution.feedback.delta": "{delta}",
+  "you.solution.feedback.noPending": "No pending change set.",
+  "you.solution.compare.title": "Compare versions",
+  "you.solution.compare.target": "Compare target",
+  "you.solution.compare.current": "Current",
+  "you.solution.compare.empty": "Need at least two versions to compare.",
+  "you.solution.compare.qualityTable": "Quality",
+  "you.solution.compare.entities": "Entity changes",
+  "you.solution.compare.environment": "Environment",
+  "you.solution.compare.history": "Version history",
+  "you.solution.compare.identical": "Versions are identical in projected state.",
+  "you.solution.export.title": "Export & editor",
+  "you.solution.export.recommended": "Recommended editor",
+  "you.solution.export.rationale": "Why",
+  "you.solution.export.format": "Format",
+  "you.solution.export.download": "Download package",
+  "you.solution.export.copy": "Copy manifest",
+  "you.solution.export.copied": "Manifest copied",
+  "you.solution.export.manifest": "Editable package manifest",
+  "you.solution.export.reimport": "Re-import",
+  "you.solution.export.reimportHint":
+    "Paste an edited package manifest to produce a candidate version with a truthful diff.",
+  "you.solution.export.reimportAction": "Import package",
+  "you.solution.export.diffTitle": "Truthful diff vs current version",
+  "you.solution.export.diffEmpty": "Imported package is identical to the current version.",
+  "you.solution.takeover.title": "Manual takeover",
+  "you.solution.takeover.enter": "Enter Edit mode",
+  "you.solution.takeover.exit": "Exit Edit mode",
+  "you.solution.takeover.session": "EditSession",
+  "you.solution.takeover.sessionClosed": "closed",
+  "you.solution.takeover.sessionOpen": "open",
+  "you.solution.takeover.target": "Correction target",
+  "you.solution.takeover.rotationZ": "Rotation Z (rad)",
+  "you.solution.takeover.apply": "Capture correction",
+  "you.solution.takeover.accept": "Accept",
+  "you.solution.takeover.revert": "Revert",
+  "you.solution.takeover.pending": "Pending correction",
+  "you.solution.takeover.learningTitle": "Learning permission",
+  "you.solution.takeover.learningOff":
+    "No learning happens without your permission. Nothing is recorded from your edits right now.",
+  "you.solution.takeover.learningOn":
+    "Granted. The correction below may inform future results for this scope only.",
+  "you.solution.takeover.learningScope": "Scope: USER (never silently global)",
+  "you.solution.takeover.learningCandidate": "What would be learned",
+  "you.solution.takeover.grant": "Allow learning from this correction",
+  "you.solution.takeover.noCandidate": "No learning candidate yet — accept a manual correction first.",
+  "you.solution.takeover.wavePreset": "Wave pose (−2.20 rad)",
+  "you.solution.takeover.editModeBadge": "Edit mode",
+  "you.solution.demo.title": "Operator demo",
+  "you.solution.demo.badge": "Deterministic simulated demo",
+  "you.solution.demo.start": "Start demo",
+  "you.solution.demo.next": "Run step",
+  "you.solution.demo.reset": "Reset",
+  "you.solution.demo.step": "Step {current} / {total}",
+  "you.solution.demo.finished": "Demo finished — every arrow of the Phase-0 loop executed.",
+  "you.solution.demo.noOutcomes": "Run steps to walk the Phase-0 loop.",
+  "you.solution.demo.scriptedNote":
+    "Scripted fixture data only. No real reconstruction, no network, no biometric data.",
+  "you.solution.simulatedNote": "simulated",
+  "you.solution.notRun": "not run",
+  "you.demo.step.intent.title": "Intent",
+  "you.demo.step.intent.description":
+    "The user expresses intent; the deterministic fixture pipeline publishes Solution v1.",
+  "you.demo.step.feedback.title": "Feedback",
+  "you.demo.step.feedback.description":
+    "A region is selected and a deficiency described; it becomes a canonical FeedbackRequest.",
+  "you.demo.step.evidence-request.title": "Evidence request",
+  "you.demo.step.evidence-request.description":
+    "The agent asks for targeted fixture evidence — synthetic only.",
+  "you.demo.step.evidence-provided.title": "Evidence provided",
+  "you.demo.step.evidence-provided.description":
+    "Fixture evidence is attached; no real biometric data is collected.",
+  "you.demo.step.improvement-proposed.title": "Improvement proposed",
+  "you.demo.step.improvement-proposed.description":
+    "The agent proposes a deterministic, measurable improvement (a candidate ChangeSet).",
+  "you.demo.step.improvement-accepted.title": "Improvement accepted",
+  "you.demo.step.improvement-accepted.description":
+    "The user accepts; a new immutable canonical version is published.",
+  "you.demo.step.takeover-open.title": "Takeover open",
+  "you.demo.step.takeover-open.description":
+    "The user takes over; an EditSession opens with observed evidence mode.",
+  "you.demo.step.takeover-correction.title": "Manual correction",
+  "you.demo.step.takeover-correction.description":
+    "A small manual transform correction is captured as a user ChangeSet.",
+  "you.demo.step.takeover-accepted.title": "Takeover accepted",
+  "you.demo.step.takeover-accepted.description":
+    "The correction is accepted; the EditSession closes; a learning candidate is recorded — permission still off.",
+  "you.demo.step.learning-consent.title": "Learning consent",
+  "you.demo.step.learning-consent.description":
+    "The user explicitly grants learning permission (scope USER).",
+  "you.demo.step.export.title": "Export",
+  "you.demo.step.export.description":
+    "A recommended external editor and an editable package with lineage/provenance are produced.",
+  "you.demo.step.re-import.title": "Re-import",
+  "you.demo.step.re-import.description":
+    "The edited package returns; YOU computes a truthful diff and a candidate version.",
+  "you.demo.step.re-import-accepted.title": "Import accepted",
+  "you.demo.step.re-import-accepted.description":
+    "The user accepts the imported edits as a new canonical version.",
+  "you.demo.step.repeated-intent.title": "Repeated intent",
+  "you.demo.step.repeated-intent.description":
+    "The same intent again — the learned correction is applied only because permission was granted.",
+  "you.demo.step.capability-gap.title": "Capability gap",
+  "you.demo.step.capability-gap.description":
+    "A fixture produces a known TOOL_GAP with attempted strategies recorded.",
+  "you.demo.step.arena-escalate.title": "Arena escalation",
+  "you.demo.step.arena-escalate.description":
+    "The user authorizes escalation; the mock Arena returns a typed expert result.",
+  "you.demo.step.arena-apply.title": "Arena applied",
+  "you.demo.step.arena-apply.description":
+    "The result is applied through YOU's own authority as an expert ChangeSet.",
+};
+
+const zhCN: Record<string, string> = {
+  "you.solution.tabTitle": "解决方案",
+  "you.solution.simulatedBadge": "确定性模拟场景",
+  "you.solution.loading": "正在加载解决方案…",
+  "you.solution.errorTitle": "解决方案加载失败",
+  "you.solution.retry": "重试",
+  "you.solution.version": "v{version}",
+  "you.solution.intent": "意图",
+  "you.solution.panel.viewport": "视口",
+  "you.solution.panel.inspector": "检查",
+  "you.solution.panel.feedback": "反馈",
+  "you.solution.panel.compare": "对比",
+  "you.solution.panel.export": "导出",
+  "you.solution.panel.takeover": "接管",
+  "you.solution.panel.demo": "演示",
+  "you.solution.viewport.hint": "拖动旋转 · Shift 拖动平移 · 滚轮缩放 · 点击选择",
+  "you.solution.viewport.keyboardHint": "键盘：方向键旋转 · +/− 缩放 · 0 复位 · 下方列表可选",
+  "you.solution.viewport.reset": "复位相机",
+  "you.solution.viewport.regions": "区域",
+  "you.solution.viewport.quality": "质量叠加",
+  "you.solution.viewport.noSelection": "未选择",
+  "you.solution.viewport.selectInScene": "在场景中点击对象，或选择上方区域。",
+  "you.solution.viewport.camera": "相机",
+  "you.solution.viewport.qualityCaption": "Fixture 质量分数——模拟值，不构成科学度量。",
+  "you.solution.inspector.title": "检查器",
+  "you.solution.inspector.empty": "先选择对象、区域或缺陷类别。",
+  "you.solution.inspector.transform": "变换",
+  "you.solution.inspector.attributes": "属性",
+  "you.solution.inspector.quality": "质量图",
+  "you.solution.inspector.version": "版本",
+  "you.solution.inspector.lineage": "血缘",
+  "you.solution.inspector.provenance": "溯源",
+  "you.solution.inspector.events": "事件日志",
+  "you.solution.feedback.title": "反馈",
+  "you.solution.feedback.needSelection": "请先选择区域或对象",
+  "you.solution.feedback.needSelectionHint": "先点区域标签或视口中的对象，再描述缺陷。",
+  "you.solution.feedback.category": "类别",
+  "you.solution.feedback.comment": "哪里不对？",
+  "you.solution.feedback.commentPlaceholder": "描述缺陷…",
+  "you.solution.feedback.action": "期望动作",
+  "you.solution.feedback.actionPlaceholder": "如：细化几何",
+  "you.solution.feedback.submit": "提交反馈",
+  "you.solution.feedback.submitted": "规范化 FeedbackRequest",
+  "you.solution.feedback.evidence": "证据请求",
+  "you.solution.feedback.requestEvidence": "请求定向证据",
+  "you.solution.feedback.attachEvidence": "附加 fixture 证据（模拟）",
+  "you.solution.feedback.evidenceAttached": "已附加 fixture 证据——仅合成数据。",
+  "you.solution.feedback.improvement": "确定性改进",
+  "you.solution.feedback.propose": "提出改进",
+  "you.solution.feedback.accept": "接受",
+  "you.solution.feedback.reject": "拒绝",
+  "you.solution.feedback.beforeAfter": "改进前后",
+  "you.solution.feedback.delta": "{delta}",
+  "you.solution.feedback.noPending": "暂无待定变更集。",
+  "you.solution.compare.title": "版本对比",
+  "you.solution.compare.target": "对比目标",
+  "you.solution.compare.current": "当前",
+  "you.solution.compare.empty": "至少需要两个版本才能对比。",
+  "you.solution.compare.qualityTable": "质量",
+  "you.solution.compare.entities": "实体变更",
+  "you.solution.compare.environment": "环境",
+  "you.solution.compare.history": "版本历史",
+  "you.solution.compare.identical": "两个版本的投影状态一致。",
+  "you.solution.export.title": "导出与编辑器",
+  "you.solution.export.recommended": "推荐编辑器",
+  "you.solution.export.rationale": "理由",
+  "you.solution.export.format": "格式",
+  "you.solution.export.download": "下载包",
+  "you.solution.export.copy": "复制 manifest",
+  "you.solution.export.copied": "已复制 manifest",
+  "you.solution.export.manifest": "可编辑包 manifest",
+  "you.solution.export.reimport": "重新导入",
+  "you.solution.export.reimportHint": "粘贴编辑后的包 manifest，生成候选版本与真实差异。",
+  "you.solution.export.reimportAction": "导入包",
+  "you.solution.export.diffTitle": "与当前版本的真实差异",
+  "you.solution.export.diffEmpty": "导入包与当前版本一致。",
+  "you.solution.takeover.title": "手动接管",
+  "you.solution.takeover.enter": "进入编辑模式",
+  "you.solution.takeover.exit": "退出编辑模式",
+  "you.solution.takeover.session": "编辑会话",
+  "you.solution.takeover.sessionClosed": "已关闭",
+  "you.solution.takeover.sessionOpen": "进行中",
+  "you.solution.takeover.target": "纠正目标",
+  "you.solution.takeover.rotationZ": "旋转 Z（弧度）",
+  "you.solution.takeover.apply": "记录纠正",
+  "you.solution.takeover.accept": "接受",
+  "you.solution.takeover.revert": "撤销",
+  "you.solution.takeover.pending": "待定纠正",
+  "you.solution.takeover.learningTitle": "学习许可",
+  "you.solution.takeover.learningOff": "未获许可绝不学习。当前不会记录你的任何编辑。",
+  "you.solution.takeover.learningOn": "已授权。下方纠正仅在该作用域内影响后续结果。",
+  "you.solution.takeover.learningScope": "作用域：USER（绝不静默全局生效）",
+  "you.solution.takeover.learningCandidate": "将学习的内容",
+  "you.solution.takeover.grant": "允许从此纠正中学习",
+  "you.solution.takeover.noCandidate": "尚无学习候选——请先接受一次手动纠正。",
+  "you.solution.takeover.wavePreset": "挥手位（−2.20 弧度）",
+  "you.solution.takeover.editModeBadge": "编辑模式",
+  "you.solution.demo.title": "操作员演示",
+  "you.solution.demo.badge": "确定性模拟演示",
+  "you.solution.demo.start": "开始演示",
+  "you.solution.demo.next": "执行步骤",
+  "you.solution.demo.reset": "重置",
+  "you.solution.demo.step": "步骤 {current} / {total}",
+  "you.solution.demo.finished": "演示完成——Phase-0 闭环的每一环均已执行。",
+  "you.solution.demo.noOutcomes": "执行步骤以走完 Phase-0 闭环。",
+  "you.solution.demo.scriptedNote": "仅使用剧本 fixture 数据。无真实重建、无网络、无生物特征数据。",
+  "you.solution.simulatedNote": "模拟",
+  "you.solution.notRun": "未运行",
+  "you.demo.step.intent.title": "意图",
+  "you.demo.step.intent.description": "用户表达意图；确定性 fixture 管线发布 Solution v1。",
+  "you.demo.step.feedback.title": "反馈",
+  "you.demo.step.feedback.description": "选择区域并描述缺陷；成为规范化 FeedbackRequest。",
+  "you.demo.step.evidence-request.title": "证据请求",
+  "you.demo.step.evidence-request.description": "Agent 请求定向 fixture 证据——仅合成数据。",
+  "you.demo.step.evidence-provided.title": "提供证据",
+  "you.demo.step.evidence-provided.description": "附加 fixture 证据；不收集任何真实生物特征数据。",
+  "you.demo.step.improvement-proposed.title": "提出改进",
+  "you.demo.step.improvement-proposed.description": "Agent 提出确定性、可度量的改进（候选 ChangeSet）。",
+  "you.demo.step.improvement-accepted.title": "接受改进",
+  "you.demo.step.improvement-accepted.description": "用户接受；发布新的不可变 canonical 版本。",
+  "you.demo.step.takeover-open.title": "打开接管",
+  "you.demo.step.takeover-open.description": "用户接管；以 observed 证据模式打开 EditSession。",
+  "you.demo.step.takeover-correction.title": "手动纠正",
+  "you.demo.step.takeover-correction.description": "一次小的手动 transform 纠正被捕获为 user ChangeSet。",
+  "you.demo.step.takeover-accepted.title": "接受接管",
+  "you.demo.step.takeover-accepted.description":
+    "纠正被接受；EditSession 关闭；记录学习候选——许可仍关闭。",
+  "you.demo.step.learning-consent.title": "学习许可",
+  "you.demo.step.learning-consent.description": "用户显式授予学习许可（作用域 USER）。",
+  "you.demo.step.export.title": "导出",
+  "you.demo.step.export.description": "产出推荐外部编辑器与带血缘/溯源的可编辑包。",
+  "you.demo.step.re-import.title": "重新导入",
+  "you.demo.step.re-import.description": "编辑后的包回传；YOU 计算真实差异并生成候选版本。",
+  "you.demo.step.re-import-accepted.title": "接受导入",
+  "you.demo.step.re-import-accepted.description": "用户将导入的编辑接受为新的 canonical 版本。",
+  "you.demo.step.repeated-intent.title": "重复意图",
+  "you.demo.step.repeated-intent.description": "同一意图再次执行——仅在已授权时应用已学习纠正。",
+  "you.demo.step.capability-gap.title": "能力缺口",
+  "you.demo.step.capability-gap.description": "fixture 产生已知 TOOL_GAP，并记录尝试过的策略。",
+  "you.demo.step.arena-escalate.title": "Arena 升级",
+  "you.demo.step.arena-escalate.description": "用户授权升级；mock Arena 返回类型化专家结果。",
+  "you.demo.step.arena-apply.title": "应用 Arena 结果",
+  "you.demo.step.arena-apply.description": "结果通过 YOU 自身权威作为 expert ChangeSet 应用。",
+};
+
+const FALLBACK_MESSAGES = enUS;
+
+export function resolveYouMessages(locale: string): Record<string, string> {
+  if (locale === "zh-CN") {
+    return zhCN;
+  }
+  return enUS;
+}
+
+/** 与中央 IntlProvider 同款 `{key}` 占位符语义；缺失回退 en-US，再回退 id。 */
+export function formatYouMessage(
+  messages: Record<string, string>,
+  id: string,
+  values?: Record<string, string | number>,
+): string {
+  let text = messages[id] ?? FALLBACK_MESSAGES[id] ?? id;
+  if (values) {
+    for (const [key, value] of Object.entries(values)) {
+      text = text.replaceAll(`{${key}}`, String(value));
+    }
+  }
+  return text;
+}
+
+/** 面板内文案 hook：读取当前 locale（只读依赖中央 IntlProvider）。 */
+export function useYouMessages(): {
+  formatMessage: (descriptor: { id: string }, values?: Record<string, string | number>) => string;
+} {
+  const { locale } = useZCodeIntl();
+  const messages = resolveYouMessages(locale);
+  return {
+    formatMessage: (descriptor, values) => formatYouMessage(messages, descriptor.id, values),
+  };
+}
