@@ -6,6 +6,11 @@ Turn this ZCode-based repository into YOU using only repository state.
 
 Do not consult conversation history for implementation requirements.
 
+## Bootstrap anchor
+
+The repository bootstrap is recorded in `docs/you/BOOTSTRAP_STATUS.md`.
+Initial TL issue: #1 (`YOU-000`). Initial Worker issues: #2 (`YOU-101`), #3 (`YOU-102`), #4 (`YOU-103`). The documentation bootstrap anchor is `8e4c6cf489da92f1a602cccab2b8516f7247ea68`; always inspect the current `main` head before dispatching and record the actual dispatch SHA.
+
 ## First action
 
 Read:
@@ -104,6 +109,10 @@ No worker waits on another worker when it can create independent work, fixtures,
 Workers may modify only their package-local manifests within their lane.
 
 TL owns root lockfile reconciliation.
+
+### Look-ahead concurrency
+
+Workers should exploit non-dependent work across future waves while the current wave is under integration. Allowed examples include research/benchmark fixtures, documentation-backed technology evaluation, mock adapters, test data, UI prototypes, and isolated harnesses whose write surfaces do not intersect active Work Orders. Do not use look-ahead work to modify frozen shared contracts or another lane's implementation.
 
 ### Integration cadence
 
