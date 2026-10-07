@@ -1,4 +1,4 @@
-# ZCode
+# YOU — Human Reality Workbench\n\n> ZCode is the host foundation; YOU is the product being built in this repository.
 
 <div align="center">
   <img src="public/logo/icons/1024x1024.png" alt="ZCode" width="128" height="128" />
@@ -13,7 +13,7 @@
 
 
 
-ZCode 是 AI 编程工作台，提供桌面应用、浏览器界面和终端 Agent。本仓库包含客户端、后端服务、共享 UI，以及 Agent CLI 与运行时源码。
+This repository retains the ZCode AI workbench foundation and is being transformed into YOU, a human-reality and agent-embodiment workbench.本仓库包含客户端、后端服务、共享 UI，以及 Agent CLI 与运行时源码。
 
 ## 更新
 
@@ -221,3 +221,35 @@ node dist/zcode/debug/zcode/bin/zcode.mjs --web \
 ## 项目声明
 
 功能与优惠范围、维护规则、执行与数据风险，以及许可和第三方版权说明，详见 [NOTICE.md](NOTICE.md)。
+
+
+---
+
+# YOU — Product Direction
+
+This repository is being transformed from its ZCode foundation into **YOU**.
+
+The ZCode workbench remains the host/runtime foundation. YOU adds human-reality infrastructure, first-class Solution environments, digital twins, performance, rendering, editing/interchange, agent embodiment, Labs and human expert escalation.
+
+**Implementation authority:** `docs/you/`
+
+Start with:
+
+- `docs/you/README.md`
+- `docs/you/ARCHITECTURE.md`
+- `docs/you/CONTRACTS.md`
+- `docs/you/IMPLEMENTATION_PLAN.md`
+- `docs/you/TASK_LEDGER.md`
+- `docs/you/WORK_ORDERS.md`
+- `docs/you/TL_HANDOFF.md`
+
+Conversation history is not an implementation dependency.
+
+The first gate is a deterministic **Solution Runtime / Operator Review**. Do not begin real reconstruction/GPU work until that gate is accepted.
+
+Product thesis:
+
+`intent -> organization/toolchain -> execution -> Solution -> feedback/takeover -> learning -> capability gap -> Arena`
+
+The Solution is a native workspace surface alongside Browser/Artifact/etc.; a second global docking framework is prohibited.
+
