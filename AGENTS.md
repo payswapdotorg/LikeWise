@@ -80,3 +80,43 @@
 - `info` 用于进程和会话生命周期、权限结果、一次性初始化等生产可用事件。
 - `warn` 用于可恢复异常；`error` 用于崩溃、握手失败、鉴权丢失等不可恢复错误。
 - 不在日志、示例或提交中写入凭据、真实用户数据和内部服务地址。
+
+
+---
+
+# YOU implementation authority
+
+This repository is now the sole durable source of truth for the YOU product.
+
+Read `docs/you/README.md` before any YOU implementation, then follow its authority chain. Chat history is not an implementation dependency.
+
+The approved architecture is:
+
+- ZCode remains the host/workbench.
+- Solution is a first-class native workspace surface.
+- Do not introduce a second global docking/layout framework.
+- Solution is a versioned runtime, not merely an HTML artifact.
+- HTIR is technology-neutral.
+- Evidence and TwinVersions are immutable.
+- User takeover is a first-class EditSession/learning event.
+- External editors are adapters.
+- Intent selects organizations/toolchains, not models directly.
+- Arena is the human capability escape hatch.
+- UI/HTTP/SDK/MCP use the same application-service authority.
+- Free-tier providers are replaceable adapters, never semantic authorities.
+
+YOU worker lanes:
+
+- Worker A: Core/API/Domain
+- Worker B: Studio/UX/Editors
+- Worker C: Labs/AI/Technology
+- TL: contracts, integration, security, lockfile reconciliation, promotion and release
+
+Maximum concurrent workers: 3.
+
+Workers must use frozen Work Orders in `docs/you/WORK_ORDERS.md`, write only inside their assigned surfaces, and submit reproducible evidence. Shared contracts and root lockfile changes are TL-owned/serialized.
+
+First gate:
+
+`intent -> Solution -> feedback -> evidence request -> deterministic improvement -> manual takeover -> EditSession -> export/editor -> re-import/diff -> learning -> repeated intent -> CapabilityGap -> Arena mock`
+
