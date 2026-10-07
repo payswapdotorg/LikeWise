@@ -104,8 +104,8 @@ Executed by the TL per issue #1 (YOU-000):
 
 ## W1 dispatch record
 
-- Base SHA for W1A/W1B/W1C: the T0 merge commit on `main` (recorded by the
-  TL immediately after merge; the three branches are cut from it).
+- Base SHA for W1A/W1B/W1C: `ff26821fec5bf42c506d47ef97d76fc2b6ca1f1b`
+  (the T0 merge commit on `main`; branches cut from it by the TL).
 - Tests: node:test, executed by the station (`pnpm exec tsx --test`);
   station verification battery: `pnpm typecheck`, `pnpm lint`,
   `pnpm architecture:check -- --changed`, package tests.
