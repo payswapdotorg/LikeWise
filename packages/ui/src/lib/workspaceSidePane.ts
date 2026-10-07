@@ -2,6 +2,7 @@
 import { createUuid, type BrowserTabResidencyState } from "@zcode/shared";
 import { inferMediaPreview, isPptxPreviewPath, type CodeViewerSource } from "@/lib/codeViewer.js";
 import { normalizeCodeViewerSource } from "@/lib/codeViewerSource.js";
+import { resolveSolutionTabState } from "@/you/solutionTabRegistration.js";
 
 export interface BrowserSidePaneTab {
   id: string;
@@ -80,6 +81,19 @@ export interface ModelTrajectorySidePaneTab {
 export interface DeveloperToolsSidePaneTab {
   id: "developer-tools";
   type: "developer-tools";
+  ownerTaskId?: string | null;
+  workspaceKey?: string | null;
+  openedAt?: number;
+}
+
+/**
+ * YOU Solution surface tab（W1B）——与 Browser/Artifact 同级的 native workspace 表面。
+ * 固定单例 id：一个 workspace 一个 Solution tab（重复打开幂等地聚焦既有 tab）；
+ * Solution 内容与视图状态由 `packages/ui/src/you/**` 子树自持。
+ */
+export interface SolutionSidePaneTab {
+  id: "solution";
+  type: "solution";
   ownerTaskId?: string | null;
   workspaceKey?: string | null;
   openedAt?: number;
@@ -522,6 +536,7 @@ export type WorkspaceSidePaneTab =
   | WhiteboardSidePaneTab
   | ModelTrajectorySidePaneTab
   | DeveloperToolsSidePaneTab
+  | SolutionSidePaneTab
   | TerminalSidePaneTab
   | BrowserUseSidePaneTab
   | SubagentSessionSidePaneTab
@@ -1055,6 +1070,8 @@ const WORKSPACE_GLOBAL_SIDE_PANE_TAB_TYPES = new Set<WorkspaceSidePaneTab["type"
   "git",
   "developer-tools",
   "treemapping",
+  // Solution 是 workspace 级表面（ADR-002），对所有对话可见，不随对话切换隐藏。
+  "solution",
 ]);
 
 function isWorkspaceGlobalSidePaneTab(tab: WorkspaceSidePaneTab): boolean {
@@ -1584,6 +1601,19 @@ export function activateDeveloperToolsSidePane(
   current: WorkspaceSidePaneState | null,
 ): WorkspaceSidePaneState {
   return activateSidePaneTab(current, createDeveloperToolsSidePaneTab());
+}
+
+/**
+ * 打开（或幂等聚焦）YOU Solution 表面 tab（W1B 注册点）。
+ * 纯转移逻辑在 `@/you/solutionTabRegistration.js`（you 子树自合，可被 tsx 直接加载）。
+ */
+export function openSolutionSidePane(
+  current: WorkspaceSidePaneState | null,
+  options: {
+    workspaceKey?: string | null;
+  },
+): WorkspaceSidePaneState {
+  return resolveSolutionTabState(current, options);
 }
 
 export function openTerminalSidePane(

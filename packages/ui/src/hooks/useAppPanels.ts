@@ -34,6 +34,7 @@ import {
   openWorkflowWorkspaceSidePane,
   openWorkflowArtifactSidePane,
   activateDeveloperToolsSidePane,
+  openSolutionSidePane,
   openBrowserSidePane,
   openOrActivateBrowserSidePaneByUrl,
   findBrowserSidePaneTabByUrl,
@@ -781,6 +782,20 @@ export function useAppPanels(options: {
       const next = activateDeveloperToolsSidePane(current);
       logger.info(
         `[App] 打开右侧面板 mode=developer-tools workspace=${workspaceAbsPath} tabs=${next.tabs.length}`,
+      );
+      return next;
+    });
+  }, [commitOpenedSidePaneState, revealSidePaneForCurrentOwner, workspaceAbsPath]);
+
+  // YOU Solution surface（W1B 注册点）：幂等打开/聚焦 native Solution tab。
+  const handleOpenSolution = useCallback(() => {
+    revealSidePaneForCurrentOwner();
+    commitOpenedSidePaneState((current) => {
+      const next = openSolutionSidePane(current, {
+        workspaceKey: activeWorkspaceKeyRef.current,
+      });
+      logger.info(
+        `[App] 打开右侧面板 mode=solution workspace=${workspaceAbsPath} tabs=${next.tabs.length}`,
       );
       return next;
     });
@@ -1587,6 +1602,7 @@ export function useAppPanels(options: {
     handleOpenTreemapping,
     handleOpenWhiteboard,
     handleOpenDeveloperTools,
+    handleOpenSolution,
     handleOpenTerminalTab,
     handleOpenModelTrajectory,
     handleOpenSubagentSession,
