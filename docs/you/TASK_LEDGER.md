@@ -169,6 +169,50 @@ Executed by the TL station on main after the W1C merge (3b059e3):
   (deterministic demo across the W1A+W1B+W1C surfaces) before wave-2 dispatch
   proceeds beyond contract freeze.
 
+## Operator greenlight (W2 authorization)
+
+- 2026-10-07, live operator directive (session
+  web-15e70763/chat 0168fd97): "continuous resident watch from here on:
+  monitor → harvest → review → approve/require-changes → dispatch next,
+  until the roadmap is complete. No early returns. Use the github repo as
+  guide for roadmap. always fix the replay."
+- Interpretation recorded by the TL: the operator delegates wave
+  review/approval authority to the TL station for the resident watch and
+  authorizes continuous progression through the roadmap stages
+  (repo docs = roadmap authority). Phase-0 gate resolved as
+  GREENLIT-ON-RECORDED-EVIDENCE (station battery 185/185, gate-parity
+  station verification of all three W1 lanes) — live demo staging
+  remains a best-effort retry during worker runtime (host OOM pressure
+  noted in the prior session; environmental, not a repo defect). The
+  gate stays reopenable: any Phase-0 acceptance regression found at T2
+  re-opens it before W3.
+- Environment note: the TL station sandbox was reset between T1 and the W2
+  freeze (2026-10-08 ~01:2x UTC); the replay stack was redeployed from the
+  canonical reset path (deploy.sh, profile durable — login preserved) and
+  the likewise clone restored from origin/main 5b91aed. No delivered work
+  was affected; the W2 freeze was re-authored station-side before dispatch.
+
+## W2 dispatch record
+
+- Wave-2 contract freeze (v2): machine authority extended ADDITIVELY in
+  `packages/shared/src/you/contract.ts` (evidence/capture/consent types,
+  event types, error codes); prose authority
+  `docs/you/CONTRACTS.md` "Evidence / capture / consent" + "Wave-2
+  contract freeze (v2)"; full W2A/W2B/W2C orders frozen in
+  `docs/you/WORK_ORDERS.md`.
+- Base SHA for W2A/W2B/W2C: the W2 contract-freeze commit on main
+  (recorded below at dispatch; branches cut from it by the TL).
+- Dependency policy wave 2: zero new runtime dependencies; workers do
+  not touch root manifests/lockfiles; TL serializes root reconciliation
+  at T2 (none expected — no new packages).
+- Write surfaces: W2A `packages/shared/src/you/**` (except TL-frozen
+  `contract.ts`) + `packages/services/src/you/**`; W2B
+  `packages/ui/src/you/**` + disclosed registration-only seams; W2C
+  `packages/you-lab/**`.
+- Tests: node:test via `pnpm exec tsx --test` (station battery per W1
+  practice: package typechecks chunked, lint baseline 0 errors /
+  70 warnings, you-test battery per package).
+
 ## W1 — Solution Runtime / Operator Gate
 
 ### W1A Core/API

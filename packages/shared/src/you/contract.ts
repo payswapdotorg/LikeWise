@@ -1,3 +1,4 @@
+/* oxlint-disable eslint(max-lines) -- YOU frozen contract machine authority (v1+v2): TL 冻结的单一机器契约入口，拆分会破坏 freeze 的单文件权威（docs/you/CONTRACTS.md）。 */
 // YOU frozen contract v1 — wave 1 (T0 TL freeze).
 //
 // Authority: docs/you/CONTRACTS.md (prose) + this file (machine types).
@@ -446,6 +447,12 @@ export type SolutionEventType =
   | "feedback-submitted"
   | "evidence-requested"
   | "evidence-provided"
+  | "capture-session-opened"
+  | "capture-session-completed"
+  | "evidence-recorded"
+  | "evidence-reviewed"
+  | "consent-recorded"
+  | "consent-withdrawn"
   | "edit-session-opened"
   | "edit-session-closed"
   | "change-proposed"
@@ -476,7 +483,146 @@ export type YouErrorCode =
   | "YOU_CONSENT_REQUIRED"
   | "YOU_CAPABILITY_GAP"
   | "YOU_FIXTURE_DETERMINISM"
-  | "YOU_INVALID_STATE";
+  | "YOU_INVALID_STATE"
+  | "YOU_EVIDENCE_NOT_FOUND"
+  | "YOU_RETENTION_EXPIRED"
+  | "YOU_CONTENT_HASH_MISMATCH";
+
+// ---------------------------------------------------------------------------
+// Evidence / Capture / Consent — frozen v2 (wave 2, TL freeze at T1->W2)
+//
+// Authority: docs/you/CONTRACTS.md "Wave-2 contract freeze (v2)".
+// Dispatched by: docs/you/WORK_ORDERS.md (W2A / W2B / W2C).
+// Same laws as v1: workers MUST NOT modify this file; immutable records are
+// never overwritten; all ids opaque; timestamps from the injected clock in
+// fixture mode; truth law (fixture evidence stays `simulated: true`).
+// ---------------------------------------------------------------------------
+
+/** Raw capture modality (provider-neutral). */
+export type CaptureModality =
+  | "image"
+  | "video"
+  | "depth"
+  | "audio"
+  | "measurement"
+  | "document"
+  | (string & {});
+
+/** Data classes (docs/you/SECURITY.md "Data classes"). */
+export type EvidencePrivacyClass =
+  | "public-metadata"
+  | "project-artifact"
+  | "sensitive-media"
+  | "biometric-evidence"
+  | "medical"
+  | "credential"
+  | "learning-artifact";
+
+export type RetentionPolicy =
+  | "session-only"
+  | "delete-after-review"
+  | "project-retention"
+  | "tenant-retention";
+
+export interface EvidenceRetention {
+  readonly policy: RetentionPolicy;
+  /** ISO-8601 (injected clock in fixture mode); null when not applicable. */
+  readonly deleteAfter: string | null;
+  readonly reason: string;
+}
+
+export type ConsentPurpose =
+  | "solution-generation"
+  | "quality-improvement"
+  | "learning"
+  | "export"
+  | "arena-escalation"
+  | (string & {});
+
+/**
+ * Server-enforced consent policy (docs/you/SECURITY.md "Consent"):
+ * explicit, scoped, revocable, purpose-specific; operational use and
+ * learning reuse are consented separately.
+ */
+export interface ConsentPolicy {
+  readonly id: OpaqueId;
+  readonly purposes: readonly ConsentPurpose[];
+  readonly scope: LearningScope;
+  readonly operationalUse: boolean;
+  readonly learningReuse: boolean;
+  readonly retention: EvidenceRetention;
+  readonly revocable: boolean;
+}
+
+export type CaptureSessionStatus =
+  | "requested"
+  | "consent-pending"
+  | "active"
+  | "completed"
+  | "declined"
+  | "expired";
+
+/** One guided-capture instruction (targeted EvidenceRequest UX). */
+export interface CaptureGuideStep {
+  readonly id: OpaqueId;
+  readonly instruction: string;
+  readonly targetDeficiency: string | null;
+  readonly preferredFraming: string | null;
+  readonly requiredModality: CaptureModality | null;
+}
+
+/**
+ * A guided capture flow bound to an EvidenceRequest (or spontaneous).
+ * State truth = evidence application service (Worker A).
+ */
+export interface CaptureSession {
+  readonly id: OpaqueId;
+  readonly evidenceRequestId: OpaqueId | null;
+  readonly scope: LearningScope;
+  readonly guideSteps: readonly CaptureGuideStep[];
+  readonly status: CaptureSessionStatus;
+  readonly consent: ConsentReference;
+  readonly startedAt: string;
+  readonly completedAt: string | null;
+  readonly provenance: ProvenanceRecord;
+}
+
+/**
+ * Immutable evidence record. Content is referenced, never inlined:
+ * `contentRef` is an opaque store key; `contentHash` binds the record to
+ * the stored bytes (sha-256 hex; deterministic fixture hash allowed only
+ * in fixture mode and then `simulated: true`).
+ */
+export interface EvidenceRecord {
+  readonly id: OpaqueId;
+  readonly evidenceRequestId: OpaqueId | null;
+  readonly captureSessionId: OpaqueId | null;
+  readonly evidenceType: EvidenceType;
+  readonly modality: CaptureModality;
+  readonly contentRef: OpaqueId;
+  readonly contentHash: string;
+  readonly privacyClass: EvidencePrivacyClass;
+  readonly retention: EvidenceRetention;
+  readonly consent: ConsentReference;
+  readonly capturedAt: string;
+  readonly provenance: ProvenanceRecord;
+  /** Truth law: fixture/synthetic evidence stays labeled. */
+  readonly simulated: boolean;
+}
+
+export type EvidenceReviewStatus = "pending" | "accepted" | "rejected" | "superseded";
+
+/** Human/agent review outcome over an EvidenceRecord. */
+export interface EvidenceReview {
+  readonly id: OpaqueId;
+  readonly evidenceId: OpaqueId;
+  readonly reviewerType: AuthorType;
+  readonly status: EvidenceReviewStatus;
+  /** Deterministic observations keyed by deficiency class (fixture-defined). */
+  readonly qualityObservations: SolutionQualityMap;
+  readonly notes: string;
+  readonly reviewedAt: string;
+}
 
 export interface YouError {
   readonly code: YouErrorCode;

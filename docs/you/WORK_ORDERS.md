@@ -142,18 +142,137 @@ Acceptance:
 
 ## W2A — Evidence Authority
 
+Branch: `you/w2a-core`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch (the W2 contract-freeze commit on main).
+
 Objective:
-Implement immutable evidence/capture/consent application services.
+Implement immutable evidence/capture/consent application services on the
+frozen v2 contracts.
+
+Frozen write surface (wave 2):
+- `packages/shared/src/you/**` — EXCEPT `you/contract.ts` is TL-frozen
+  (implement around it; request a TL contract update if a change is needed);
+- `packages/services/src/you/**` (the you services subtree Worker A owns
+  since W1A).
+
+Zero edits to any other existing file: no UI, no you-lab, no root
+manifest/lockfile, no new dependencies, no `packages/shared/src/index.ts`
+changes (the v2 types already re-export through the public entry).
+
+Acceptance:
+- evidence application service: record immutable `EvidenceRecord`s
+  (content-addressed: `contentRef` + `contentHash` binding, typed
+  `YOU_CONTENT_HASH_MISMATCH` on mismatch), append-only events
+  (`evidence-recorded`, `evidence-reviewed`);
+- content store abstraction + deterministic in-memory/fixture
+  implementation (seed-derived synthetic evidence bytes; hash via
+  node:crypto sha-256 — a builtin, not a new dependency);
+- consent/policy service: `ConsentPolicy` records, grant/deny/withdraw
+  flows, server-style enforcement checks (no processing of sensitive
+evidence classes without an active consent reference; no learning reuse
+  without separate permission; withdrawal blocks future use),
+  `consent-recorded` / `consent-withdrawn` events;
+- capture session flow: open/complete/decline a guided `CaptureSession`
+  bound to an `EvidenceRequest`, `capture-session-*` events;
+- evidence review flow: `EvidenceReview` accept/reject/supersede with
+  deterministic `qualityObservations` keyed by deficiency class;
+- retention: policy application incl. delete-after-review path and typed
+  `YOU_RETENTION_EXPIRED` / `YOU_EVIDENCE_NOT_FOUND` errors;
+- deterministic fixtures per `FIXTURES.md` (injected clock/rng; synthetic
+  evidence labeled `simulated: true`; byte-identical replay);
+- tests (node:test; station runs `pnpm exec tsx --test`) covering:
+  immutability, hash binding + mismatch error, consent enforcement matrix,
+  withdrawal semantics, capture flow state machine, review supersession,
+  retention expiry, fixture determinism (byte-identical replay), event
+  ledger append-only + replay reproduction.
 
 ## W2B — Capture Studio
 
+Branch: `you/w2b-studio`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch (the W2 contract-freeze commit on main).
+
 Objective:
-Implement guided evidence capture/review and targeted evidence requests.
+Make evidence capture/review/consent a native guided workspace experience.
+
+Read first:
+`DESIGN.md`, the W1B surfaces (`packages/ui/src/you/**` — Solution pane
+pattern, controller seam, i18n catalog), `docs/you/CONTRACTS.md` wave-2
+freeze, `docs/you/SECURITY.md` (consent UX duties),
+`docs/you/OPERATOR_ACCEPTANCE.md` (Feedback loop + Trust sections).
+
+Frozen write surface (wave 2):
+- `packages/ui/src/you/**` (free);
+- minimal registration-only seams in `packages/ui/src/app-shell/**` and
+  `packages/ui/src/v4/**` ONLY where strictly required to register the
+  Capture/Evidence pane or surface entry points — no behavior changes to
+  existing panes; every seam edit disclosed per-file in the delivery
+  report (pre-expand the seam list from the W1B arbitration record);
+- dedicated UX tests under the you subtree.
+
+Contract imports: frozen v2 types from `@zcode/shared`. Do not redeclare
+contract types locally; do not modify `contract.ts`. Bind to Worker A's
+service seams through a controller injection point in the W1B pattern
+(simulated controller acceptable until T2; business logic stays in
+services, never in the UI).
+
+Acceptance:
+- capture UX: guided capture surface rendering `CaptureSession` +
+  `CaptureGuideStep`s with progress, per-step preferred framing, and
+  explicit synthetic/fixture labeling;
+- evidence review UX: review an `EvidenceRecord` (quality observations,
+  notes, accept/reject) with honest loading/error states;
+- targeted EvidenceRequest UX: render an `EvidenceRequest` with its
+  reason, privacy requirements and retention policy prominently and
+  plainly (operator must understand what is asked and why);
+- consent UX: explicit grant/deny per purpose, separate learning-reuse
+  permission, withdrawal control, and a state that makes "no permission
+  ⇒ no processing" visible;
+- upload UX bound to `upload_requested` / evidence flows (deterministic
+  fixture content only in the demo);
+- keyboard navigation, focus and close/reopen parity with the Solution
+  pane; i18n strings via the you catalog pattern (en-US + zh-CN);
+- tests (node:test) covering store/selector logic, storyboard/demo
+  scripting determinism, registration wiring, and consent-state
+  projection; loading/error/empty states exercised.
 
 ## W2C — Capture Technology
 
+Branch: `you/w2c-capture-tech`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch (the W2 contract-freeze commit on main).
+
 Objective:
-Integrate and benchmark capture/segmentation/pose candidates.
+Integrate and benchmark provider-neutral capture/segmentation/pose
+reconstruction candidates on the W1C lab foundation.
+
+Frozen write surface (wave 2):
+- `packages/you-lab/**` only. Zero edits outside; import frozen contract
+types from `@zcode/shared` at the existing seam module
+(`src/contractSeam.ts`).
+
+Acceptance:
+- capture technology registry additions: researched real profiles for
+  candidate set — MediaPipe (Holistic/Landmarker), OpenPose, MoveNet /
+  BlazePose (TF.js), YOLO-seg family / Segment Anything (SAM/SAM2),
+  Depth-Anything, SMPL/X family, OpenMMLab (MMPose) — license (SPDX +
+  source URL), maintenance evidence, compatibility notes, provenance;
+  `unverified: true` where not verified (truth law — never invent);
+- provider-neutral `CaptureAdapter` seam: input modality -> typed capture
+  observations/candidates; deterministic `mockSegmentationAdapter` +
+  `mockPoseAdapter` (seed-derived, no network);
+- segmentation/pose/reconstruction candidate profiles + evaluation
+  criteria (capability coverage vs modality, determinism, licensing,
+  runtime class — structured fields, explicit `not-measured (simulated)`
+  markers where unmeasured);
+- benchmark harness: deterministic fixtures (seeded synthetic capture
+  payloads + golden expectations), runner scoring candidates on quality
+  of typed observations (deterministic), recording effort/latency/cost as
+  structured fields with honest markers;
+- seam mapping onto frozen v2 contracts (e.g. `EvidenceRecord`
+  construction from adapter observations, `qualityObservations`
+  projection);
+- tests (node:test) covering registry integrity (license + source URL,
+  unique ids, no unverified-as-verified), adapter determinism,
+  golden benchmark scores, seam mapping validity.
 
 ## W3A — Twin Authority
 
