@@ -20,7 +20,11 @@ export interface LicenseClaim {
   readonly note: string;
 }
 
-export type MaintenanceSignalKind = "npm-publish" | "github-release" | "pypi-upload";
+// W2C: "github-commit" added additively for capture candidates that publish
+// neither releases nor registry packages (SAM/SAM2, Depth-Anything-V2); the
+// signal cites the last observed commit date on the default branch.
+
+export type MaintenanceSignalKind = "npm-publish" | "github-release" | "pypi-upload" | "github-commit";
 
 export interface MaintenanceSignal {
   readonly kind: MaintenanceSignalKind;
