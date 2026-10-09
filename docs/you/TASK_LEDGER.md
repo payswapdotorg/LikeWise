@@ -213,6 +213,34 @@ Executed by the TL station on main after the W1C merge (3b059e3):
   practice: package typechecks chunked, lint baseline 0 errors /
   70 warnings, you-test battery per package).
 
+### W2C merge record (2026-10-09)
+
+- Status: MERGED. Owner: Worker C (GLM-5.3 agent session), station-verified
+  by TL. Branch: `you/w2c-capture-tech`. Base SHA: `437e380`.
+- PR #12; merge commit `e7484ea`; worker commit `d554e94`
+  (26 files, +3178/−15, ALL inside `packages/you-lab/**` — surface PASS).
+- Station battery (gate-parity, re-run — not worker-reported):
+  `tsc -b packages/you-lab` exit 0; `pnpm lint` 0 errors / 70 warnings =
+  exact baseline; `tsx --test packages/you-lab` **113/113** (43 W1C + 70
+  new W2C; station double-run identical — determinism confirmed);
+  frozen `contract.ts` diff vs base: NONE.
+- Delivery report harvested from the worker chat (archived at the station
+  replay logs). Honest-research practices verified: real license fetches
+  with disclosed AGPL-3.0-only inference; non-attributable npm/PyPI
+  entries excluded; benchmark candidates explicitly labeled NOT
+  measurements of real technologies; additive `github-commit`
+  maintenance-signal kind for release-less projects.
+- Disclosed deviations accepted (all in-surface, justified): package-root
+  `index.ts` for the station command form; consumer-sim runner-entry
+  extension; registry.ts additive union member.
+- Environment note: W2 workers were first dispatched 2026-10-08 01:33Z
+  into a site-wide generation outage (~23.5h); all three chats rolled.
+  Sandbox reset #2 (2026-10-09 ~01:30Z) additionally wiped the station
+  replay; both absorbed (replay rebuilt via canonical path, workers
+  re-dispatched 02:0xZ from re-authored prompts). W2C delivered ~02:5xZ
+  on the re-dispatch.
+- W2A/W2B remain in flight at this record.
+
 ## W1 — Solution Runtime / Operator Gate
 
 ### W1A Core/API
