@@ -59,17 +59,19 @@ test("launcher offers solution only when the tab is not open", () => {
     developerToolsEnabled: false,
     hasReviewTab: false,
     hasSolutionTab: false,
+    hasCaptureTab: false,
   };
   assert.deepEqual(resolveOpenTabLauncherItemIds(base), [
     "review",
     "terminal",
     "browser",
     "solution",
+    "capture",
   ]);
 
   assert.deepEqual(
     resolveOpenTabLauncherItemIds({ ...base, hasSolutionTab: true }),
-    ["review", "terminal", "browser"],
+    ["review", "terminal", "browser", "capture"],
   );
 
   // 既有行为不受影响：developer tools / review / 无浏览器环境。
@@ -78,9 +80,10 @@ test("launcher offers solution only when the tab is not open", () => {
       developerToolsEnabled: true,
       hasReviewTab: true,
       hasSolutionTab: false,
+      hasCaptureTab: false,
       supportsEmbeddedBrowser: false,
     }),
-    ["terminal", "developer-tools", "solution"],
+    ["terminal", "developer-tools", "solution", "capture"],
   );
 
   assert.deepEqual(
@@ -89,7 +92,8 @@ test("launcher offers solution only when the tab is not open", () => {
       developerToolsEnabled: false,
       hasReviewTab: false,
       hasSolutionTab: false,
+      hasCaptureTab: false,
     }),
-    ["selection-side-conversation", "review", "terminal", "browser", "solution"],
+    ["selection-side-conversation", "review", "terminal", "browser", "solution", "capture"],
   );
 });

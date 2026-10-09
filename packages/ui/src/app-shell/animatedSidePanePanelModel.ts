@@ -6,12 +6,14 @@ export type OpenTabLauncherItemId =
   | "terminal"
   | "browser"
   | "developer-tools"
-  | "solution";
+  | "solution"
+  | "capture";
 
 export function resolveOpenTabLauncherItemIds({
   developerToolsEnabled,
   hasReviewTab,
   hasSolutionTab,
+  hasCaptureTab = false,
   canOpenSelectionSideConversation = false,
   supportsEmbeddedBrowser = true,
 }: {
@@ -19,6 +21,8 @@ export function resolveOpenTabLauncherItemIds({
   hasReviewTab: boolean;
   /** YOU Solution tab 已开时不再提供入口（幂等聚焦语义）。 */
   hasSolutionTab: boolean;
+  /** YOU Capture tab 已开时不再提供入口（W2B，同幂等聚焦语义）。缺省 false。 */
+  hasCaptureTab?: boolean;
   canOpenSelectionSideConversation?: boolean;
   supportsEmbeddedBrowser?: boolean;
 }): OpenTabLauncherItemId[] {
@@ -44,6 +48,10 @@ export function resolveOpenTabLauncherItemIds({
 
   if (!hasSolutionTab) {
     itemIds.push("solution");
+  }
+
+  if (!hasCaptureTab) {
+    itemIds.push("capture");
   }
 
   return itemIds;

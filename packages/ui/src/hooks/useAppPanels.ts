@@ -35,6 +35,7 @@ import {
   openWorkflowArtifactSidePane,
   activateDeveloperToolsSidePane,
   openSolutionSidePane,
+  openCaptureStudioSidePane,
   openBrowserSidePane,
   openOrActivateBrowserSidePaneByUrl,
   findBrowserSidePaneTabByUrl,
@@ -796,6 +797,20 @@ export function useAppPanels(options: {
       });
       logger.info(
         `[App] 打开右侧面板 mode=solution workspace=${workspaceAbsPath} tabs=${next.tabs.length}`,
+      );
+      return next;
+    });
+  }, [commitOpenedSidePaneState, revealSidePaneForCurrentOwner, workspaceAbsPath]);
+
+  // YOU Capture/Evidence surface（W2B 注册点）：幂等打开/聚焦 native Capture tab。
+  const handleOpenCaptureStudio = useCallback(() => {
+    revealSidePaneForCurrentOwner();
+    commitOpenedSidePaneState((current) => {
+      const next = openCaptureStudioSidePane(current, {
+        workspaceKey: activeWorkspaceKeyRef.current,
+      });
+      logger.info(
+        `[App] 打开右侧面板 mode=capture workspace=${workspaceAbsPath} tabs=${next.tabs.length}`,
       );
       return next;
     });
@@ -1603,6 +1618,7 @@ export function useAppPanels(options: {
     handleOpenWhiteboard,
     handleOpenDeveloperTools,
     handleOpenSolution,
+    handleOpenCaptureStudio,
     handleOpenTerminalTab,
     handleOpenModelTrajectory,
     handleOpenSubagentSession,

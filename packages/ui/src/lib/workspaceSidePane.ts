@@ -3,6 +3,7 @@ import { createUuid, type BrowserTabResidencyState } from "@zcode/shared";
 import { inferMediaPreview, isPptxPreviewPath, type CodeViewerSource } from "@/lib/codeViewer.js";
 import { normalizeCodeViewerSource } from "@/lib/codeViewerSource.js";
 import { resolveSolutionTabState } from "@/you/solutionTabRegistration.js";
+import { resolveCaptureTabState } from "@/you/captureTabRegistration.js";
 
 export interface BrowserSidePaneTab {
   id: string;
@@ -94,6 +95,19 @@ export interface DeveloperToolsSidePaneTab {
 export interface SolutionSidePaneTab {
   id: "solution";
   type: "solution";
+  ownerTaskId?: string | null;
+  workspaceKey?: string | null;
+  openedAt?: number;
+}
+
+/**
+ * YOU Capture/Evidence surface tab（W2B）——与 Solution 同级的 native workspace 表面。
+ * 固定单例 id：一个 workspace 一个 Capture tab（重复打开幂等地聚焦既有 tab）；
+ * 内容与视图状态由 `packages/ui/src/you/**` 子树自持（capture 系列模块）。
+ */
+export interface CaptureStudioSidePaneTab {
+  id: "capture";
+  type: "capture";
   ownerTaskId?: string | null;
   workspaceKey?: string | null;
   openedAt?: number;
@@ -537,6 +551,7 @@ export type WorkspaceSidePaneTab =
   | ModelTrajectorySidePaneTab
   | DeveloperToolsSidePaneTab
   | SolutionSidePaneTab
+  | CaptureStudioSidePaneTab
   | TerminalSidePaneTab
   | BrowserUseSidePaneTab
   | SubagentSessionSidePaneTab
@@ -1072,6 +1087,8 @@ const WORKSPACE_GLOBAL_SIDE_PANE_TAB_TYPES = new Set<WorkspaceSidePaneTab["type"
   "treemapping",
   // Solution 是 workspace 级表面（ADR-002），对所有对话可见，不随对话切换隐藏。
   "solution",
+  // Capture/Evidence 同为 workspace 级表面（W2B，同 ADR-002 语义）。
+  "capture",
 ]);
 
 function isWorkspaceGlobalSidePaneTab(tab: WorkspaceSidePaneTab): boolean {
@@ -1614,6 +1631,19 @@ export function openSolutionSidePane(
   },
 ): WorkspaceSidePaneState {
   return resolveSolutionTabState(current, options);
+}
+
+/**
+ * 打开（或幂等聚焦）YOU Capture/Evidence 表面 tab（W2B 注册点）。
+ * 纯转移逻辑在 `@/you/captureTabRegistration.js`（you 子树自合，可被 tsx 直接加载）。
+ */
+export function openCaptureStudioSidePane(
+  current: WorkspaceSidePaneState | null,
+  options: {
+    workspaceKey?: string | null;
+  },
+): WorkspaceSidePaneState {
+  return resolveCaptureTabState(current, options);
 }
 
 export function openTerminalSidePane(

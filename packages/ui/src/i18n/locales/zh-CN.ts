@@ -944,6 +944,7 @@ const zhCN: Record<string, string> = {
   "sidePane.openFile.emptyQuery": "输入内容搜索文件",
   "sidePane.review": "审查",
   "you.solution.tabTitle": "解决方案",
+  "you.capture.tabTitle": "采集",
   "whiteboard.title": "画板",
   "whiteboard.defaultName": "画板",
   "whiteboard.nameLabel": "画板名称",
