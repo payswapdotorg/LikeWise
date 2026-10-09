@@ -241,6 +241,54 @@ Executed by the TL station on main after the W1C merge (3b059e3):
   on the re-dispatch.
 - W2A/W2B remain in flight at this record.
 
+### W2A merge record (2026-10-09)
+
+- Status: MERGED. Owner: Worker A (GLM-5.3 agent session), station-verified
+  by TL. Branch: `you/w2a-core`. Base SHA: `437e380`. PR #13; merge
+  commit `b1e3770`; worker commit `3267917` (24 files, +4459, ALL inside
+  `packages/shared/src/you/**` + `packages/services/src/you/**`).
+- Station battery (gate-parity, re-run): `tsc -b shared services` exit 0;
+  lint 0 errors / 70 warnings = exact baseline; shared/you **135/135**
+  (113 W1A + 22 new); services/you **39/39** (19 W1A + 20 new); frozen
+  `contract.ts` untouched.
+- All 9 order-required coverage areas verified (immutability, typed hash
+  mismatch, consent golden matrix, withdrawal semantics, capture state
+  machine, review supersession, retention paths, byte-identical replay,
+  ledger replay === live projection). No CONTRACT-CHANGE-REQUEST.
+- Delivery report archived station-side. Session marked DONE (slot freed).
+
+### W2B merge record (2026-10-09)
+
+- Status: MERGED. Owner: Worker B (GLM-5.3 agent session), station-verified
+  by TL. Branch: `you/w2b-studio`. Base SHA: `437e380`. PR #14; merge
+  commit `f3e73e7`; worker commit `2e6d0bf` (37 files = 24 new in
+  `packages/ui/src/you/**` + 13 authorized seam files; +5756/−6).
+- Station battery (gate-parity, re-run): `tsc -b packages/ui` exit 0
+  (station re-run after memory freed — host 4GB OOM constraint handled
+  per T1 chunking practice); lint 0 errors / 70 warnings = exact baseline;
+  ui/you **81/81** (46 W1B + 35 new); frozen `contract.ts` untouched.
+- Coverage verified: store/selector logic, consent-state projection
+  (no-permission⇒no-processing matrix), storyboard/demo determinism,
+  registration wiring + keyboard parity, controller state machine,
+  enforcement, review supersession, retention expiry/purge, hash
+  mismatch, append-only ledger, loading/error/empty states. No
+  CONTRACT-CHANGE-REQUEST.
+- Delivery report archived station-side. Session marked DONE (slot freed).
+
+### T2 integration record (2026-10-09)
+
+- WAVE 2 COMPLETE: freeze (437e380) → W2A (PR #13, b1e3770) → W2C
+  (PR #12, e7484ea) → W2B (PR #14, f3e73e7) → T2 integrated.
+- Integrated main battery: typecheck chunked (shared+services+you-lab / ui
+  / rpc+provider+provider-node / client+server+zcode-server-cli) ALL
+  exit 0; lint 0 errors / 70 warnings = exact baseline; integrated
+  you-battery **368/368** (shared 135 + services 39 + ui 81 + you-lab
+  113); root manifest + lockfile untouched vs freeze (wave-2 dependency
+  policy PASS — zero new dependencies).
+- Phase-0 gate: remains GREENLIT-ON-RECORDED-EVIDENCE; live demo staging
+  still environmental-deferred (host OOM). W2 surfaces are now part of
+  the station battery evidence set.
+
 ## W1 — Solution Runtime / Operator Gate
 
 ### W1A Core/API
