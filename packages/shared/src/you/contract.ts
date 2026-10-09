@@ -460,7 +460,11 @@ export type SolutionEventType =
   | "change-rejected"
   | "capability-gap-detected"
   | "arena-escalation-requested"
-  | "arena-result-applied";
+  | "arena-result-applied"
+  | "twin-version-published"
+  | "twin-quality-assessed"
+  | "reconstruction-job-submitted"
+  | "reconstruction-job-completed";
 
 export interface SolutionEvent {
   readonly id: OpaqueId;
@@ -486,7 +490,10 @@ export type YouErrorCode =
   | "YOU_INVALID_STATE"
   | "YOU_EVIDENCE_NOT_FOUND"
   | "YOU_RETENTION_EXPIRED"
-  | "YOU_CONTENT_HASH_MISMATCH";
+  | "YOU_CONTENT_HASH_MISMATCH"
+  | "YOU_TWIN_NOT_FOUND"
+  | "YOU_HTIR_DOMAIN_INVALID"
+  | "YOU_RECONSTRUCTION_UNSUPPORTED";
 
 // ---------------------------------------------------------------------------
 // Evidence / Capture / Consent — frozen v2 (wave 2, TL freeze at T1->W2)
@@ -629,5 +636,161 @@ export interface YouError {
   readonly message: string;
   readonly details: Readonly<Record<string, string | number | boolean>>;
   /** Never report a mock as completed (truth law). */
+  readonly simulated: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Twin / Reconstruction — frozen v3 (wave 3, TL freeze at T2->W3)
+//
+// Authority: docs/you/CONTRACTS.md "Twin / reconstruction (design authority,
+// wave 3)" + "Wave-3 contract freeze (v3)".
+// Dispatched by: docs/you/WORK_ORDERS.md (W3A / W3B / W3C).
+// Same laws as v1/v2: workers MUST NOT modify this file; TwinVersions are
+// immutable and never overwritten; all ids opaque; timestamps from the
+// injected clock in fixture mode; truth law (fixture twins/reconstructions
+// stay `simulated: true`); evidence referenced by immutable id + contentHash,
+// never inlined; no single reconstruction method is canonical (open unions).
+// ---------------------------------------------------------------------------
+
+/**
+ * HTIR domain (docs/you/ARCHITECTURE.md §4). Open union: domain extensions
+ * are legal without contract changes; providers are adapters, never
+ * authorities.
+ */
+export type HtirDomainKind =
+  | "identity-binding"
+  | "morphology"
+  | "geometry-skeleton"
+  | "face-hands"
+  | "appearance-materials"
+  | "hair"
+  | "articulation-blendshapes"
+  | "neural-appearance"
+  | "motion-profile"
+  | "voice"
+  | "style"
+  | (string & {});
+
+/**
+ * One typed HTIR domain block. Content is referenced, never inlined:
+ * `contentRef` is an opaque store key; `contentHash` binds the block to
+ * the stored bytes (sha-256 hex; same content-store abstraction as wave-2
+ * evidence).
+ */
+export interface HtirDomainBlock {
+  readonly id: OpaqueId;
+  readonly domain: HtirDomainKind;
+  readonly contentRef: OpaqueId;
+  readonly contentHash: string;
+  /** Deterministic 0..1 confidence (fixture-defined in fixture mode). */
+  readonly confidence: number;
+  /** Truth law: fixture/synthetic blocks stay labeled. */
+  readonly simulated: boolean;
+  readonly provenance: ProvenanceRecord;
+}
+
+/** Immutable evidence binding: an EvidenceRecord id + its contentHash. */
+export interface TwinEvidenceBinding {
+  readonly evidenceId: OpaqueId;
+  readonly evidenceContentHash: string;
+  readonly consent: ConsentReference;
+}
+
+export type TwinVersionStatus = "candidate" | "canonical" | "superseded";
+
+/**
+ * Immutable twin version (docs/you/ARCHITECTURE.md "Twin plane"). A
+ * TwinVersion is never mutated; acceptance promotes candidate -> canonical
+ * and publishes a new version; a newer canonical supersedes older ones
+ * (append-only linkage, never overwrite).
+ */
+export interface TwinVersion {
+  readonly id: OpaqueId;
+  readonly twinId: OpaqueId;
+  /** Monotonic per twin; immutable once published. */
+  readonly version: number;
+  readonly status: TwinVersionStatus;
+  readonly domainBlocks: readonly HtirDomainBlock[];
+  readonly evidenceBindings: readonly TwinEvidenceBinding[];
+  readonly quality: TwinQualityState;
+  readonly createdAt: string;
+  readonly provenance: ProvenanceRecord;
+}
+
+/** Deficiency classes for twin quality (open union, extendable). */
+export type TwinDeficiencyClass =
+  | "coverage-gap"
+  | "geometric-error"
+  | "appearance-error"
+  | "articulation-error"
+  | "temporal-inconsistency"
+  | "provenance-missing"
+  | (string & {});
+
+/** A typed twin deficiency with remediation path into the W2 machinery. */
+export interface TwinDeficiency {
+  readonly id: OpaqueId;
+  readonly deficiencyClass: TwinDeficiencyClass;
+  readonly domain: HtirDomainKind;
+  /** Deterministic 0..1 severity (fixture-defined in fixture mode). */
+  readonly severity: number;
+  readonly remediationHint: string | null;
+  /** Targeted EvidenceRequest that would remediate (W2 seam), or null. */
+  readonly remediationEvidenceRequestId: OpaqueId | null;
+}
+
+/** Deterministic quality state projected onto an immutable TwinVersion. */
+export interface TwinQualityState {
+  /** Domain-keyed 0..1 scores (deterministic in fixture mode). */
+  readonly domainScores: SolutionQualityMap;
+  readonly deficiencies: readonly TwinDeficiency[];
+  readonly assessedAt: string;
+}
+
+/**
+ * Reconstruction method (docs/you/ARCHITECTURE.md §4: explicit geometry and
+ * neural appearance are complementary; no single method is canonical).
+ */
+export type ReconstructionMethod =
+  | "explicit-geometry"
+  | "neural-appearance"
+  | "hybrid"
+  | (string & {});
+
+/**
+ * Provider-neutral reconstruction job spec. State truth = the twin/recon
+ * application service (Worker A lane); adapters (Worker C lane) are
+ * replaceable and never authorities.
+ */
+export interface ReconstructionJobSpec {
+  readonly id: OpaqueId;
+  readonly twinVersionId: OpaqueId;
+  readonly method: ReconstructionMethod;
+  readonly targetDomains: readonly HtirDomainKind[];
+  readonly evidenceBindings: readonly TwinEvidenceBinding[];
+  readonly createdAt: string;
+}
+
+export type ReconstructionJobStatus =
+  | "queued"
+  | "running"
+  | "completed"
+  | "failed";
+
+/**
+ * Reconstruction job outcome. Honest markers: effort/latency/cost are
+ * structured fields with explicit not-measured labels when unmeasured
+ * (truth law); fixture results stay `simulated: true`.
+ */
+export interface ReconstructionJobResult {
+  readonly jobId: OpaqueId;
+  readonly status: ReconstructionJobStatus;
+  readonly producedDomainBlocks: readonly HtirDomainBlock[];
+  /**
+   * Structured effort/latency/cost observations; unmeasured values carry
+   * explicit markers (e.g. `{ measured: false }`) — never invented numbers.
+   */
+  readonly effortObservations: Readonly<Record<string, string | number | boolean>>;
+  readonly completedAt: string | null;
   readonly simulated: boolean;
 }

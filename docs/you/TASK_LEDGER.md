@@ -289,6 +289,26 @@ Executed by the TL station on main after the W1C merge (3b059e3):
   still environmental-deferred (host OOM). W2 surfaces are now part of
   the station battery evidence set.
 
+## W3 dispatch record
+
+- Wave-3 contract freeze (v3): machine authority extended ADDITIVELY in
+  `packages/shared/src/you/contract.ts` (HTIR/twin/reconstruction types,
+  event types, error codes); prose authority `docs/you/CONTRACTS.md`
+  "Twin / reconstruction (design authority, wave 3)" + "Wave-3 contract
+  freeze (v3)"; full W3A/W3B/W3C orders frozen in `docs/you/WORK_ORDERS.md`.
+- Base SHA for W3A/W3B/W3C: the W3 contract-freeze commit on main
+  (recorded below at dispatch; branches cut from it by the TL).
+- Dependency policy wave 3: zero new runtime dependencies; workers do
+  not touch root manifests/lockfiles; TL serializes root reconciliation
+  at T3 (none expected — no new packages).
+- Write surfaces: W3A `packages/shared/src/you/**` (except TL-frozen
+  `contract.ts`) + `packages/services/src/you/**`; W3B
+  `packages/ui/src/you/**` + disclosed registration-only seams (same
+  pre-expanded seam list as W2B); W3C `packages/you-lab/**`.
+- Tests: node:test via `pnpm exec tsx --test` (station battery per W1/W2
+  practice: package typechecks chunked, lint baseline 0 errors /
+  70 warnings, you-test battery per package).
+
 ## W1 — Solution Runtime / Operator Gate
 
 ### W1A Core/API

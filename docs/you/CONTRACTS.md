@@ -306,3 +306,70 @@ Frozen by the TL at the T1->W2 transition for Work Orders W2A / W2B / W2C.
 - Dependency policy for wave 2: zero new runtime dependencies; no root
   manifest/lockfile edits by workers; TL serializes any root reconciliation
   at T2.
+
+## Twin / reconstruction (design authority, wave 3)
+
+The twin plane stores HTIR (Human Twin Intermediate Representation) and
+immutable TwinVersions. State truth = the twin/reconstruction application
+service (Worker A lane); UI and adapters are never authorities.
+
+A TwinVersion is immutable: acceptance promotes a candidate to canonical
+and publishes a new version; newer canonical versions supersede older ones
+through append-only linkage — never overwrite. HTIR is composed of typed
+domain blocks (identity binding, morphology, geometry/skeleton, face/hands,
+appearance/materials, hair, articulation/blendshapes, neural appearance,
+motion profile, voice, style, plus open domain extensions). Domain blocks
+are content-addressed (`contentRef` + `contentHash`), never inlined.
+
+Twin quality is a deterministic projection onto a TwinVersion: domain-keyed
+scores plus typed deficiencies with remediation hints. A deficiency may
+reference a targeted EvidenceRequest (the wave-2 capture machinery) —
+quality improvement flows through evidence capture, never through silent
+mutation.
+
+Evidence bindings reference immutable EvidenceRecords by id + contentHash
+with their consent references. Derived representations must not outlive
+their consent scope: binding-time consent state is recorded and enforced
+by the service (withdrawal blocks new bindings and new processing;
+already-derived immutable versions keep provenance).
+
+Reconstruction is provider-neutral and method-plural: explicit geometry
+and neural appearance are complementary, and no single reconstruction
+method is canonical. Reconstruction jobs are typed specs (method, target
+domains, evidence bindings) with typed results; effort/latency/cost
+observations are structured fields with explicit not-measured markers —
+never invented numbers. Fixture reconstructions stay `simulated: true`
+and follow the same job machinery as real ones — no parallel mock path.
+
+## Wave-3 contract freeze (v3)
+
+Frozen by the TL at the T2->W3 transition for Work Orders W3A / W3B / W3C.
+
+- Machine authority: `packages/shared/src/you/contract.ts` (the same file
+  as v1/v2; the freeze is ADDITIVE — no v1/v2 shape was altered. New:
+  HtirDomainKind, HtirDomainBlock, TwinEvidenceBinding, TwinVersionStatus,
+  TwinVersion, TwinDeficiencyClass, TwinDeficiency, TwinQualityState,
+  ReconstructionMethod, ReconstructionJobSpec, ReconstructionJobStatus,
+  ReconstructionJobResult; additive event types twin-version-published /
+  twin-quality-assessed / reconstruction-job-submitted /
+  reconstruction-job-completed; additive error codes YOU_TWIN_NOT_FOUND /
+  YOU_HTIR_DOMAIN_INVALID / YOU_RECONSTRUCTION_UNSUPPORTED).
+- Workers MUST NOT modify `contract.ts`. A worker needing a contract change
+  stops and requests a TL contract update in its delivery report.
+- Wave-3 consumption: Worker A implements the twin/reconstruction
+  application services + fixtures on the frozen types (twin versioning,
+  quality assessment, deficiency remediation links, reconstruction job
+  lifecycle). Worker B imports the frozen types from `@zcode/shared` and
+  binds to Worker A's service seams via the W1B/W2B controller pattern
+  (simulated controller until T3 binding; no business logic in the UI).
+  Worker C researches and registers reconstruction technology candidates
+  and implements the production-eligible adapter seam + mock/fixture
+  adapters + benchmark inside `packages/you-lab`, mapping onto the frozen
+  contract at its existing seam module.
+- Twin domain content is never inlined in records or events; `contentRef` +
+  `contentHash` only, on the same content-store abstraction as wave-2
+  evidence. FIXTURES.md laws apply verbatim (injected clock/rng, no
+  ambient nondeterminism, byte-identical replays, `simulated: true`).
+- Dependency policy for wave 3: zero new runtime dependencies; no root
+  manifest/lockfile edits by workers; TL serializes any root reconciliation
+  at T3.

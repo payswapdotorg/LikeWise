@@ -276,18 +276,157 @@ Acceptance:
 
 ## W3A — Twin Authority
 
+Branch: `you/w3a-core`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch (the W3 contract-freeze commit on main).
+
 Objective:
-Implement HTIR, immutable TwinVersion, provenance and quality state.
+Implement HTIR domain services, immutable TwinVersion lifecycle, provenance
+and quality state on the frozen v3 contracts.
+
+Frozen write surface (wave 3):
+- `packages/shared/src/you/**` — EXCEPT `you/contract.ts` is TL-frozen
+  (implement around it; request a TL contract update if a change is needed);
+- `packages/services/src/you/**` (the you services subtree Worker A owns
+  since W1A).
+
+Zero edits to any other existing file: no UI, no you-lab, no root
+manifest/lockfile, no new dependencies, no `packages/shared/src/index.ts`
+changes (the v3 types already re-export through the public entry).
+
+Acceptance:
+- HTIR domain module: typed domain-block construction (content-addressed
+  via the wave-2 content-store abstraction: `contentRef` + sha-256
+  `contentHash`), confidence + provenance + `simulated` labeling;
+- twin versioning service: create a twin; publish immutable TwinVersions
+  (candidate → canonical promotion; supersession via append-only linkage —
+  never overwrite; monotonic version numbers; typed `YOU_TWIN_NOT_FOUND` /
+  `YOU_IMMUTABLE_VIOLATION` errors);
+- evidence binding: TwinVersion construction from EvidenceRecords
+  (id + contentHash + consent references, wave-2 machinery); binding-time
+  consent enforcement (withdrawn consent blocks NEW bindings/processing;
+  already-published versions keep provenance);
+- quality assessment: deterministic domain-keyed scores + typed
+  deficiencies with remediation hints; a deficiency may reference a
+  targeted EvidenceRequest (remediation flows through capture, never
+  silent mutation);
+- reconstruction job lifecycle: submit typed `ReconstructionJobSpec`s
+  (queued → running → completed/failed), deterministic fixture
+  reconstruction producing `HtirDomainBlock`s, typed
+  `YOU_RECONSTRUCTION_UNSUPPORTED` for unsupported method/domain
+  combinations, honest effortObservations with not-measured markers;
+- event ledger integration: `twin-version-published`,
+  `twin-quality-assessed`, `reconstruction-job-submitted`,
+  `reconstruction-job-completed` appended through the existing
+  SolutionEvent machinery;
+- deterministic fixtures per `FIXTURES.md` (seeded synthetic twin
+  scenarios end-to-end: capture → evidence → binding → reconstruction →
+  quality assessment; byte-identical replay);
+- tests (node:test; station runs `pnpm exec tsx --test`) covering:
+  TwinVersion immutability + supersession semantics, monotonic versions,
+  binding-time consent enforcement (incl. withdrawal), deterministic
+  quality projection, deficiency → EvidenceRequest remediation links,
+  reconstruction job state machine (legal + illegal transitions),
+  unsupported-method typed errors, fixture determinism (byte-identical
+  replay), ledger append-only + replay reproduction.
 
 ## W3B — Twin Studio
 
+Branch: `you/w3b-studio`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch (the W3 contract-freeze commit on main).
+
 Objective:
-Implement Twin inspection, quality maps, deficiencies and improvement flow.
+Make twin inspection, quality maps, deficiencies and the improvement flow
+a native workspace experience.
+
+Read first:
+`DESIGN.md`, the W1B/W2B surfaces (`packages/ui/src/you/**` — Solution
+pane + Capture Studio patterns, controller seam, i18n catalog),
+`docs/you/CONTRACTS.md` wave-3 freeze, `docs/you/OPERATOR_ACCEPTANCE.md`.
+
+Frozen write surface (wave 3):
+- `packages/ui/src/you/**` (free);
+- minimal registration-only seams in `packages/ui/src/app-shell/**` and
+  `packages/ui/src/v4/**` ONLY where strictly required to register the
+  Twin pane or surface entry points — no behavior changes to existing
+  panes; every seam edit disclosed per-file in the delivery report
+  (pre-expanded seam list: `lib/workspaceSidePane.ts`,
+  `hooks/useAppPanels.ts`, `App.tsx`, i18n en-US/zh-CN catalogs);
+- dedicated UX tests under the you subtree.
+
+Contract imports: frozen v3 types from `@zcode/shared`. Do not redeclare
+contract types locally; do not modify `contract.ts`. Bind to Worker A's
+service seams through a controller injection point in the W1B/W2B pattern
+(simulated controller acceptable until T3; business logic stays in
+services, never in the UI).
+
+Acceptance:
+- twin inspection UX: view a TwinVersion's domain blocks (typed,
+  content-addressed, simulated-labeled), provenance and version lineage
+  (candidate/canonical/superseded, monotonic versions);
+- version compare UX: side-by-side or delta view of two TwinVersions
+  (domain scores, deficiencies, provenance);
+- quality map UX: domain-keyed scores rendered accessibly (not color-only)
+  with deficiency list (class, severity, remediation hint);
+- improvement flow UX: a deficiency's remediation path renders its
+  targeted EvidenceRequest (reason, privacy requirements, retention —
+  wave-2 consent UX duties apply verbatim) and links into the capture
+  flow; "no permission ⇒ no processing" stays visible;
+- reconstruction job UX: job list with status, method, target domains,
+  honest effortObservations (not-measured markers rendered as such,
+  never invented numbers);
+- keyboard navigation, focus and close/reopen parity with the Solution
+  and Capture panes; i18n strings via the you catalog pattern
+  (en-US + zh-CN);
+- tests (node:test) covering store/selector logic, storyboard/demo
+  scripting determinism, registration wiring, quality/deficiency
+  projection, version compare projection, consent-state visibility;
+  loading/error/empty states exercised.
 
 ## W3C — Reconstruction
 
+Branch: `you/w3c-reconstruction`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch (the W3 contract-freeze commit on main).
+
 Objective:
-Implement first production-eligible reconstruction adapter plus mock/fixture adapter and benchmark.
+Integrate and benchmark provider-neutral reconstruction candidates on the
+W1C/W2C lab foundation; implement the first production-eligible
+reconstruction adapter seam plus mock/fixture adapters and benchmark.
+
+Frozen write surface (wave 3):
+- `packages/you-lab/**` only. Zero edits outside; import frozen contract
+  types from `@zcode/shared` at the existing seam module
+  (`src/contractSeam.ts`).
+
+Acceptance:
+- reconstruction technology registry additions: researched REAL profiles
+  for the candidate set — SMPL / SMPL-X (mesh), PIFu / PIFuHD, ICON /
+  ECON (implicit), Gaussian-splatting avatar approaches,
+  InstantAvatar-class fast-optimization methods, NeRF-human-class
+  approaches, classic photogrammetry (COLMAP/OpenMVS), depth-sensor
+  pipelines — license (SPDX + source URL), maintenance evidence,
+  compatibility notes, provenance; `unverified: true` where not verified
+  (truth law — never invent);
+- provider-neutral `ReconstructionAdapter` seam: typed job spec → typed
+  domain-block results (HtirDomainBlock construction per the frozen v3
+  contract); deterministic `mockReconstructionAdapter` (seed-derived,
+  no network) covering explicit-geometry / neural-appearance / hybrid
+  methods;
+- production-eligible adapter: the best-license/maintenance candidate
+  integrated behind the seam as a profile-backed evaluation adapter
+  (real runtime integration is W4+ compute-plane territory; honest
+  markers required — `not-measured (simulated)` where unmeasured);
+- benchmark harness: deterministic fixtures (seeded synthetic capture
+  payloads from the W2C machinery or fresh seeds), runner scoring
+  candidates on quality of typed domain blocks (deterministic), recording
+  effort/latency/cost as structured fields with honest markers;
+- seam mapping onto frozen v3 contracts (ReconstructionJobSpec →
+  ReconstructionJobResult; HtirDomainBlock construction; TwinVersion
+  assembly from adapter outputs at the seam);
+- tests (node:test) covering registry integrity (license + source URL,
+  unique ids, no unverified-as-verified), adapter determinism
+  (byte-identical replay from seed), golden benchmark scores, seam
+  mapping validity (adapter outputs construct valid v3 shapes; only the
+  seam module touches contract types).
 
 ## W4A — Performance Authority
 
