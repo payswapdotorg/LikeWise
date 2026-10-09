@@ -5,3 +5,5 @@
 // NOT a production barrel — nothing should import this file.
 import "./solutionService.test.js";
 import "./phase0Loop.test.js";
+import "./evidenceService.test.js";
+import "./evidenceFixtureScenario.test.js";
