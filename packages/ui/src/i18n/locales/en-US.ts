@@ -1024,6 +1024,7 @@ const enUS: Record<string, string> = {
   "sidePane.openFile.emptyQuery": "Type to search files",
   "sidePane.review": "Review",
   "you.solution.tabTitle": "Solution",
+  "you.capture.tabTitle": "Capture",
   "whiteboard.title": "Whiteboard",
   "whiteboard.defaultName": "Whiteboard",
   "whiteboard.nameLabel": "Whiteboard name",

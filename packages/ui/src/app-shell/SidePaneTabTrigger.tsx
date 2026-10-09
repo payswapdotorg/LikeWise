@@ -6,6 +6,7 @@ import {
   BotIcon,
   BotMessageSquareIcon,
   BugIcon,
+  CameraIcon,
   FileCode2Icon,
   FileDiffIcon,
   MapIcon,
@@ -334,6 +335,11 @@ export function SidePaneTabIcon({ tab }: { tab: WorkspaceSidePaneTab }) {
     return <PersonStandingIcon className="size-3.5" />;
   }
 
+  // YOU Capture/Evidence surface（W2B）：与 Solution 同级的 workspace 表面，固定相机图标。
+  if (tab.type === "capture") {
+    return <CameraIcon className="size-3.5" />;
+  }
+
   if (tab.type === "terminal" || tab.type === "bash-output") {
     return <SquareTerminalIcon className="size-3.5" />;
   }
@@ -545,6 +551,11 @@ export function getSidePaneTabTitle(
   // YOU Solution surface（W1B）：标题走中央文案表（you.solution.tabTitle）。
   if (tab.type === "solution") {
     return formatMessage({ id: "you.solution.tabTitle" });
+  }
+
+  // YOU Capture/Evidence surface（W2B）：标题走中央文案表（you.capture.tabTitle）。
+  if (tab.type === "capture") {
+    return formatMessage({ id: "you.capture.tabTitle" });
   }
 
   if (tab.type === "terminal" || tab.type === "bash-output") {

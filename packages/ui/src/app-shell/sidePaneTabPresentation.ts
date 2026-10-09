@@ -10,6 +10,7 @@ export interface SidePaneTabPresentationLabels {
   modelTrajectoryTitle: string;
   developerToolsTitle: string;
   solutionTitle: string;
+  captureTitle: string;
   terminalTitle: string;
   subagentTypeLabel: string;
   subagentDirectoryTitle: string;
@@ -69,6 +70,10 @@ export function getSidePaneTabSearchHint(tab: WorkspaceSidePaneTab): string {
   if (tab.type === "solution") {
     return "you solution synthetic human simulated viewport feedback takeover export demo";
   }
+  // YOU Capture/Evidence surface（W2B）：搜索面覆盖证据/采集/同意/评审标注。
+  if (tab.type === "capture") {
+    return "you capture evidence consent review upload retention simulated guided";
+  }
   if (tab.type === "terminal" || tab.type === "bash-output")
     return `${tab.title} terminal shell command`;
   return tab.source.path ?? tab.source.title;
@@ -88,6 +93,7 @@ export function getLocalizedSidePaneTabTitle(
       "modelTrajectory.title": labels.modelTrajectoryTitle,
       "developerTools.title": labels.developerToolsTitle,
       "you.solution.tabTitle": labels.solutionTitle,
+      "you.capture.tabTitle": labels.captureTitle,
       "terminal.title": labels.terminalTitle,
       "sidePane.subagent": labels.subagentTypeLabel,
       "sidePane.subagentDirectory": labels.subagentDirectoryTitle,
@@ -124,6 +130,7 @@ export function getSidePaneTabTypeLabel(
   if (tab.type === "model-trajectory") return labels.modelTrajectoryTitle;
   if (tab.type === "developer-tools") return labels.developerToolsTitle;
   if (tab.type === "solution") return labels.solutionTitle;
+  if (tab.type === "capture") return labels.captureTitle;
   if (tab.type === "terminal" || tab.type === "bash-output") return labels.terminalTitle;
   return labels.codeViewerTitle;
 }

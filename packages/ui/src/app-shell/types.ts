@@ -239,6 +239,8 @@ export interface WorkspaceShellLayoutProps extends Omit<AppProps, "baseFeedbackS
   handleOpenDeveloperTools: () => void;
   /** YOU Solution surface（W1B）：幂等打开/聚焦 native Solution tab。 */
   handleOpenSolution: () => void;
+  /** YOU Capture/Evidence surface（W2B）：幂等打开/聚焦 native Capture tab。 */
+  handleOpenCaptureStudio: () => void;
   handleOpenTerminalTab: () => void;
   handleToggleGit: () => void;
   handleOpenGitReview: (sourceId?: GitChangeSourceId) => void;

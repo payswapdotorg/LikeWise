@@ -51,6 +51,7 @@ import { WorkflowActorSessionSidePane } from "@/app-shell/WorkflowActorSessionSi
 import { WorkflowWorkspaceSidePane } from "@/app-shell/WorkflowWorkspaceSidePane.js";
 import { WorkflowArtifactSidePane } from "@/app-shell/WorkflowArtifactSidePane.js";
 import { SolutionSurface } from "@/you/SolutionSurface.js";
+import { CaptureStudioSurface } from "@/you/CaptureStudioSurface.js";
 import {
   getSidePaneTabTitle,
   SidePaneTabDragOverlay,
@@ -92,6 +93,7 @@ import { getVisibleSidePaneTabs } from "@/lib/workspaceSidePane.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   BugIcon,
+  CameraIcon,
   FileDiffIcon,
   GlobeIcon,
   MessageSquareTextIcon,
@@ -316,6 +318,7 @@ export function AnimatedSidePanePanel({
   onOpenWhiteboard: _onOpenWhiteboard,
   onOpenDeveloperTools,
   onOpenSolution,
+  onOpenCaptureStudio,
   onOpenTerminalTab,
   onOpenReviewTab,
   onOpenSelectionSideConversation,
@@ -383,6 +386,8 @@ export function AnimatedSidePanePanel({
   onOpenDeveloperTools: () => void;
   /** YOU Solution surface（W1B）：幂等打开/聚焦 Solution tab。 */
   onOpenSolution: () => void;
+  /** YOU Capture/Evidence surface（W2B）：幂等打开/聚焦 Capture tab。 */
+  onOpenCaptureStudio: () => void;
   onOpenTerminalTab: () => void;
   onOpenReviewTab: () => void;
   onOpenSelectionSideConversation: () => void;
@@ -454,6 +459,7 @@ export function AnimatedSidePanePanel({
   const panelLayout = resolveAnimatedSidePanePanelLayout();
   const hasReviewTab = visibleTabs.some((tab) => tab.type === "git");
   const hasSolutionTab = tabs.some((tab) => tab.type === "solution");
+  const hasCaptureTab = tabs.some((tab) => tab.type === "capture");
   const canOpenSelectionSideConversation = shouldOfferSelectionSideConversation({
     activeTaskId,
   });
@@ -774,6 +780,17 @@ export function AnimatedSidePanePanel({
             <span>{intl.formatMessage({ id: "you.solution.tabTitle" })}</span>
           </DropdownMenuItem>
         ) : null}
+        {!hasCaptureTab ? (
+          <DropdownMenuItem
+            data-side-pane-add-item="capture"
+            onSelect={() => {
+              onOpenCaptureStudio();
+            }}
+          >
+            <CameraIcon className="size-4" />
+            <span>{intl.formatMessage({ id: "you.capture.tabTitle" })}</span>
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -814,12 +831,19 @@ export function AnimatedSidePanePanel({
       icon: PersonStandingIcon,
       onOpen: onOpenSolution,
     },
+    capture: {
+      id: "capture",
+      label: intl.formatMessage({ id: "you.capture.tabTitle" }),
+      icon: CameraIcon,
+      onOpen: onOpenCaptureStudio,
+    },
   };
   const openTabLauncherItems: OpenTabLauncherItem[] = resolveOpenTabLauncherItemIds({
     canOpenSelectionSideConversation,
     developerToolsEnabled,
     hasReviewTab,
     hasSolutionTab,
+    hasCaptureTab,
     supportsEmbeddedBrowser,
   })
     .filter((itemId) => !isOfficeMode || (itemId !== "terminal" && itemId !== "review"))
@@ -910,6 +934,7 @@ export function AnimatedSidePanePanel({
           id: "developerTools.title",
         }),
         solutionTitle: intl.formatMessage({ id: "you.solution.tabTitle" }),
+        captureTitle: intl.formatMessage({ id: "you.capture.tabTitle" }),
         terminalTitle: intl.formatMessage({ id: "terminal.title" }),
         subagentTypeLabel: intl.formatMessage({ id: "sidePane.subagent" }),
         subagentDirectoryTitle: intl.formatMessage({
@@ -1290,6 +1315,13 @@ export function AnimatedSidePanePanel({
                           />
                         ) : tab.type === "solution" ? (
                           <SolutionSurface
+                            key={tab.id}
+                            tab={tab}
+                            workspaceKey={workspaceKey}
+                            isActive={isVisible && tab.id === visibleActiveTabId}
+                          />
+                        ) : tab.type === "capture" ? (
+                          <CaptureStudioSurface
                             key={tab.id}
                             tab={tab}
                             workspaceKey={workspaceKey}
