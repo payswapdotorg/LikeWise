@@ -309,6 +309,37 @@ Executed by the TL station on main after the W1C merge (3b059e3):
   practice: package typechecks chunked, lint baseline 0 errors /
   70 warnings, you-test battery per package).
 
+### W3A merge record (2026-10-09)
+
+- Status: MERGED. Owner: Worker A (GLM-5.3 agent session, Full-Stack),
+  station-verified by TL. Branch: `you/w3a-core`. Base SHA: `cd69cf3`.
+  PR #18; merge commit `bfc4103`; worker commit `d85838f` (25 files,
+  +4835, ALL inside `packages/shared/src/you/**` +
+  `packages/services/src/you/**`).
+- Station battery (gate-parity, re-run): `tsc -b shared services`
+  exit 0; lint 0 errors / 70 warnings = exact baseline; shared/you
+  **180/180** (135 W2-era + 45 new); services/you **57/57** (39 W2-era
+  + 18 new); frozen `contract.ts` untouched; no lockfile/manifest
+  changes (zero-new-deps law).
+- TL review: TwinVersion immutability = frozen record replacement +
+  append-only transition journal (candidate->canonical->superseded
+  legal table, monotonic version numbers never reused); consent
+  enforcement delegates to the frozen wave-2 `canProcess` predicate via
+  the evidence-authority seam (no second consent authority);
+  reconstruction job lifecycle = legal transition table + terminal
+  statuses; deterministic fixture scenario spans the full arrow
+  (capture -> evidence -> binding -> reconstruction -> quality ->
+  remediation -> round-2 -> promotion/supersession -> consent
+  withdrawal -> unsupported method -> ledger readout) with fixtures
+  `simulated: true` (truth law).
+- Operational note: the agent backend flapped closed mid-wave after
+  dispatch (~13:00Z); the worker still completed and pushed from its
+  sandbox. Turn/chat surface appeared static during sandbox-side work —
+  body-liveness heuristics must not be read as turn death while a
+  sandbox is attached (recorded for future waves).
+- W3B/W3C remain in flight at this record (re-armed canary loop owns
+  their re-dispatch; see station ops log).
+
 ## W1 — Solution Runtime / Operator Gate
 
 ### W1A Core/API
