@@ -7,3 +7,5 @@ import "./solutionService.test.js";
 import "./phase0Loop.test.js";
 import "./evidenceService.test.js";
 import "./evidenceFixtureScenario.test.js";
+import "./twinService.test.js";
+import "./twinFixtureScenario.test.js";
