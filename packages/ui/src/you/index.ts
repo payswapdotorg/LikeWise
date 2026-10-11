@@ -36,3 +36,10 @@ import "./performanceStudioStore.test.js";
 import "./performanceStudioProjection.test.js";
 import "./performanceSimulatedController.test.js";
 import "./performanceStudioDemo.test.js";
+// W5B — Editing Studio 逻辑测试。
+import "./editingTabRegistration.test.js";
+import "./editingMessages.test.js";
+import "./editingStudioStore.test.js";
+import "./editingStudioProjection.test.js";
+import "./editingSimulatedController.test.js";
+import "./editingStudioDemo.test.js";

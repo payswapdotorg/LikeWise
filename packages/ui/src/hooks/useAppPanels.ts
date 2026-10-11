@@ -38,6 +38,7 @@ import {
   openCaptureStudioSidePane,
   openTwinStudioSidePane,
   openPerformanceStudioSidePane,
+  openEditingStudioSidePane,
   openBrowserSidePane,
   openOrActivateBrowserSidePaneByUrl,
   findBrowserSidePaneTabByUrl,
@@ -841,6 +842,20 @@ export function useAppPanels(options: {
       });
       logger.info(
         `[App] 打开右侧面板 mode=performance workspace=${workspaceAbsPath} tabs=${next.tabs.length}`,
+      );
+      return next;
+    });
+  }, [commitOpenedSidePaneState, revealSidePaneForCurrentOwner, workspaceAbsPath]);
+
+  // YOU Editing surface（W5B 注册点）：幂等打开/聚焦 native Editing tab。
+  const handleOpenEditingStudio = useCallback(() => {
+    revealSidePaneForCurrentOwner();
+    commitOpenedSidePaneState((current) => {
+      const next = openEditingStudioSidePane(current, {
+        workspaceKey: activeWorkspaceKeyRef.current,
+      });
+      logger.info(
+        `[App] 打开右侧面板 mode=editing workspace=${workspaceAbsPath} tabs=${next.tabs.length}`,
       );
       return next;
     });
@@ -1651,6 +1666,7 @@ export function useAppPanels(options: {
     handleOpenCaptureStudio,
     handleOpenTwinStudio,
     handleOpenPerformanceStudio,
+    handleOpenEditingStudio,
     handleOpenTerminalTab,
     handleOpenModelTrajectory,
     handleOpenSubagentSession,

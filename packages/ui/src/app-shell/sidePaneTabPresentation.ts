@@ -13,6 +13,7 @@ export interface SidePaneTabPresentationLabels {
   captureTitle: string;
   twinTitle: string;
   performanceTitle: string;
+  editingTitle: string;
   terminalTitle: string;
   subagentTypeLabel: string;
   subagentDirectoryTitle: string;
@@ -84,6 +85,10 @@ export function getSidePaneTabSearchHint(tab: WorkspaceSidePaneTab): string {
   if (tab.type === "performance") {
     return "you performance timeline cue track motion layer template render job artifact review simulated";
   }
+  // YOU Editing surface（W5B）：搜索面覆盖会话/变更集/候选谱系/编辑器/交换/接管标注。
+  if (tab.type === "editing") {
+    return "you editing session changeset candidate lineage parent compare editor native embedded external interchange export import takeover consent simulated";
+  }
   if (tab.type === "terminal" || tab.type === "bash-output")
     return `${tab.title} terminal shell command`;
   return tab.source.path ?? tab.source.title;
@@ -106,6 +111,7 @@ export function getLocalizedSidePaneTabTitle(
       "you.capture.tabTitle": labels.captureTitle,
       "you.twin.tabTitle": labels.twinTitle,
       "you.performance.tabTitle": labels.performanceTitle,
+      "you.editing.tabTitle": labels.editingTitle,
       "terminal.title": labels.terminalTitle,
       "sidePane.subagent": labels.subagentTypeLabel,
       "sidePane.subagentDirectory": labels.subagentDirectoryTitle,
@@ -145,6 +151,7 @@ export function getSidePaneTabTypeLabel(
   if (tab.type === "capture") return labels.captureTitle;
   if (tab.type === "twin") return labels.twinTitle;
   if (tab.type === "performance") return labels.performanceTitle;
+  if (tab.type === "editing") return labels.editingTitle;
   if (tab.type === "terminal" || tab.type === "bash-output") return labels.terminalTitle;
   return labels.codeViewerTitle;
 }

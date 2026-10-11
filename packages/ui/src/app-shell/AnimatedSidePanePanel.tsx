@@ -54,6 +54,7 @@ import { SolutionSurface } from "@/you/SolutionSurface.js";
 import { CaptureStudioSurface } from "@/you/CaptureStudioSurface.js";
 import { TwinStudioSurface } from "@/you/TwinStudioSurface.js";
 import { PerformanceStudioSurface } from "@/you/PerformanceStudioSurface.js";
+import { EditingStudioSurface } from "@/you/EditingStudioSurface.js";
 import {
   getSidePaneTabTitle,
   SidePaneTabDragOverlay,
@@ -98,6 +99,7 @@ import {
   CameraIcon,
   ClapperboardIcon,
   FileDiffIcon,
+  FilePenLineIcon,
   GlobeIcon,
   MessageSquareTextIcon,
   PersonStandingIcon,
@@ -325,6 +327,7 @@ export function AnimatedSidePanePanel({
   onOpenCaptureStudio,
   onOpenTwinStudio,
   onOpenPerformanceStudio,
+  onOpenEditingStudio,
   onOpenTerminalTab,
   onOpenReviewTab,
   onOpenSelectionSideConversation,
@@ -398,6 +401,8 @@ export function AnimatedSidePanePanel({
   onOpenTwinStudio: () => void;
   /** YOU Performance surface（W4B）：幂等打开/聚焦 Performance tab。 */
   onOpenPerformanceStudio: () => void;
+  /** YOU Editing surface（W5B）：幂等打开/聚焦 Editing tab。 */
+  onOpenEditingStudio: () => void;
   onOpenTerminalTab: () => void;
   onOpenReviewTab: () => void;
   onOpenSelectionSideConversation: () => void;
@@ -472,6 +477,7 @@ export function AnimatedSidePanePanel({
   const hasCaptureTab = tabs.some((tab) => tab.type === "capture");
   const hasTwinTab = tabs.some((tab) => tab.type === "twin");
   const hasPerformanceTab = tabs.some((tab) => tab.type === "performance");
+  const hasEditingTab = tabs.some((tab) => tab.type === "editing");
   const canOpenSelectionSideConversation = shouldOfferSelectionSideConversation({
     activeTaskId,
   });
@@ -825,6 +831,17 @@ export function AnimatedSidePanePanel({
             <span>{intl.formatMessage({ id: "you.performance.tabTitle" })}</span>
           </DropdownMenuItem>
         ) : null}
+        {!hasEditingTab ? (
+          <DropdownMenuItem
+            data-side-pane-add-item="editing"
+            onSelect={() => {
+              onOpenEditingStudio();
+            }}
+          >
+            <FilePenLineIcon className="size-4" />
+            <span>{intl.formatMessage({ id: "you.editing.tabTitle" })}</span>
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -883,6 +900,12 @@ export function AnimatedSidePanePanel({
       icon: ClapperboardIcon,
       onOpen: onOpenPerformanceStudio,
     },
+    editing: {
+      id: "editing",
+      label: intl.formatMessage({ id: "you.editing.tabTitle" }),
+      icon: FilePenLineIcon,
+      onOpen: onOpenEditingStudio,
+    },
   };
   const openTabLauncherItems: OpenTabLauncherItem[] = resolveOpenTabLauncherItemIds({
     canOpenSelectionSideConversation,
@@ -892,6 +915,7 @@ export function AnimatedSidePanePanel({
     hasCaptureTab,
     hasTwinTab,
     hasPerformanceTab,
+    hasEditingTab,
     supportsEmbeddedBrowser,
   })
     .filter((itemId) => !isOfficeMode || (itemId !== "terminal" && itemId !== "review"))
@@ -985,6 +1009,7 @@ export function AnimatedSidePanePanel({
         captureTitle: intl.formatMessage({ id: "you.capture.tabTitle" }),
         twinTitle: intl.formatMessage({ id: "you.twin.tabTitle" }),
         performanceTitle: intl.formatMessage({ id: "you.performance.tabTitle" }),
+        editingTitle: intl.formatMessage({ id: "you.editing.tabTitle" }),
         terminalTitle: intl.formatMessage({ id: "terminal.title" }),
         subagentTypeLabel: intl.formatMessage({ id: "sidePane.subagent" }),
         subagentDirectoryTitle: intl.formatMessage({
@@ -1387,6 +1412,13 @@ export function AnimatedSidePanePanel({
                           />
                         ) : tab.type === "performance" ? (
                           <PerformanceStudioSurface
+                            key={tab.id}
+                            tab={tab}
+                            workspaceKey={workspaceKey}
+                            isActive={isVisible && tab.id === visibleActiveTabId}
+                          />
+                        ) : tab.type === "editing" ? (
+                          <EditingStudioSurface
                             key={tab.id}
                             tab={tab}
                             workspaceKey={workspaceKey}

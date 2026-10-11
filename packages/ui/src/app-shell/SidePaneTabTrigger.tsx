@@ -10,6 +10,7 @@ import {
   ClapperboardIcon,
   FileCode2Icon,
   FileDiffIcon,
+  FilePenLineIcon,
   MapIcon,
   MessageSquareTextIcon,
   ListTreeIcon,
@@ -353,6 +354,12 @@ export function SidePaneTabIcon({ tab }: { tab: WorkspaceSidePaneTab }) {
     return <ClapperboardIcon className="size-3.5" />;
   }
 
+  // YOU Editing surface（W5B）：与 Solution/Capture/Twin/Performance 同级的 workspace
+  // 表面，固定编辑笔（file pen line）图标。
+  if (tab.type === "editing") {
+    return <FilePenLineIcon className="size-3.5" />;
+  }
+
   if (tab.type === "terminal" || tab.type === "bash-output") {
     return <SquareTerminalIcon className="size-3.5" />;
   }
@@ -579,6 +586,11 @@ export function getSidePaneTabTitle(
   // YOU Performance surface（W4B）：标题走中央文案表（you.performance.tabTitle）。
   if (tab.type === "performance") {
     return formatMessage({ id: "you.performance.tabTitle" });
+  }
+
+  // YOU Editing surface（W5B）：标题走中央文案表（you.editing.tabTitle）。
+  if (tab.type === "editing") {
+    return formatMessage({ id: "you.editing.tabTitle" });
   }
 
   if (tab.type === "terminal" || tab.type === "bash-output") {
