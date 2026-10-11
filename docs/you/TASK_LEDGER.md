@@ -840,3 +840,65 @@ Workers never mark their own work DONE; they submit evidence to TL.
   i18n en-US/zh-CN per the order; App.tsx additive seam per the W2B/W3B/W4B
   precedent.
 - Contract change requests: none.
+
+### W5C merge record (2026-10-11)
+
+- Status: MERGED. Owner: Worker C (GLM-5.3 agent session, Full-Stack),
+  station-verified by TL. Branch: `you/w5c-edittech`. Base SHA: `0c5b54e`
+  (the W5 contract freeze; the pre-cut branch fast-forwarded). PR #26;
+  merge commit `b05c877`; station-lane commit `fd1acc4` (19 files,
+  +3300/−4 — 16 new you-lab modules incl. 7 test files, plus the
+  sanctioned `contractSeam.ts` v5 mappings, `technology/registry.ts`
+  registration, `index.ts` consolidation — the disclosed max-lines
+  suppression per the W4C precedent).
+- Delivery-path note: EMISSION PATH (the worker explicitly declined
+  embedded-token commands on security grounds — the packet's no-credential
+  fallback exercised for real). Patch staged by the worker at the pod
+  project root, harvested via the workspaces files API BYTE-EXACT
+  (sha256 3237b50cedcaed8cd80d0f07e5a104e30abf4d2ca78ed1e916c84142c
+  9b79490 confirmed on both sides), station-applied to pristine 0c5b54e
+  (git apply clean), committed with worker identity preserved.
+- Station battery (branch): you-lab **268/268** (220 baseline + 48 new) ·
+  shared 224/224 · services 76/76 · ui 164/164 · scoped tsc exit 0 ·
+  you-lab oxlint 0e/0w · root lint 0e/70w — EXACT parity with the worker
+  report.
+- Registry: 9 researched W5C profiles (vscode, monaco-editor, codemirror,
+  prosemirror, godot, gimp, krita, kdenlive, gltf) — all license claims
+  verified:true against primary sources (LICENSE files, release feeds,
+  npm registry, unpkg, GitLab); honest unverifiedClaims disclosed
+  (monaco repo-root license unreachable → npm-basis note; codemirror/
+  prosemirror stale GitHub feeds → npm publishes as the live signal);
+  10 W1C profiles reused per the wave precedent; one additive registry
+  change (gitlab-release signal kind — GIMP's release feed location).
+- Production pick: vscode (MIT verified + freshest maintenance 1.141.0
+  2026-10-07); evaluation adapter fails closed if the derivation shifts
+  (tested). Round-trip benchmark: 3 seeded fixtures, fidelity scorer
+  0.6/0.2/0.2, golden digests/scores/runId from the shipped generator.
+- TL review: content-addressed payloads never inlined in records (the
+  v4/v5 payload law); only contractSeam.ts touches frozen contract types
+  (walk-tested); truth law held throughout (not-measured (simulated)
+  markers on every effort field).
+- Contract change requests: none.
+
+### T5 integration record (2026-10-11)
+
+- WAVE 5 COMPLETE: freeze (0c5b54e) → W5A (PR #24, 655deb1+d8a24c1,
+  emission→push hybrid by the sibling TL's worker) → W5B (PR #25, 5a19f0d,
+  sibling TL's worker, slot-battle re-dispatch lineage per its record) →
+  W5C (PR #26, fd1acc4, THIS station's worker, emission path harvested
+  byte-exact) → T5 integrated.
+- Integrated main battery (at merge commit b05c877): shared **254/254** +
+  services **97/97** + ui **218/218** (164 + 54 W5B) + you-lab **268/268**
+  (220 + 48 W5C) = **837/837 GREEN**; tsc -b shared+services exit 0;
+  root lint 0 errors / 70 warnings (exact baseline); zero dependency drift
+  (root manifest + lockfile untouched vs freeze across all three lanes);
+  contract.ts untouched by every lane (the v5 freeze honored throughout).
+- Operational note: wave 5 closed across TWO resident TL stations (the
+  sibling station and this one) with complementary lanes — W5A/W5B by the
+  sibling, W5C by this station; one duplicate-lane incident (W5A,
+  contained — voided within 25 min, zero content loss, the branch-tip law
+  + pre-dispatch ground-truth checks held the line); independent station
+  verification of every merged lane (this station re-ran W5A and W5C
+  batteries — exact parity both times).
+- Phase-0 gate: unchanged. W5 surfaces (editing services, Editing Studio,
+  editor lab) join the station battery evidence set.
