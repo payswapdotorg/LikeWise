@@ -748,3 +748,32 @@ Workers never mark their own work DONE; they submit evidence to TL.
   fan-out w5b + w5c); branches pre-cut at the freeze commit;
   worker-prompts authored from the frozen orders with send-time PAT
   substitution.
+
+### W5A merge record (2026-10-11)
+
+- Status: MERGED. Owner: Worker A (GLM-5.3 agent session, Full-Stack).
+  Branch: `you/w5a-core`. PR #24; merge commit `d699a8a4cbe8dcd9ac3cf417d9ce1f313b068194`; worker-lane
+  commit `9eb35ccc9d4768bc32321e6d6ac98c68312a7168` (25 files, +5180/−0 —
+  editingSession / editingInterchange / editingLedger services + tests, all
+  in `packages/shared/src/you/**` + `packages/services/src/you/**`;
+  `you/index.ts` +5 additive re-exports, in-surface).
+- Delivery-path note: autonomous push at 21:48:54Z (turn spawned 21:30:07Z —
+  ~19 min to gates-pass). Corrected v5 work order: the stale pre-freeze w5a2
+  packet (v1 contract names + base 297de08) was superseded BEFORE spawn —
+  zero wasted generation; the lane ran the canonical frozen v5 order at the
+  freeze base 0c5b54e5c581de653cf017c2966974c802d1efdc.
+- Station battery (branch @ 0c5b54e): tsc shared+services exit 0 · lint
+  0 errors / 70 warnings (exact baseline) · shared/you **248/248** (224
+  baseline + 24 new) · services/you **95/95** (76 + 19 new) · ui/you
+  164/164 · you-lab 220/220 — integrated you-battery **727/727**.
+- tsc ui/web/desktop chunk: the 4-project batch run OOM-SIGKILLed on the
+  4GB box (environmental, no diagnostics emitted); verified GREEN via split
+  runs after tab-GC memory relief (ui exit 0 · web+desktop host exit 0 ·
+  you-lab exit 0). Station law: batch-OOM ≠ type errors — split-run parity
+  is the accepted evidence class.
+- TL review: write surface exact (25/25 files in the frozen surface;
+  contract.ts untouched — the v5 freeze honored); namespaced v5 shapes
+  implemented (EditingSession open→committed|abandoned terminals;
+  EditChangeSet content-addressed ops; candidate-version lineage;
+  ImportExportFormat interchange; typed refusal taxonomy).
+- Contract change requests: none.
