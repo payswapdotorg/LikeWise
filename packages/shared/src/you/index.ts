@@ -30,3 +30,8 @@ import "./twinQuality.test.js";
 import "./twinVersioning.test.js";
 import "./reconstruction.test.js";
 import "./twinLedger.test.js";
+import "./performanceTimeline.test.js";
+import "./performanceTemplate.test.js";
+import "./renderJob.test.js";
+import "./renderArtifact.test.js";
+import "./performanceLedger.test.js";
