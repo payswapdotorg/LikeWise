@@ -37,6 +37,7 @@ import {
   openSolutionSidePane,
   openCaptureStudioSidePane,
   openTwinStudioSidePane,
+  openPerformanceStudioSidePane,
   openBrowserSidePane,
   openOrActivateBrowserSidePaneByUrl,
   findBrowserSidePaneTabByUrl,
@@ -826,6 +827,20 @@ export function useAppPanels(options: {
       });
       logger.info(
         `[App] 打开右侧面板 mode=twin workspace=${workspaceAbsPath} tabs=${next.tabs.length}`,
+      );
+      return next;
+    });
+  }, [commitOpenedSidePaneState, revealSidePaneForCurrentOwner, workspaceAbsPath]);
+
+  // YOU Performance surface（W4B 注册点）：幂等打开/聚焦 native Performance tab。
+  const handleOpenPerformanceStudio = useCallback(() => {
+    revealSidePaneForCurrentOwner();
+    commitOpenedSidePaneState((current) => {
+      const next = openPerformanceStudioSidePane(current, {
+        workspaceKey: activeWorkspaceKeyRef.current,
+      });
+      logger.info(
+        `[App] 打开右侧面板 mode=performance workspace=${workspaceAbsPath} tabs=${next.tabs.length}`,
       );
       return next;
     });
@@ -1635,6 +1650,7 @@ export function useAppPanels(options: {
     handleOpenSolution,
     handleOpenCaptureStudio,
     handleOpenTwinStudio,
+    handleOpenPerformanceStudio,
     handleOpenTerminalTab,
     handleOpenModelTrajectory,
     handleOpenSubagentSession,

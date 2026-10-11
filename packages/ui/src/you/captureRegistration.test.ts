@@ -85,11 +85,12 @@ test("launcher offers capture only when the tab is not open", () => {
     "solution",
     "capture",
     "twin",
+    "performance",
   ]);
 
   assert.deepEqual(
     resolveOpenTabLauncherItemIds({ ...base, hasCaptureTab: true }),
-    ["review", "terminal", "browser", "solution", "twin"],
+    ["review", "terminal", "browser", "solution", "twin", "performance"],
   );
 
   // 既有行为不受影响：developer tools / review / 无浏览器环境。
@@ -101,7 +102,7 @@ test("launcher offers capture only when the tab is not open", () => {
       hasCaptureTab: false,
       supportsEmbeddedBrowser: false,
     }),
-    ["terminal", "developer-tools", "solution", "capture", "twin"],
+    ["terminal", "developer-tools", "solution", "capture", "twin", "performance"],
   );
 
   assert.deepEqual(
@@ -112,7 +113,16 @@ test("launcher offers capture only when the tab is not open", () => {
       hasSolutionTab: false,
       hasCaptureTab: false,
     }),
-    ["selection-side-conversation", "review", "terminal", "browser", "solution", "capture", "twin"],
+    [
+      "selection-side-conversation",
+      "review",
+      "terminal",
+      "browser",
+      "solution",
+      "capture",
+      "twin",
+      "performance",
+    ],
   );
 });
 
