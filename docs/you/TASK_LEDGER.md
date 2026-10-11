@@ -818,3 +818,25 @@ Workers never mark their own work DONE; they submit evidence to TL.
   doctrine (W4C precedent).
 - Contract change requests: none. Report archived at
   replay2/scripts/worker-reports/w5a3-full-*.txt.
+
+### W5B merge record (2026-10-11)
+
+- Status: MERGED. Owner: Worker B (GLM-5.3 agent session, Full-Stack).
+  Branch: `you/w5b-studio`. PR #25; merge commit `31bf4c1b7431f9ff25346df555e4a6d59b41d7fe`; worker-lane
+  commit `5a19f0dd220f16678257af84240a90c91fe4644e` (44 files, +7537/−11 —
+  33 in `packages/ui/src/you/**` + the 11 disclosed registration/i18n seams;
+  zero files outside the frozen wave-5 surface).
+- Delivery-path note: fresh dispatch (w5b4) after the workspace-slot battle
+  (3 stale pods released; the prior w5b3 queued send never drained — voided
+  with documented rationale); turn spawned 22:33Z, autonomous push at
+  23:17:08Z, exactly on the freeze base 0c5b54e.
+- Station battery (branch @ 0c5b54e): **9/9 GREEN** — tsc shared+services
+  exit 0 · tsc ui/web/desktop/you-lab batch exit 0 · lint 0 errors / 70
+  warnings (exact baseline) · shared/you · services/you · ui/you (baseline
+  164 + 54 new UX tests) · you-lab — all suites passing.
+- TL review: controller-projection discipline held (zero business logic in
+  the UI — W1B/W2B/W3B/W4B pattern); typed error panels for the v5 refusal
+  taxonomy; consent-gated external-editor launch as projected flows;
+  i18n en-US/zh-CN per the order; App.tsx additive seam per the W2B/W3B/W4B
+  precedent.
+- Contract change requests: none.
