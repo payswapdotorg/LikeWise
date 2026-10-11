@@ -661,3 +661,41 @@ Workers never mark their own work DONE; they submit evidence to TL.
   binding; consent gating routes through the wave-2 authority projection
   (no second consent path); i18n key parity en-US/zh-CN asserted by
   test; the 46 UX tests include golden determinism replays.
+
+### W4C merge record (2026-10-11)
+
+- Status: MERGED. Owner: Worker C (GLM-5.3 agent session, Full-Stack),
+  station-verified by TL (recovered resident-watch session). Branch:
+  `you/w4c-render`. PR #23; merge commit `82b9862`; worker-lane commit
+  `928f9f2` (17 files, +3378/−11 — all `packages/you-lab/src`: render
+  seam/mock/evaluation/fixtures/scorer/runner/candidates, 15 render +
+  technology modules incl. 41 new node:test cases, plus contractSeam v4
+  mapping).
+- Delivery-path note: autonomous push at 19:26:17Z via agent-mode window
+  (machine was in canary patience loop, cycles 113). Worker based its
+  branch atop `2053d72` (merged-W4A main) rather than the literal frozen
+  base `c327881` — disclosed in commit body rationale: W4C render
+  evaluation requires the W4A contract types (renderJob/renderArtifact/
+  performanceTimeline). Deviation ACCEPTED: merge-base 2053d72, W4B
+  content NOT in worker history, three-way merge conflict-free.
+- Station battery (branch @ 2053d72, worker report + TL re-run):
+  you-lab **220/220** (179 baseline + 41 new, zero lost) · shared
+  224/224 · services 76/76 · ui 118/118 (worker's pre-W4B base) ·
+  lint 0 errors / 70 warnings (exact baseline) · typecheck exit 0.
+- Integrated battery (merge commit `82b9862`, TL-run): **684/684 GREEN**
+  — you-lab 220/220 · shared 224/224 · services 76/76 · ui 164/164
+  (W4B coexists, zero interaction; disjoint write surfaces) · oxlint
+  full-repo 0e/70w exact baseline · you-lab + shared tsc rc=0 · zero
+  new dependencies (no package.json/lockfile in delta) · `contract.ts`
+  untouched (contractSeam.ts is the sanctioned v4 mapping seam).
+- TL review: truth law held (SPDX + source URL + maintenance evidence +
+  provenance on all 11 researched profiles; WHAM-code-not-found
+  disclosed honestly; 4 profiles reused from W1C/W2C per smplx
+  precedent); provider-neutral RenderAdapter seam consumes the W4A
+  timeline at the seam (support matrix aligned 1:1 with
+  FIXTURE_RENDER_SUPPORT; typed YOU_RENDER_UNSUPPORTED refusals);
+  three.js adapter is fail-closed (refuses construction unless 'three'
+  derives as top eligible candidate); benchmark reports honest
+  not-measured (simulated) effort/latency/cost markers, golden report
+  runId 81d2b048; zero business logic outside the lane.
+- Contract change requests: none.
