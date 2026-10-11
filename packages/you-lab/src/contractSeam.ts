@@ -1,4 +1,6 @@
-// SINGLE seam to the frozen YOU contract v1+v2 (packages/shared/src/you/contract.ts).
+/* eslint-disable max-lines -- the single seam to the frozen YOU contract v1+v2+v3+v4 is consolidated BY DESIGN: exactly one module maps every neutral you-lab shape onto the frozen contracts (the only-module law asserted by tests), so the full W1C/W2C/W3C/W4C mapping surface intentionally lives in this one file. */
+// SINGLE seam to the frozen YOU contract v1+v2+v3+v4
+// (packages/shared/src/you/contract.ts).
 //
 // SEAM NOTE (W1C sandbox): importing "@zcode/shared" from packages/you-lab
 // fails here (TS2307) because the workspace lockfile does not include you-lab
@@ -10,10 +12,15 @@
 //
 // Mapping is 1:1 by design: the neutral interchange shapes in
 // adapters/editorAdapterSeam.ts were structurally aligned with the frozen
-// SolutionEntity/SolutionEnvironmentState/SolutionPatchOperation shapes, and
-// the W2C capture shapes (capture/captureAdapterSeam.ts) are structurally
+// SolutionEntity/SolutionEnvironmentState/SolutionPatchOperation shapes, the
+// W2C capture shapes (capture/captureAdapterSeam.ts) are structurally
 // aligned with the frozen v2 CaptureModality/EvidenceRecord/EvidenceReview
-// shapes, so the seam never redeclares or mutates contract semantics.
+// shapes, the W3C reconstruction shapes
+// (reconstruction/reconstructionAdapterSeam.ts) with the frozen v3
+// twin/reconstruction shapes, and the W4C render shapes
+// (render/renderAdapterSeam.ts) with the frozen v4
+// PerformanceTimeline/RenderJobSpec/RenderJobResult/RenderArtifact shapes,
+// so the seam never redeclares or mutates contract semantics.
 
 import type {
   AuthorType,
@@ -28,11 +35,16 @@ import type {
   EvidenceType,
   HtirDomainBlock,
   HtirDomainKind,
+  PerformanceTimeline,
   ProvenanceRecord,
   ReconstructionJobResult,
   ReconstructionJobSpec,
   ReconstructionJobStatus,
   ReconstructionMethod,
+  RenderArtifact,
+  RenderJobResult,
+  RenderJobSpec,
+  RenderJobStatus,
   TwinDeficiency,
   TwinDeficiencyClass,
   TwinEvidenceBinding,
@@ -53,6 +65,14 @@ import type {
   ReconstructionEffortFields,
   ReconstructionOutput,
 } from "./reconstruction/reconstructionAdapterSeam.js";
+import type {
+  NeutralPerformanceTimeline,
+  NeutralRenderArtifact,
+  NeutralRenderRequest,
+  RenderAdapter,
+  RenderEffortFields,
+  RenderOutput,
+} from "./render/renderAdapterSeam.js";
 import type { TechnologyRegistry } from "./technology/registry.js";
 import type { EditorCapabilityProfile } from "./technology/editorCapability.js";
 
@@ -553,5 +573,242 @@ export function toTwinVersion(
     createdAt: construction.createdAt,
     provenance: construction.provenance,
   };
+}
+
+// ---------------------------------------------------------------------------
+// W4C: mapping onto the frozen v4 performance/render contracts
+//
+// Render adapters (you-lab) are provider-neutral and simulated; the
+// performance/render application service (Worker A lane) owns ids, job
+// lifecycle, artifact identity and event journaling — never the adapter.
+// The mappings below are 1:1 by design: the neutral render shapes
+// (render/renderAdapterSeam.ts) are structurally aligned with the frozen v4
+// RenderJobSpec / RenderJobResult / RenderArtifact shapes, so the seam never
+// redeclares or mutates contract semantics. The PERFORMANCE TIMELINE is
+// consumed at this seam: the frozen PerformanceTimeline maps 1:1 onto the
+// neutral timeline the adapter request carries. Artifact content is
+// referenced, never inlined: the neutral payload bytes (and the fixture-only
+// fidelity field) are DROPPED here (contentRef + contentHash only).
+// Truth law: adapter outputs are simulated, so every constructed v4 shape
+// stays `simulated: true`.
+// ---------------------------------------------------------------------------
+
+/**
+ * Map a frozen v4 PerformanceTimeline onto the neutral timeline the render
+ * adapter consumes. Malformed timelines (unordered cues, duplicate ids,
+ * bad hashes, duration mismatch) are typed rejections — never silently
+ * repaired. The frozen validators (shared/you/performanceTimeline) remain
+ * the authority; this mirror guard keeps the seam refusal honest.
+ */
+export function toNeutralRenderTimeline(timeline: PerformanceTimeline): NeutralPerformanceTimeline {
+  if (timeline.id.length === 0) {
+    throw new Error("toNeutralRenderTimeline: timeline id must be non-empty");
+  }
+  if (!Number.isInteger(timeline.durationMs) || timeline.durationMs < 0) {
+    throw new Error("toNeutralRenderTimeline: durationMs must be a non-negative integer");
+  }
+  const seen = new Set<string>();
+  let previousStartMs: number | null = null;
+  let maxEndMs = 0;
+  for (let index = 0; index < timeline.cues.length; index++) {
+    const cue = timeline.cues[index];
+    if (!cue) continue;
+    if (cue.id.length === 0 || seen.has(cue.id)) {
+      throw new Error(`toNeutralRenderTimeline: cue ${index}: id must be unique and non-empty`);
+    }
+    seen.add(cue.id);
+    if (typeof cue.track !== "string" || cue.track.length === 0) {
+      throw new Error(`toNeutralRenderTimeline: cue ${index}: track must be a non-empty string`);
+    }
+    if (cue.endMs <= cue.startMs) {
+      throw new Error(`toNeutralRenderTimeline: cue ${index}: endMs must be greater than startMs`);
+    }
+    if (cue.payloadRef.length === 0) {
+      throw new Error(`toNeutralRenderTimeline: cue ${index}: payloadRef must be non-empty (content-addressed law)`);
+    }
+    if (!/^[0-9a-f]{64}$/.test(cue.payloadHash)) {
+      throw new Error(`toNeutralRenderTimeline: cue ${index}: payloadHash must be a sha-256 hex digest`);
+    }
+    if (previousStartMs !== null && cue.startMs < previousStartMs) {
+      throw new Error(`toNeutralRenderTimeline: cue ${index}: cues must be ordered by startMs`);
+    }
+    previousStartMs = cue.startMs;
+    maxEndMs = Math.max(maxEndMs, cue.endMs);
+  }
+  if (timeline.durationMs !== maxEndMs) {
+    throw new Error(`toNeutralRenderTimeline: durationMs ${timeline.durationMs} must equal the greatest cue endMs ${maxEndMs}`);
+  }
+  return {
+    id: timeline.id,
+    durationMs: timeline.durationMs,
+    cues: timeline.cues.map((cue) => ({
+      id: cue.id,
+      track: cue.track,
+      startMs: cue.startMs,
+      endMs: cue.endMs,
+      payloadRef: cue.payloadRef,
+      payloadHash: cue.payloadHash,
+    })),
+  };
+}
+
+/**
+ * Map a frozen v4 RenderJobSpec + the rendered performance's timeline onto
+ * the neutral adapter request. The spec's method/outputKinds/parameters
+ * pass through 1:1; the timeline is consumed at the seam. An empty
+ * outputKinds set is a typed rejection (the service refuses empty specs
+ * upstream; the seam never repairs).
+ */
+export function toNeutralRenderRequest(
+  spec: RenderJobSpec,
+  timeline: PerformanceTimeline,
+): NeutralRenderRequest {
+  if (spec.id.length === 0) {
+    throw new Error("toNeutralRenderRequest: spec id must be non-empty");
+  }
+  if (spec.outputKinds.length === 0) {
+    throw new Error("toNeutralRenderRequest: a render job requires at least one output kind");
+  }
+  return {
+    requestId: spec.id,
+    performanceId: spec.performanceId,
+    method: spec.method,
+    outputKinds: spec.outputKinds,
+    parameters: spec.parameters,
+    timeline: toNeutralRenderTimeline(timeline),
+    submittedAt: spec.createdAt,
+  };
+}
+
+/** Inputs for the frozen RenderArtifact construction (service-owned identity/timing). */
+export interface RenderArtifactContext {
+  readonly jobId: string;
+  /** ISO-8601 from the injected clock. */
+  readonly createdAt: string;
+}
+
+/**
+ * Construct frozen v4 RenderArtifacts from neutral adapter artifacts. The
+ * payload bytes AND the fixture-only fidelity field are dropped at the seam
+ * (content-addressed law: contentRef + contentHash only). Malformed
+ * artifacts are typed rejections — never silently repaired.
+ */
+export function toRenderArtifacts(
+  artifacts: readonly NeutralRenderArtifact[],
+  context: RenderArtifactContext,
+): readonly RenderArtifact[] {
+  if (context.jobId.length === 0) {
+    throw new Error("toRenderArtifacts: jobId must be non-empty");
+  }
+  const out: RenderArtifact[] = [];
+  for (const artifact of artifacts) {
+    if (artifact.artifactId.length === 0) {
+      throw new Error("toRenderArtifacts: artifactId must be non-empty");
+    }
+    if (artifact.kind.length === 0) {
+      throw new Error("toRenderArtifacts: kind must be non-empty");
+    }
+    if (artifact.contentRef.length === 0) {
+      throw new Error("toRenderArtifacts: contentRef must reference stored content (content-addressed law)");
+    }
+    if (!/^[0-9a-f]{64}$/.test(artifact.contentHash)) {
+      throw new Error("toRenderArtifacts: contentHash must be a sha-256 hex digest");
+    }
+    if (!Number.isFinite(artifact.fidelity) || artifact.fidelity < 0 || artifact.fidelity > 1) {
+      throw new Error("toRenderArtifacts: fidelity outside [0, 1] (fixture arithmetic law)");
+    }
+    out.push({
+      id: artifact.artifactId,
+      jobId: context.jobId,
+      kind: artifact.kind,
+      contentRef: artifact.contentRef,
+      contentHash: artifact.contentHash,
+      createdAt: context.createdAt,
+      simulated: artifact.simulated,
+    });
+  }
+  return out;
+}
+
+/**
+ * Project structured render effort MetricFields onto the frozen v4
+ * effortObservations record (same honest-marker layout as the W4A
+ * notMeasuredRenderEffortObservations keys). Not-measured fields carry the
+ * explicit "not-measured (simulated)" marker; estimates carry simulated
+ * markers + basis; only genuinely measured values may claim measured=true
+ * (none exist in fixture mode).
+ */
+export function toRenderEffortObservations(
+  fields: RenderEffortFields,
+  producedArtifactCount: number,
+  timelineCueCount: number,
+): Readonly<Record<string, string | number | boolean>> {
+  const out: Record<string, string | number | boolean> = {
+    artifactsProduced: producedArtifactCount,
+    timelineCuesProcessed: timelineCueCount,
+    simulated: true,
+  };
+  appendMetricField(out, "computeEffort", fields.effort);
+  appendMetricField(out, "latencyMs", fields.latency);
+  appendMetricField(out, "costUnits", fields.cost);
+  return out;
+}
+
+/** Inputs for the frozen RenderJobResult construction (service-owned timing). */
+export interface RenderJobCompletion {
+  readonly spec: RenderJobSpec;
+  readonly output: RenderOutput;
+  /** Cue count of the performance timeline the job consumed (service-owned observation). */
+  readonly timelineCueCount: number;
+  /** ISO-8601 from the injected clock (artifact + completion timestamps). */
+  readonly completedAt: string;
+}
+
+/**
+ * Construct a frozen v4 RenderJobResult from an adapter output. Status maps
+ * 1:1 ("completed" | "failed"); failed jobs produce no artifacts and carry
+ * the failure reason in the effort observations.
+ */
+export function toRenderJobResult(completion: RenderJobCompletion): RenderJobResult {
+  const { spec, output } = completion;
+  if (output.adapterId.length === 0 || output.requestId !== spec.id) {
+    throw new Error("toRenderJobResult: adapter output does not belong to this job spec");
+  }
+  const artifacts =
+    output.status === "completed"
+      ? toRenderArtifacts(output.producedArtifacts, { jobId: spec.id, createdAt: completion.completedAt })
+      : [];
+  const observations: Record<string, string | number | boolean> = {
+    ...toRenderEffortObservations(output.effort, artifacts.length, completion.timelineCueCount),
+  };
+  if (output.status === "failed") {
+    observations["failureReason"] = output.failureReason ?? "unspecified";
+  }
+  return {
+    jobId: spec.id,
+    status: output.status as RenderJobStatus,
+    artifacts,
+    effortObservations: observations,
+    completedAt: completion.completedAt,
+    simulated: output.simulated,
+  };
+}
+
+/**
+ * Convenience: run a frozen v4 RenderJobSpec through a provider-neutral
+ * render adapter and construct the frozen v4 RenderJobResult (spec ->
+ * neutral request -> adapter -> frozen result). Pure orchestration — no
+ * business logic; the adapter remains the only renderer and the service
+ * remains the authority.
+ */
+export function renderThroughAdapter(
+  spec: RenderJobSpec,
+  adapter: RenderAdapter,
+  timeline: PerformanceTimeline,
+  completion: { readonly completedAt: string },
+): RenderJobResult {
+  const request = toNeutralRenderRequest(spec, timeline);
+  const output = adapter.render(request);
+  return toRenderJobResult({ spec, output, timelineCueCount: timeline.cues.length, completedAt: completion.completedAt });
 }
 
