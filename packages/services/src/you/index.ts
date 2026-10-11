@@ -9,3 +9,5 @@ import "./evidenceService.test.js";
 import "./evidenceFixtureScenario.test.js";
 import "./twinService.test.js";
 import "./twinFixtureScenario.test.js";
+import "./performanceService.test.js";
+import "./performanceFixtureScenario.test.js";
