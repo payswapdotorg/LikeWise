@@ -1,5 +1,5 @@
-/* eslint-disable max-lines -- the single seam to the frozen YOU contract v1+v2+v3+v4 is consolidated BY DESIGN: exactly one module maps every neutral you-lab shape onto the frozen contracts (the only-module law asserted by tests), so the full W1C/W2C/W3C/W4C mapping surface intentionally lives in this one file. */
-// SINGLE seam to the frozen YOU contract v1+v2+v3+v4
+/* eslint-disable max-lines -- the single seam to the frozen YOU contract v1+v2+v3+v4+v5 is consolidated BY DESIGN: exactly one module maps every neutral you-lab shape onto the frozen contracts (the only-module law asserted by tests), so the full W1C/W2C/W3C/W4C/W5C mapping surface intentionally lives in this one file. */
+// SINGLE seam to the frozen YOU contract v1+v2+v3+v4+v5
 // (packages/shared/src/you/contract.ts).
 //
 // SEAM NOTE (W1C sandbox): importing "@zcode/shared" from packages/you-lab
@@ -24,9 +24,15 @@
 
 import type {
   AuthorType,
+  CandidateVersion,
   CaptureModality,
   ConsentReference,
+  EditChangeSet as FrozenEditChangeSet,
+  EditChangeSetOp as FrozenEditChangeSetOp,
+  EditorCapabilityProfile as ContractEditorCapabilityProfile,
   EditorRecommendation,
+  EditingSession as FrozenEditingSession,
+  EditingSessionStatus,
   EvidencePrivacyClass,
   EvidenceRecord,
   EvidenceRetention,
@@ -35,6 +41,9 @@ import type {
   EvidenceType,
   HtirDomainBlock,
   HtirDomainKind,
+  ImportExportFormat,
+  ImportExportResult as FrozenImportExportResult,
+  ImportExportStatus,
   PerformanceTimeline,
   ProvenanceRecord,
   ReconstructionJobResult,
@@ -45,6 +54,7 @@ import type {
   RenderJobResult,
   RenderJobSpec,
   RenderJobStatus,
+  RoundTripBenchmarkReport as FrozenRoundTripBenchmarkReport,
   TwinDeficiency,
   TwinDeficiencyClass,
   TwinEvidenceBinding,
@@ -75,6 +85,16 @@ import type {
 } from "./render/renderAdapterSeam.js";
 import type { TechnologyRegistry } from "./technology/registry.js";
 import type { EditorCapabilityProfile } from "./technology/editorCapability.js";
+import type {
+  EditingCapabilityProfile,
+  NeutralEditChangeSet,
+  NeutralEditingOutput,
+  NeutralEditingRequest,
+  NeutralEditorKind,
+  NeutralImportExportFormat,
+} from "./editing/editingAdapterSeam.js";
+import type { EditingAdapter } from "./editing/editingAdapterSeam.js";
+import type { CandidateRoundTripResult } from "./editing/roundTripRunner.js";
 
 /**
  * Build a frozen-contract EditorRecommendation from a derived capability
@@ -812,3 +832,210 @@ export function renderThroughAdapter(
   return toRenderJobResult({ spec, output, timelineCueCount: timeline.cues.length, completedAt: completion.completedAt });
 }
 
+
+// ---------------------------------------------------------------------------
+// W5C: seam mapping onto the frozen v5 editing/interchange contracts
+// (EditingSession / EditChangeSet / CandidateVersion / ImportExportResult /
+// RoundTripBenchmarkReport / v5 EditorCapabilityProfile). The neutral W5C
+// shapes in editing/editingAdapterSeam.ts are structurally aligned with the
+// frozen v5 shapes, so this mapping is 1:1 and never redeclares or mutates
+// contract semantics. The import/export format mapping also happens here —
+// the ONLY place neutral formats meet the frozen ImportExportFormat.
+// ---------------------------------------------------------------------------
+
+/** Map a neutral interchange format onto the frozen v5 ImportExportFormat (1:1, validated). */
+export function mapImportExportFormat(format: NeutralImportExportFormat): ImportExportFormat {
+  if (format.length === 0) {
+    throw new Error("mapImportExportFormat: empty format (truth law — refusing to map an unaddressed format)");
+  }
+  return format;
+}
+
+/** Map a neutral editor kind onto the frozen v5 EditorKind (1:1, validated). */
+export function mapEditorKind(kind: NeutralEditorKind): "native" | "embedded" | "external" {
+  if (kind === "native" || kind === "embedded" || kind === "external") {
+    // The neutral open union (string & {}) does not narrow through === on
+    // its literal members; the guard above guarantees the cast is sound.
+    return kind as "native" | "embedded" | "external";
+  }
+  throw new Error(`mapEditorKind: neutral kind "${kind}" has no frozen v5 mapping (open-union extension requires a TL contract update)`);
+}
+
+/**
+ * Build a frozen v5 EditorCapabilityProfile from a derived neutral editing
+ * capability profile (researched data — never a runtime authority).
+ */
+export function toFrozenEditorCapabilityProfile(profile: EditingCapabilityProfile): ContractEditorCapabilityProfile {
+  return {
+    id: profile.id,
+    editorKind: mapEditorKind(profile.editorKind),
+    displayName: profile.displayName,
+    supportsFormats: profile.supportsFormats.map(mapImportExportFormat),
+    roundTripSafe: profile.roundTripSafe,
+    notes: `${profile.notes} (derivedFrom: ${profile.derivedFrom})`,
+  };
+}
+
+/** Inputs for frozen v5 EditingSession construction (service-owned identity/timing). */
+export interface EditingSessionConstruction {
+  readonly sessionId: string;
+  readonly subjectArtifactId: string;
+  readonly editorKind: NeutralEditorKind;
+  readonly openedAt: string;
+  readonly status?: EditingSessionStatus;
+}
+
+/** Map a neutral editing session construction onto the frozen v5 EditingSession. */
+export function toFrozenEditingSession(construction: EditingSessionConstruction): FrozenEditingSession {
+  if (construction.sessionId.length === 0) throw new Error("toFrozenEditingSession: empty sessionId");
+  if (construction.subjectArtifactId.length === 0) throw new Error("toFrozenEditingSession: empty subjectArtifactId");
+  return {
+    id: construction.sessionId,
+    subjectArtifactId: construction.subjectArtifactId,
+    editorKind: mapEditorKind(construction.editorKind),
+    openedAt: construction.openedAt,
+    status: construction.status ?? "open",
+  };
+}
+
+/** Map a neutral edit change set onto the frozen v5 EditChangeSet (ops 1:1, hash-validated). */
+export function toFrozenEditChangeSet(changeSet: NeutralEditChangeSet): FrozenEditChangeSet {
+  if (changeSet.id.length === 0) throw new Error("toFrozenEditChangeSet: empty changeSet id");
+  if (changeSet.sessionId.length === 0) throw new Error("toFrozenEditChangeSet: empty sessionId");
+  const ops: FrozenEditChangeSetOp[] = changeSet.ops.map((op) => {
+    if (op.id.length === 0) throw new Error("toFrozenEditChangeSet: empty op id");
+    if (!/^[0-9a-f]{64}$/.test(op.payloadHash)) {
+      throw new Error(`toFrozenEditChangeSet: op ${op.id} payloadHash is not sha-256 hex (content-addressing law)`);
+    }
+    return {
+      id: op.id,
+      kind: op.kind,
+      payloadRef: op.payloadRef,
+      payloadHash: op.payloadHash,
+    };
+  });
+  return {
+    id: changeSet.id,
+    sessionId: changeSet.sessionId,
+    ops,
+    createdAt: changeSet.createdAt,
+  };
+}
+
+/** Inputs for frozen v5 CandidateVersion construction (lineage + content addressing). */
+export interface CandidateVersionConstruction {
+  readonly candidateVersionId: string;
+  readonly changeSetId: string;
+  readonly parentVersionId: string;
+  readonly contentRef: string;
+  readonly contentHash: string;
+  readonly proposedAt: string;
+}
+
+/** Build a frozen v5 CandidateVersion from the artifact-lineage construction. */
+export function toFrozenCandidateVersion(construction: CandidateVersionConstruction): CandidateVersion {
+  if (construction.candidateVersionId.length === 0) throw new Error("toFrozenCandidateVersion: empty id");
+  if (construction.changeSetId.length === 0) throw new Error("toFrozenCandidateVersion: empty changeSetId");
+  if (construction.parentVersionId.length === 0) throw new Error("toFrozenCandidateVersion: empty parentVersionId");
+  if (!/^[0-9a-f]{64}$/.test(construction.contentHash)) {
+    throw new Error("toFrozenCandidateVersion: contentHash is not sha-256 hex (content-addressing law)");
+  }
+  return {
+    id: construction.candidateVersionId,
+    changeSetId: construction.changeSetId,
+    parentVersionId: construction.parentVersionId,
+    contentRef: construction.contentRef,
+    contentHash: construction.contentHash,
+    proposedAt: construction.proposedAt,
+    simulated: true, // truth law: adapter outputs are simulated round trips
+  };
+}
+
+/** Inputs for frozen v5 ImportExportResult construction. */
+export interface ImportExportConstruction {
+  readonly id: string;
+  readonly sessionId: string | null;
+  readonly format: NeutralImportExportFormat;
+  readonly status: ImportExportStatus;
+  readonly contentRef: string | null;
+  readonly contentHash: string | null;
+  readonly completedAt: string;
+}
+
+/** Build a frozen v5 ImportExportResult (format interchange outcome). */
+export function toFrozenImportExportResult(construction: ImportExportConstruction): FrozenImportExportResult {
+  if (construction.id.length === 0) throw new Error("toFrozenImportExportResult: empty id");
+  if (construction.contentHash !== null && !/^[0-9a-f]{64}$/.test(construction.contentHash)) {
+    throw new Error("toFrozenImportExportResult: contentHash is not sha-256 hex (content-addressing law)");
+  }
+  if (construction.status === "succeeded" && (construction.contentRef === null || construction.contentHash === null)) {
+    throw new Error("toFrozenImportExportResult: succeeded interchange must carry contentRef + contentHash");
+  }
+  return {
+    id: construction.id,
+    sessionId: construction.sessionId,
+    format: mapImportExportFormat(construction.format),
+    status: construction.status,
+    contentRef: construction.contentRef,
+    contentHash: construction.contentHash,
+    completedAt: construction.completedAt,
+    simulated: true, // truth law: fixture-mode interchange stays labeled
+  };
+}
+
+/** Honest effort observations for a round-trip result (structured not-measured markers). */
+export function toRoundTripEffortObservations(
+  result: CandidateRoundTripResult,
+): Readonly<Record<string, string | number | boolean>> {
+  const out: Record<string, string | number | boolean> = {
+    fixtureCount: result.fixtureScores.length,
+    simulated: true,
+  };
+  appendMetricField(out, "roundTripEffort", result.effort);
+  appendMetricField(out, "latencyMs", result.latency);
+  appendMetricField(out, "costUnits", result.cost);
+  return out;
+}
+
+/** Project a benchmark candidate result onto the frozen v5 RoundTripBenchmarkReport. */
+export function toFrozenRoundTripBenchmarkReport(result: CandidateRoundTripResult): FrozenRoundTripBenchmarkReport {
+  return {
+    editorId: result.candidateId,
+    format: mapImportExportFormat(result.format as NeutralImportExportFormat),
+    fidelityScore: result.overallFidelityScore,
+    effortObservations: toRoundTripEffortObservations(result),
+    simulated: true, // truth law: computed fixture objectives, never measurements
+  };
+}
+
+/** Full W5C path: invoke the editing adapter and construct the frozen v5 shapes. */
+export function editingThroughAdapter(
+  adapter: EditingAdapter,
+  request: NeutralEditingRequest,
+  completion: {
+    readonly subjectArtifactId: string;
+    readonly openedAt: string;
+    readonly candidateVersionId: string;
+    readonly parentVersionId: string;
+    readonly proposedAt: string;
+  },
+): { readonly session: FrozenEditingSession; readonly changeSet: FrozenEditChangeSet; readonly candidateVersion: CandidateVersion; readonly output: NeutralEditingOutput } {
+  const output = adapter.invoke(request);
+  const session = toFrozenEditingSession({
+    sessionId: request.editingSessionId,
+    subjectArtifactId: completion.subjectArtifactId,
+    editorKind: adapter.profile.editorKind,
+    openedAt: completion.openedAt,
+    status: "committed",
+  });
+  const changeSet = toFrozenEditChangeSet(output.changeSet);
+  const candidateVersion = toFrozenCandidateVersion({
+    candidateVersionId: completion.candidateVersionId,
+    changeSetId: changeSet.id,
+    parentVersionId: completion.parentVersionId,
+    contentRef: `content-store://you-lab/editing/${adapter.profile.id}/${request.requestId}`,
+    contentHash: output.editedContentHash,
+    proposedAt: completion.proposedAt,
+  });
+  return { session, changeSet, candidateVersion, output };
+}
