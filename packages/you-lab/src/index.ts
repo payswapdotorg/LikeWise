@@ -1,8 +1,11 @@
+/* eslint-disable eslint(max-lines) -- the you-lab public entry consolidates the export surface of ALL waves BY DESIGN (W1C-W5C modules are separate; this single index.ts re-exports them, mirroring the contractSeam.ts single-seam precedent), so the per-file line budget is intentionally waived here rather than splitting the public entry. */
 // @zcode/you-lab — public entry (W1C: Technology/Editor/Lab foundation; W2C:
 // capture technology candidates, capture adapters and benchmarks; W3C:
 // reconstruction technology candidates, reconstruction adapters and
 // benchmarks; W4C: render technology candidates, render adapters and
-// benchmarks).
+// benchmarks; W5C: editor technology candidates, the editing adapter seam,
+// the production-eligible editor evaluation adapter and the round-trip
+// benchmark).
 //
 // Provider-neutral editor and organization capability infrastructure:
 // technology registry, editor capability profiles, the editor adapter seam,
@@ -440,6 +443,124 @@ export {
 } from "./render/renderArtifactScorer.js";
 
 // ---------------------------------------------------------------------------
+// W5C: editing adapter seam, capability profiles, evaluation adapter,
+// round-trip benchmark
+// ---------------------------------------------------------------------------
+
+export { EDITOR_SEED_PROFILES, createEditorRegistry } from "./technology/editorSeedProfiles.js";
+
+export {
+  EDITING_UNSUPPORTED_CODE,
+  UnsupportedEditingFormatError,
+  applyNeutralChangeSet,
+  assertEditingRequestSupported,
+  decodeEditOpPayload,
+  encodeEditOpPayload,
+  neutralEditChangeSetId,
+  neutralEditOpPayloadRef,
+  notMeasuredEditingEffortFields,
+  sha256Hex as sha256HexEditing,
+  unsupportedEditingFormats,
+  type EditingAdapter,
+  type EditingAdapterProfile,
+  type EditingCapabilityProfile,
+  type EditingEffortFields,
+  type NeutralEditChangeSet,
+  type NeutralEditChangeSetOp,
+  type NeutralEditingOutput,
+  type NeutralEditingRequest,
+  type NeutralEditPlan,
+  type NeutralEditorKind,
+  type NeutralImportExportFormat,
+  type NeutralSubjectArtifact,
+} from "./editing/editingAdapterSeam.js";
+
+export {
+  deriveEditingCapabilityProfiles,
+  editingCapabilityById,
+} from "./editing/capabilityProfiles.js";
+
+export {
+  EDITING_EVALUATION_FORMATS,
+  EDITING_RESEARCH_DATE,
+  assessEditingProductionEligibility,
+  deriveEditingCandidateProfiles,
+  editingCandidateIdsForKind,
+  rankEditingProductionEligible,
+  type EditingCandidateProfile,
+  type EditingEligibilityOptions,
+  type EditingEvaluationCriteria,
+  type EditingProductionEligibilityAssessment,
+} from "./editing/editorEvaluation.js";
+
+export {
+  createMockEditingAdapter,
+  mockEditingGenerator,
+  type MockEditingConfig,
+} from "./editing/mockEditingAdapter.js";
+
+export {
+  VSCODE_EVALUATION_ADAPTER_ID,
+  createVscodeEditingEvaluationAdapter,
+  vscodeEvaluationGenerator,
+  type VscodeAdapterFacts,
+} from "./editing/vscodeEvaluationAdapter.js";
+
+export {
+  MOCK_EDITING_CANDIDATES,
+  createStandardEditingCandidates,
+  type RoundTripCandidateSpec,
+} from "./editing/roundTripCandidates.js";
+
+export {
+  GOLDEN_ROUND_TRIP_REPORT_RUN_ID,
+  ROUND_TRIP_BENCHMARK_FIXTURES,
+  ROUND_TRIP_FIXTURE_SET_VERSION,
+  fixtureEditPlan,
+  fixtureSubjectState,
+  neutralStateDigest,
+  synthesizeEditPlan,
+  synthesizeSubjectState,
+  type RoundTripBenchmarkFixture,
+  type SyntheticEditSpec,
+  type SyntheticSubjectSpec,
+} from "./editing/roundTripFixtures.js";
+
+export {
+  ROUND_TRIP_WEIGHTS,
+  SCORER_ROUND_TRIP_VERSION,
+  intendedOperationsForPlan,
+  scoreRoundTripFidelity,
+  subjectStateFromContent,
+  type RoundTripFidelityParts,
+} from "./editing/roundTripScorer.js";
+
+export {
+  EDITING_BENCH_SUBMITTED_AT,
+  runRoundTripBenchmark,
+  runStandardRoundTripBenchmark,
+  type CandidateRoundTripResult,
+  type FixtureRoundTripScore,
+  type RoundTripBenchmarkRunReport,
+} from "./editing/roundTripRunner.js";
+
+export {
+  editingThroughAdapter,
+  mapEditorKind,
+  mapImportExportFormat,
+  toFrozenCandidateVersion,
+  toFrozenEditChangeSet,
+  toFrozenEditingSession,
+  toFrozenEditorCapabilityProfile,
+  toFrozenImportExportResult,
+  toFrozenRoundTripBenchmarkReport,
+  toRoundTripEffortObservations,
+  type CandidateVersionConstruction,
+  type EditingSessionConstruction,
+  type ImportExportConstruction,
+} from "./contractSeam.js";
+
+// ---------------------------------------------------------------------------
 // Test-suite entry for the station command
 //
 // `pnpm exec tsx --test packages/you-lab/src` passes the DIRECTORY to the
@@ -471,6 +592,7 @@ if (isTestRunnerDirectoryEntry()) {
   await import("./technology/captureSeedProfiles.test.js");
   await import("./technology/reconstructionSeedProfiles.test.js");
   await import("./technology/renderSeedProfiles.test.js");
+  await import("./technology/editorSeedProfiles.test.js");
   await import("./adapters/mockEditorAdapter.test.js");
   await import("./organization/compiler.test.js");
   await import("./benchmarks/benchmark.test.js");
@@ -490,6 +612,11 @@ if (isTestRunnerDirectoryEntry()) {
   await import("./render/renderEvaluation.test.js");
   await import("./render/renderBenchmark.test.js");
   await import("./render/renderSeam.test.js");
+  await import("./editing/capabilityProfiles.test.js");
+  await import("./editing/editorEvaluation.test.js");
+  await import("./editing/mockEditingAdapter.test.js");
+  await import("./editing/roundTripBenchmark.test.js");
+  await import("./editing/editingSeam.test.js");
   await import("./contractSeam.test.js");
   await import("./consumer-sim.test.js");
 }

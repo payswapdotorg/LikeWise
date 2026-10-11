@@ -23,8 +23,11 @@ export interface LicenseClaim {
 // W2C: "github-commit" added additively for capture candidates that publish
 // neither releases nor registry packages (SAM/SAM2, Depth-Anything-V2); the
 // signal cites the last observed commit date on the default branch.
+// W5C: "gitlab-release" added additively for editor candidates whose release
+// feed lives on a GitLab forge (GIMP publishes releases on
+// gitlab.gnome.org, not GitHub); the signal cites that forge's release feed.
 
-export type MaintenanceSignalKind = "npm-publish" | "github-release" | "pypi-upload" | "github-commit";
+export type MaintenanceSignalKind = "npm-publish" | "github-release" | "pypi-upload" | "github-commit" | "gitlab-release";
 
 export interface MaintenanceSignal {
   readonly kind: MaintenanceSignalKind;
