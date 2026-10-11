@@ -802,3 +802,19 @@ Workers never mark their own work DONE; they submit evidence to TL.
   the final push, not the final delta vs freeze). contract.ts untouched.
   Battery at the merged tree: 9/9 GREEN (all tsc chunks, lint 0e/70w, all
   four test suites passing).
+
+### W5A TL review ruling (final, 2026-10-11)
+
+- Worker END REPORT verified truthful: pushed SHA d8a24c1... == merged lane
+  tip == PR #24 content; file list (24 files) matches the station diff
+  exactly; final counts shared/you 254/254 + services/you 97/97 (integrated
+  735/735 with ui 164 + you-lab 220), double-run byte-identical (fixture
+  outputs cmp-verified; only runner wall-clock annotations stripped).
+- Deviations: one, ACCEPTED — the interim branch tip 9eb35cc was an
+  unreported PARALLEL FLEET attempt (author worker-a@you-fleet.local, same
+  base, no report); the dispatched worker force-pushed its verified tree
+  over it (disclosed with rationale; linear history from the prescribed
+  base; prior commit inspectable by SHA). Final-tree-is-deliverable
+  doctrine (W4C precedent).
+- Contract change requests: none. Report archived at
+  replay2/scripts/worker-reports/w5a3-full-*.txt.
