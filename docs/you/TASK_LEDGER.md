@@ -699,3 +699,52 @@ Workers never mark their own work DONE; they submit evidence to TL.
   not-measured (simulated) effort/latency/cost markers, golden report
   runId 81d2b048; zero business logic outside the lane.
 - Contract change requests: none.
+
+### T4 integration record (2026-10-11)
+
+- WAVE 4 COMPLETE: freeze (c327881) → W4A (PR #21, 84737cd/7958b97) →
+  W4B (PR #22, 8d9b62d/a6a4059) → W4C (PR #23, 928f9f2/82b9862) →
+  T4 integrated.
+- Integrated main battery (post-merge, at 82b9862): integrated
+  you-battery **684/684** (shared 224 + services 76 + ui 164 + you-lab
+  220); lint 0 errors / 70 warnings = exact baseline; lane typechecks
+  exit 0 (you-lab, shared, services); root manifest + lockfile untouched
+  vs freeze (wave-4 dependency policy PASS — zero new dependencies).
+- Operational era note: wave 4 closed across sustained agent-mode
+  degradation (split-brain: regular-mode probe recovered intermittently
+  while agent lanes stayed no-markers); W4A delivered via wall-cycle
+  autonomous push (15:33Z); W4B worker pod expired pre-push — TL
+  narrative reconstruction via scripts/replay_full.py (250 tool calls
+  replayed in emission order, zero insertion mismatches, worker identity
+  preserved); W4C delivered via agent-mode window autonomous push
+  (19:26Z, worker branch based atop merged-W4A main for render contract
+  types — deviation disclosed and ACCEPTED).
+- Phase-0 gate: unchanged (GREENLIT-ON-RECORDED-EVIDENCE; live demo
+  staging remains environmental-deferred). W4 surfaces (performance
+  services, Performance Studio, render lab) are now part of the station
+  battery evidence set.
+
+### W5 contract freeze + dispatch record (2026-10-11)
+
+- Frozen by the TL at the T4→W5 transition. Contract freeze commit:
+  THIS COMMIT (see git log for the exact SHA; the working tree carries
+  the freeze). Machine authority: `packages/shared/src/you/contract.ts`
+  v5 (ADDITIVE — EditorKind, ImportExportFormat, EditorCapabilityProfile,
+  EditingSession, EditingSessionStatus, EditChangeSetOp, EditChangeSet,
+  CandidateVersion, ImportExportStatus, ImportExportResult,
+  RoundTripBenchmarkReport — namespaced to avoid the v1 EditSession /
+  ChangeSet collision, caught by the pre-commit typecheck; additive events change-set-applied /
+  candidate-version-proposed / import-export-completed; additive error
+  codes YOU_EDIT_SESSION_NOT_FOUND / YOU_CHANGESET_INVALID /
+  YOU_EDITOR_UNSUPPORTED / YOU_IMPORT_EXPORT_FAILED).
+- Docs: CONTRACTS.md "Wave-5 contract freeze (v5)"; WORK_ORDERS.md
+  W5A/W5B/W5C expanded to full orders (write surfaces, acceptance
+  criteria, zero-dep policy).
+- Wave-5 lanes: W5A Editing Authority (branch `you/w5a-core`, shared +
+  services surfaces); W5B Editing Experience (branch `you/w5b-studio`,
+  ui surface + registration seams); W5C Editor Ecosystem (branch
+  `you/w5c-edittech`, you-lab only).
+- Dispatch: W5 wave machine armed by the resident TL (canary w5a →
+  fan-out w5b + w5c); branches pre-cut at the freeze commit;
+  worker-prompts authored from the frozen orders with send-time PAT
+  substitution.

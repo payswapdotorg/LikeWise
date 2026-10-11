@@ -468,7 +468,10 @@ export type SolutionEventType =
   | "performance-published"
   | "render-job-submitted"
   | "render-job-completed"
-  | "render-artifact-reviewed";
+  | "render-artifact-reviewed"
+  | "change-set-applied"
+  | "candidate-version-proposed"
+  | "import-export-completed";
 
 export interface SolutionEvent {
   readonly id: OpaqueId;
@@ -501,7 +504,11 @@ export type YouErrorCode =
   | "YOU_PERFORMANCE_NOT_FOUND"
   | "YOU_TIMELINE_INVALID"
   | "YOU_RENDER_UNSUPPORTED"
-  | "YOU_RENDER_ARTIFACT_NOT_FOUND";
+  | "YOU_RENDER_ARTIFACT_NOT_FOUND"
+  | "YOU_EDIT_SESSION_NOT_FOUND"
+  | "YOU_CHANGESET_INVALID"
+  | "YOU_EDITOR_UNSUPPORTED"
+  | "YOU_IMPORT_EXPORT_FAILED";
 
 // ---------------------------------------------------------------------------
 // Evidence / Capture / Consent — frozen v2 (wave 2, TL freeze at T1->W2)
@@ -938,5 +945,137 @@ export interface RenderJobResult {
   readonly artifacts: readonly RenderArtifact[];
   readonly effortObservations: Readonly<Record<string, string | number | boolean>>;
   readonly completedAt: string | null;
+  readonly simulated: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Editing / Interchange — frozen v5 (wave 5, TL freeze at T4->W5)
+//
+// Authority: docs/you/CONTRACTS.md "Wave-5 contract freeze (v5)".
+// Dispatched by: docs/you/WORK_ORDERS.md (W5A / W5B / W5C).
+// Same laws as v1/v2/v3/v4: workers MUST NOT modify this file; the freeze is
+// ADDITIVE — no v1/v2/v3/v4 shape is altered. NOTE: the v1 EditSession /
+// ChangeSet types (solution-version patch flow) keep their names; the wave-5
+// artifact-editing shapes are namespaced EditingSession / EditChangeSet to
+// stay additive without collision. All ids opaque; edit payloads are never
+// inlined in records or events — payloadRef + payloadHash /
+// contentRef + contentHash on the same content-store abstraction as wave-2
+// evidence; timestamps from the injected clock in fixture mode; truth law
+// (fixture results stay `simulated: true`; unmeasured round-trip effort
+// carries explicit not-measured markers).
+// ---------------------------------------------------------------------------
+
+/** Provider-neutral editor kind (W5C taxonomy). */
+export type EditorKind =
+  | "native"
+  | "embedded"
+  | "external"
+  | (string & {});
+
+/**
+ * Provider-neutral interchange format for import/export flows. The
+ * `edit-interchange` family is defined by docs/you/EDITING_INTERCHANGE.md.
+ */
+export type ImportExportFormat =
+  | "json"
+  | "edit-interchange"
+  | "scene-package"
+  | (string & {});
+
+/**
+ * A registered editor's capability profile (registry authority = W5C lane;
+ * the profile is researched data, never a runtime authority).
+ */
+export interface EditorCapabilityProfile {
+  readonly id: OpaqueId;
+  readonly editorKind: EditorKind;
+  readonly displayName: string;
+  readonly supportsFormats: readonly ImportExportFormat[];
+  readonly roundTripSafe: boolean;
+  readonly notes: string;
+}
+
+export type EditingSessionStatus =
+  | "open"
+  | "committed"
+  | "abandoned";
+
+/**
+ * An artifact editing session over a subject artifact (render artifact or
+ * another editable content-addressed record). Session state authority = W5A
+ * lane. (Namespaced EditingSession — the v1 EditSession is the distinct
+ * solution-version patch flow and keeps its name.)
+ */
+export interface EditingSession {
+  readonly id: OpaqueId;
+  readonly subjectArtifactId: OpaqueId;
+  readonly editorKind: EditorKind;
+  readonly openedAt: string;
+  readonly status: EditingSessionStatus;
+}
+
+/**
+ * A single edit operation inside an edit change set. The operation payload is
+ * content-addressed (payloadRef + payloadHash) — never inlined.
+ */
+export interface EditChangeSetOp {
+  readonly id: OpaqueId;
+  readonly kind: string;
+  readonly payloadRef: string;
+  readonly payloadHash: string;
+}
+
+/** An ordered, immutable edit change set produced by an editing session. */
+export interface EditChangeSet {
+  readonly id: OpaqueId;
+  readonly sessionId: OpaqueId;
+  readonly ops: readonly EditChangeSetOp[];
+  readonly createdAt: string;
+}
+
+/**
+ * A candidate version proposed by applying an edit change set (the
+ * artifact-lineage node: parentVersionId -> candidate). Content-addressed;
+ * `simulated: true` in fixture mode.
+ */
+export interface CandidateVersion {
+  readonly id: OpaqueId;
+  readonly changeSetId: OpaqueId;
+  readonly parentVersionId: OpaqueId;
+  readonly contentRef: string;
+  readonly contentHash: string;
+  readonly proposedAt: string;
+  readonly simulated: boolean;
+}
+
+export type ImportExportStatus =
+  | "succeeded"
+  | "failed";
+
+/**
+ * Import/export outcome (format interchange). Content-addressed result when
+ * succeeded; typed failure when not.
+ */
+export interface ImportExportResult {
+  readonly id: OpaqueId;
+  readonly sessionId: OpaqueId | null;
+  readonly format: ImportExportFormat;
+  readonly status: ImportExportStatus;
+  readonly contentRef: string | null;
+  readonly contentHash: string | null;
+  readonly completedAt: string;
+  readonly simulated: boolean;
+}
+
+/**
+ * Round-trip benchmark report (W5C lane). Honest markers: effort observations
+ * are structured fields with explicit not-measured labels when unmeasured
+ * (truth law); fixture reports stay `simulated: true`.
+ */
+export interface RoundTripBenchmarkReport {
+  readonly editorId: OpaqueId;
+  readonly format: ImportExportFormat;
+  readonly fidelityScore: number;
+  readonly effortObservations: Readonly<Record<string, string | number | boolean>>;
   readonly simulated: boolean;
 }

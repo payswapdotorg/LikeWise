@@ -430,3 +430,41 @@ Frozen by the TL at the T3->W4 transition for Work Orders W4A / W4B / W4C.
 - Dependency policy for wave 4: zero new runtime dependencies; no root
   manifest/lockfile edits by workers; TL serializes any root reconciliation
   at T4.
+
+## Wave-5 contract freeze (v5)
+
+Frozen by the TL at the T4->W5 transition for Work Orders W5A / W5B / W5C.
+
+- Machine authority: `packages/shared/src/you/contract.ts` (the same file
+  as v1/v2/v3/v4; the freeze is ADDITIVE — no earlier shape was altered.
+  New: EditorKind, ImportExportFormat, EditorCapabilityProfile,
+  EditingSessionStatus, EditingSession, EditChangeSetOp, EditChangeSet,
+  CandidateVersion, ImportExportStatus, ImportExportResult,
+  RoundTripBenchmarkReport (namespaced Editing* / EditChangeSet* — the v1
+  EditSession / ChangeSet solution-version patch types keep their names); additive event types change-set-applied /
+  candidate-version-proposed / import-export-completed (the v1
+  edit-session-opened / edit-session-closed / change-proposed /
+  change-accepted / change-rejected events already cover the rest of the
+  editing lifecycle); additive error codes YOU_EDIT_SESSION_NOT_FOUND /
+  YOU_CHANGESET_INVALID / YOU_EDITOR_UNSUPPORTED /
+  YOU_IMPORT_EXPORT_FAILED).
+- Workers MUST NOT modify `contract.ts`. A worker needing a contract change
+  stops and requests a TL contract update in its delivery report.
+- Wave-5 consumption: Worker A implements the editing application services
+  + fixtures on the frozen types (EditingSession lifecycle, EditChangeSet
+  validation, candidate-version artifact lineage, import/export flows).
+  Worker B imports the frozen types from `@zcode/shared` and binds to
+  Worker A's service seams via the W1B/W2B/W3B/W4B controller pattern
+  (simulated controller until T5 binding; no business logic in the UI).
+  Worker C researches and registers native/embedded/external editor
+  candidates and implements the production-eligible editor adapter seam +
+  mock adapters + round-trip benchmarks inside `packages/you-lab`, mapping
+  onto the frozen contract at its existing seam module (`contractSeam.ts`).
+- Edit payloads and candidate-version content are never inlined in records
+  or events; `payloadRef` + `payloadHash` / `contentRef` + `contentHash`
+  only, on the same content-store abstraction as wave-2 evidence.
+  EDITING_INTERCHANGE.md laws apply verbatim (injected clock/rng, no
+  ambient nondeterminism, byte-identical replays, `simulated: true`).
+- Dependency policy for wave 5: zero new runtime dependencies; no root
+  manifest/lockfile edits by workers; TL serializes any root
+  reconciliation at T5.

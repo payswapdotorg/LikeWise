@@ -569,18 +569,149 @@ Acceptance:
 
 ## W5A — Editing Authority
 
+Branch: `you/w5a-core`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch (the W5 contract-freeze commit on main).
+
 Objective:
-EditSession, ChangeSet, artifact lineage and import/export services.
+Implement EditingSession, EditChangeSet, candidate-version artifact lineage
+and import/export application services on the frozen v5 contracts.
+
+Frozen write surface (wave 5):
+- `packages/shared/src/you/**` — EXCEPT `you/contract.ts` is TL-frozen
+  (implement around it; request a TL contract update if a change is needed);
+- `packages/services/src/you/**` (the you services subtree Worker A owns
+  since W1A).
+
+Zero edits to any other existing file: no UI, no you-lab, no root
+manifest/lockfile, no new dependencies, no `packages/shared/src/index.ts`
+changes (the v5 types already re-export through the public entry).
+
+Acceptance:
+- edit session service: open sessions over subject artifacts (render
+  artifacts or other content-addressed records); append-only session
+  lifecycle open → committed | abandoned (terminals locked; illegal
+  transitions typed refusals); typed `YOU_EDIT_SESSION_NOT_FOUND`; the
+  EditingSession record is the wave-5 namespaced shape (the v1
+  EditSession solution-patch flow is untouched);
+- edit change set validation: ordered ops with content-addressed payloads
+  (`payloadRef` + sha-256 `payloadHash`), no empty op lists, op kinds
+  non-empty strings — typed `YOU_CHANGESET_INVALID` refusals (stateless
+  validators; no clock use);
+- candidate-version lineage: applying a validated EditChangeSet to a
+  parent version produces an immutable CandidateVersion (content-addressed
+  `contentRef` + `contentHash` on the wave-2 content-store abstraction);
+  parent → candidate lineage queryable; `simulated` flags threaded from
+  fixtures;
+- import/export flows: format-typed interchange (ImportExportFormat) with
+  deterministic export assembly and validated import; typed
+  `YOU_IMPORT_EXPORT_FAILED` on invalid payloads; results
+  content-addressed when succeeded;
+- deterministic fixtures: seeded scenarios spanning the full arrow
+  (open session → propose edit change set → validate → apply → candidate
+  version → lineage query; a committed-session path; an abandoned-session
+  path; an invalid-changeset refusal; a failed import path; a round-trip
+  export→import identity check) — injected clock/rng, byte-identical
+  replay, `simulated: true`;
+- event ledger integration: edit-session-opened / change-set-applied /
+  candidate-version-proposed / import-export-completed (plus the v1
+  change-accepted / change-rejected where the flow calls for them) through
+  the existing ledger machinery;
+- tests (node:test) covering the transition tables, validators,
+  immutability, lineage, interchange determinism and error taxonomy.
 
 ## W5B — Editing Experience
 
+Branch: `you/w5b-studio`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch.
+
 Objective:
-Native/embedded/external editor orchestration, takeover UX, compare/revert.
+Native/embedded/external editor orchestration surface — edit session
+control, change-set proposal/review, compare/revert UX and manual takeover
+flows on the W5A service seams.
+
+Frozen write surface (wave 5):
+- `packages/ui/src/you/**` + the disclosed registration-only seams (same
+  pre-expanded seam list as W2B/W3B/W4B: `lib/workspaceSidePane`,
+  `app-shell/animatedSidePanePanelModel`, `AnimatedSidePanePanel`,
+  `SidePaneTabTrigger`, `sidePaneTabPresentation`, `WorkspaceShellLayout`,
+  `app-shell/types`, `hooks/useAppPanels`, `you/index.ts`, i18n
+  `en-US`/`zh-CN`).
+
+Zero edits to any other existing file: no services, no you-lab, no root
+manifest/lockfile, no new dependencies.
+
+Acceptance:
+- edit session surface: subject-artifact picker, session status ladder
+  (open/committed/abandoned) rendered from controller projections — zero
+  business logic in the UI (W1B/W2B/W3B/W4B controller pattern; simulated
+  controller until T5 binding);
+- edit change-set proposal flow: op list with content-addressed payload
+  labels (never inlined content), deterministic preview of the candidate
+  version against its parent;
+- compare/revert UX: candidate vs parent lineage view; accept/reject
+  change projections routed through the v1 change-accepted /
+  change-rejected event discipline (append-only; no second authority
+  path);
+- editor orchestration: native / embedded / external editor kind picker
+  (EditorKind taxonomy); external editor launch UX as consent-gated,
+  projected flows (no ambient process control in the UI — the launch is
+  a projected intent through the controller seam);
+- manual takeover UX: takeover confirmation rendered from consent-state
+  projections (the wave-2 consent authority; no second consent path);
+- loading/error/empty states for every region; `YOU_EDIT_SESSION_NOT_FOUND`
+  / `YOU_CHANGESET_INVALID` / `YOU_EDITOR_UNSUPPORTED` /
+  `YOU_IMPORT_EXPORT_FAILED` surfaces as typed error panels;
+- i18n: en-US + zh-CN strings for every visible label;
+- dedicated UX tests under the you subtree (registration wiring, panel
+  projection, change-set flow, compare/revert, error surfaces; node:test).
 
 ## W5C — Editor Ecosystem
 
+Branch: `you/w5c-edittech`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch.
+
 Objective:
-Technology registry profiles, adapters and round-trip benchmarks for editors.
+Research, register and benchmark provider-neutral native/embedded/external
+editor technology candidates on the lab foundation; implement the
+production-eligible editor adapter seam plus mock and fixture adapters, and
+round-trip capability benchmarks.
+
+Frozen write surface (wave 5):
+- `packages/you-lab/**` ONLY. Zero edits outside.
+
+Acceptance:
+- editor technology registry additions: researched REAL profiles for the
+  candidate set — native editors (VS Code-class extensible editors,
+  Monaco-class embedded editors), embedded hosts (CodeMirror-class,
+  ProseMirror-class rich-text surfaces, Monaco web hosts), external
+  pipelines (Blender-class DCC editing, Godot-class scene editing,
+  image/video editors with round-trip format support), interchange
+  toolchains (glTF-class scene interchange, USD-class scene
+  composition) — license (SPDX + source URL), maintenance evidence,
+  compatibility notes, provenance; `unverified: true` where not verified
+  (truth law — never invent);
+- capability profiles: EditorCapabilityProfile records derived from the
+  registry (supportsFormats, roundTripSafe) — researched data, never a
+  runtime authority;
+- provider-neutral editor adapter seam: typed editor invocation →
+  EditChangeSet-shaped results (content-addressed op payloads per the
+  frozen v5 contract); deterministic `mockEditorAdapter` (seed-derived,
+  no network) covering native/embedded/external kinds;
+- production-eligible adapter: the best-license/maintenance candidate
+  integrated behind the seam as a profile-backed evaluation adapter (real
+  runtime integration is W6+ compute-plane territory; honest markers
+  required — `not-measured (simulated)` where unmeasured);
+- round-trip benchmark harness: deterministic fixtures (seeded synthetic
+  edit payloads), runner scoring candidates on round-trip fidelity and
+  determinism, recording effort as structured fields with honest markers;
+  RoundTripBenchmarkReport assembly (fidelityScore 0..1 deterministic);
+- seam mapping onto frozen v5 contracts (EditingSession/EditChangeSet/
+  CandidateVersion shapes; import/export format mapping at the seam);
+- tests (node:test) covering registry integrity (license + source URL,
+  unique ids, no unverified-as-verified), adapter determinism
+  (byte-identical replay from seed), golden round-trip scores, seam
+  mapping validity (adapter outputs construct valid v5 shapes; only the
+  seam module touches contract types).
 
 ## W6A — Learning Authority
 
