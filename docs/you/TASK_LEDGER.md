@@ -340,6 +340,45 @@ Executed by the TL station on main after the W1C merge (3b059e3):
 - W3B/W3C remain in flight at this record (re-armed canary loop owns
   their re-dispatch; see station ops log).
 
+### W3B merge record (2026-10-11)
+
+- Status: MERGED. Owner: Worker B (GLM-5.3 agent session, Full-Stack),
+  station-verified by TL. Branch: `you/w3b-studio`. Base SHA: `ad9dae1`.
+  PR #19; merge commit `897aacd`; worker commit `9bdbb97` (38 files,
+  +6338/-7, all inside `packages/ui/src/**` with registration-only
+  seams in app-shell/hooks/i18n/lib).
+- Station battery (gate-parity, re-run at TL station): lint 0 errors /
+  70 warnings = exact baseline; shared 180/180; services 57/57;
+  ui 118/118 (baseline 81 + 37 new twin tests); you-lab 113/113.
+  Patch sha256 `2208de1630cb6dd577b72b83592636843bba5a61280b36209d4ae57baf473988`
+  verified byte-exact on BOTH sides (pod regeneration + TL station
+  `git diff ad9dae1..9bdbb97`); 38 files / 6849 diff lines / 295503 bytes.
+- Zero new deps (no manifest/lockfile changes); frozen wave-2/wave-3
+  contracts untouched (no shared/services writes); consent still
+  delegates to the wave-2 authority — the studio adds no second
+  consent path.
+- TL review: view-state discipline held — `twinStudioStore.ts` holds
+  projection/view state only (panels, selection, compare mode, demo
+  progress) with canonical twin truth remaining in the W3A services;
+  simulated controller keeps the immutable version chain + append-only
+  supersession semantics; registration modules are pure
+  `*TabRegistration.ts` seams through `workspaceSidePane` (W1B/W2B
+  pattern); demo/storyboard fixtures stay deterministic with
+  `simulated: true` markings (truth law).
+- Delivery-path note (PAT-less window): the worker had no push
+  credentials at dispatch; delivery began as a chat emission relay
+  (FILE-DIFF blocks, files 1-25 banked server-side) while the
+  generation plane flapped ("No response" null-commits, correlated
+  with the station VPN tunnel being down). After the operator PAT
+  re-seed + tunnel heal, the TL continuation upgraded the delivery to
+  a direct push — emission stood down; pushed commit == banked patch
+  byte-for-byte. Platform turn-null-commit outages correlate with the
+  station's browser-plane health: reconnect the tunnel BEFORE
+  adjudicating a lane as turn-dead (recorded for future waves).
+- W3C remains in flight at this record (capacity-queued, packet
+  landed, turn unspawned; the wave machine owns it — void would reset
+  the queue position).
+
 ## W1 — Solution Runtime / Operator Gate
 
 ### W1A Core/API
