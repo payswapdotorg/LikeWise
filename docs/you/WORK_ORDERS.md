@@ -430,18 +430,142 @@ Acceptance:
 
 ## W4A — Performance Authority
 
+Branch: `you/w4a-core`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch (the W4 contract-freeze commit on main).
+
 Objective:
-Performance/RenderJob/Artifact services.
+Implement performance/render application services, artifact lineage and
+the artifact review state machine on the frozen v4 contracts.
+
+Frozen write surface (wave 4):
+- `packages/shared/src/you/**` — EXCEPT `you/contract.ts` is TL-frozen
+  (implement around it; request a TL contract update if a change is needed);
+- `packages/services/src/you/**` (the you services subtree Worker A owns
+  since W1A).
+
+Zero edits to any other existing file: no UI, no you-lab, no root
+manifest/lockfile, no new dependencies, no `packages/shared/src/index.ts`
+changes (the v4 types already re-export through the public entry).
+
+Acceptance:
+- performance service: publish immutable Performances bound to TwinVersions
+  (append-only; `basedOnTemplateId` linkage; typed
+  `YOU_PERFORMANCE_NOT_FOUND` errors);
+- timeline validation: cues content-addressed (`payloadRef` + sha-256
+  `payloadHash`), ordered by `startMs`, non-overlapping per track,
+  `endMs > startMs`, `durationMs` consistency — typed
+  `YOU_TIMELINE_INVALID` refusals (stateless validators; no clock use);
+- template library: parameterized PerformanceTemplates (name uniqueness,
+  parameter schema as plain records; deterministic instantiation producing
+  a Performance whose timeline is the template timeline verbatim);
+- render job lifecycle: legal transition table queued → running →
+  completed | failed (terminals locked; illegal transitions typed
+  refusals); RenderJobSpec validation (method/outputKinds); typed
+  `YOU_RENDER_UNSUPPORTED` for methods the registry lane has not
+  registered;
+- artifact lineage: immutable RenderArtifacts content-addressed on the
+  wave-2 content-store abstraction; job→artifacts lineage queryable;
+  `simulated` flags threaded from fixtures;
+- artifact review state machine: append-only reviews
+  (pending → accepted | rejected | superseded; the SAME status discipline
+  as wave-2 evidence reviews; never overwrite; typed
+  `YOU_RENDER_ARTIFACT_NOT_FOUND`);
+- deterministic fixtures: seeded performance/template/job scenarios
+  spanning the full arrow (template → instantiate performance → submit
+  render job → running → completed with artifacts → review accepted /
+  rejected / superseded; a failed-job path; an invalid-timeline refusal;
+  an unsupported-method refusal) — injected clock/rng, byte-identical
+  replay, `simulated: true`;
+- event ledger integration: performance-published / render-job-submitted /
+  render-job-completed / render-artifact-reviewed events through the
+  existing ledger machinery;
+- tests (node:test) covering the transition tables, validators,
+  immutability, lineage, determinism and error taxonomy.
 
 ## W4B — Performance Studio
 
+Branch: `you/w4b-studio`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch.
+
 Objective:
-Timeline/template/performance/output review.
+Native Performance Studio surface — timeline/template editing, render job
+control and artifact review UX on the W4A service seams.
+
+Frozen write surface (wave 4):
+- `packages/ui/src/you/**` + the disclosed registration-only seams (same
+  pre-expanded seam list as W2B/W3B: `lib/workspaceSidePane`,
+  `app-shell/animatedSidePanePanelModel`, `AnimatedSidePanePanel`,
+  `SidePaneTabTrigger`, `sidePaneTabPresentation`, `WorkspaceShellLayout`,
+  `app-shell/types`, `hooks/useAppPanels`, `you/index.ts`, i18n
+  `en-US`/`zh-CN`).
+
+Zero edits to any other existing file: no services, no you-lab, no root
+manifest/lockfile, no new dependencies.
+
+Acceptance:
+- performance timeline surface: cue track visualization (motion/cue/layer
+  taxonomy), duration display, per-cue payload references (content-addressed
+  labels, never inlined content);
+- template picker + instantiation flow (parameter editing as plain typed
+  records; deterministic preview of the instantiated timeline);
+- render job control: submit render job (method + outputKinds + params),
+  job status ladder (queued/running/completed/failed) rendered from
+  controller projections — zero business logic in the UI (W1B/W2B/W3B
+  controller pattern; simulated controller until T4 binding);
+- artifact review flow: artifact list with lineage (job → artifacts),
+  content-addressed artifact cards, review actions (accept/reject/supersede)
+  projected through the review state machine; consent-gated inputs
+  rendered from consent-state projections (no second consent path);
+- loading/error/empty states for every region; `YOU_TIMELINE_INVALID` /
+  `YOU_RENDER_UNSUPPORTED` / `YOU_RENDER_ARTIFACT_NOT_FOUND` surfaces as
+  typed error panels;
+- i18n: en-US + zh-CN strings for every visible label;
+- dedicated UX tests under the you subtree (registration wiring, panel
+  projection, review flow, error surfaces; node:test).
 
 ## W4C — Performance/Render Technologies
 
+Branch: `you/w4c-render`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch.
+
 Objective:
-Motion extraction, retargeting and image/video/3D render adapters.
+Research, register and benchmark provider-neutral motion-extraction,
+retargeting and image/video/3D render technology candidates on the lab
+foundation; implement the production-eligible adapter seam plus mock and
+fixture adapters.
+
+Frozen write surface (wave 4):
+- `packages/you-lab/**` ONLY. Zero edits outside.
+
+Acceptance:
+- render technology registry additions: researched REAL profiles for the
+  candidate set — motion extraction (e.g. MediaPipe Holistic-class,
+  OpenPose-class, WHAM/scene-class 3D motion methods), retargeting
+  (Rokoko-class, Auto-Rig-class, mesh-deformation toolkits), image render
+  (diffusion-class image pipelines), video render (animated-diffusion /
+  frame-interpolation chains), 3D render (Blender-class toolchains,
+  three.js-class rasterization, Gaussian-splatting renderers) — license
+  (SPDX + source URL), maintenance evidence, compatibility notes,
+  provenance; `unverified: true` where not verified (truth law — never
+  invent);
+- provider-neutral `RenderAdapter` seam: typed RenderJobSpec → typed
+  RenderArtifact results (content-addressed artifact construction per the
+  frozen v4 contract); deterministic `mockRenderAdapter` (seed-derived,
+  no network) covering image / video / mesh / animation output kinds;
+- production-eligible adapter: the best-license/maintenance candidate
+  integrated behind the seam as a profile-backed evaluation adapter (real
+  runtime integration is W5+ compute-plane territory; honest markers
+  required — `not-measured (simulated)` where unmeasured);
+- benchmark harness: deterministic fixtures (seeded synthetic performance
+  payloads), runner scoring candidates on artifact validity and determinism,
+  recording effort/latency/cost as structured fields with honest markers;
+- seam mapping onto frozen v4 contracts (RenderJobSpec → RenderJobResult;
+  RenderArtifact assembly; performance timeline consumption at the seam);
+- tests (node:test) covering registry integrity (license + source URL,
+  unique ids, no unverified-as-verified), adapter determinism
+  (byte-identical replay from seed), golden benchmark scores, seam mapping
+  validity (adapter outputs construct valid v4 shapes; only the seam
+  module touches contract types).
 
 ## W5A — Editing Authority
 

@@ -551,3 +551,28 @@ The TL updates this file after each merge wave with:
 - blockers.
 
 Workers never mark their own work DONE; they submit evidence to TL.
+
+## W4 dispatch record
+
+- Wave-4 contract freeze (v4): machine authority extended ADDITIVELY in
+  `packages/shared/src/you/contract.ts` (performance/render types: timeline
+  cue/track, template, performance, render job spec/status/result, render
+  artifact + review; event types; error codes); prose authority
+  `docs/you/CONTRACTS.md` "Performance / render (design authority, wave 4)"
+  + "Wave-4 contract freeze (v4)"; full W4A/W4B/W4C orders frozen in
+  `docs/you/WORK_ORDERS.md`.
+- Base SHA for W4A/W4B/W4C: this W4 contract-freeze commit on main
+  (this commit; branches cut from it by the TL at fan-out).
+- Dependency policy wave 4: zero new runtime dependencies; workers do not
+  touch root manifests/lockfiles; TL serializes root reconciliation at T4
+  (none expected — no new packages).
+- Write surfaces: W4A `packages/shared/src/you/**` (except TL-frozen
+  `contract.ts`) + `packages/services/src/you/**`; W4B
+  `packages/ui/src/you/**` + disclosed registration-only seams (same
+  pre-expanded seam list as W2B/W3B); W4C `packages/you-lab/**`.
+- Tests: node:test via `pnpm exec tsx --test` (station battery per W1/W2/W3
+  practice: package typechecks chunked, lint baseline 0 errors / 70
+  warnings, you-test battery per package).
+- Station gate at freeze: shared tsc exit 0; the integrated battery stands
+  at 534/534 (T3 record) — the freeze is additive and touches no runtime
+  surface outside the contract module.

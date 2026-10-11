@@ -373,3 +373,60 @@ Frozen by the TL at the T2->W3 transition for Work Orders W3A / W3B / W3C.
 - Dependency policy for wave 3: zero new runtime dependencies; no root
   manifest/lockfile edits by workers; TL serializes any root reconciliation
   at T3.
+
+## Performance / render (design authority, wave 4)
+
+Objective (frozen from the mission): the YOU twin performs. A performance is
+a twin version plus an immutable ordered timeline of content-addressed cues;
+templates parameterize timelines for reuse; render jobs turn performances
+into reviewed artifacts. The domain is deliberately shaped like the twin/
+reconstruction domains so the station's service/adapter/studio split maps
+1:1: Worker A owns the performance/render application services, Worker B
+binds them into the native studio surface, Worker C researches and registers
+provider-neutral render/motion/retargeting technology candidates and the
+adapter seam.
+
+Laws (inherited verbatim from v1/v2/v3): immutable records are append-only;
+ids stay opaque; timeline cue payloads and render artifact content are never
+inlined — `payloadRef`+`payloadHash` / `contentRef`+`contentHash` on the
+content-store abstraction; consent for any evidence-bound render input
+delegates to the frozen wave-2 consent authority (no second consent path);
+artifact reviews are append-only status transitions (pending → accepted |
+rejected | superseded); render effort/latency/cost observations carry
+explicit not-measured markers (truth law); fixture results stay
+`simulated: true`.
+
+## Wave-4 contract freeze (v4)
+
+Frozen by the TL at the T3->W4 transition for Work Orders W4A / W4B / W4C.
+
+- Machine authority: `packages/shared/src/you/contract.ts` (the same file
+  as v1/v2/v3; the freeze is ADDITIVE — no v1/v2/v3 shape was altered. New:
+  PerformanceTrackKind, PerformanceCue, PerformanceTimeline,
+  PerformanceTemplate, Performance, RenderMethod, RenderOutputKind,
+  RenderJobSpec, RenderJobStatus, RenderArtifact,
+  RenderArtifactReviewStatus, RenderArtifactReview, RenderJobResult;
+  additive event types performance-published / render-job-submitted /
+  render-job-completed / render-artifact-reviewed; additive error codes
+  YOU_PERFORMANCE_NOT_FOUND / YOU_TIMELINE_INVALID /
+  YOU_RENDER_UNSUPPORTED / YOU_RENDER_ARTIFACT_NOT_FOUND).
+- Workers MUST NOT modify `contract.ts`. A worker needing a contract change
+  stops and requests a TL contract update in its delivery report.
+- Wave-4 consumption: Worker A implements the performance/render
+  application services + fixtures on the frozen types (performance
+  publishing, template library, render job lifecycle, artifact lineage,
+  artifact review state machine). Worker B imports the frozen types from
+  `@zcode/shared` and binds to Worker A's service seams via the W1B/W2B/W3B
+  controller pattern (simulated controller until T4 binding; no business
+  logic in the UI). Worker C researches and registers motion-extraction /
+  retargeting / image / video / 3D render candidates and implements the
+  production-eligible adapter seam + mock/fixture adapters + benchmark
+  inside `packages/you-lab`, mapping onto the frozen contract at its
+  existing seam module (`contractSeam.ts`).
+- Performance payload and artifact content are never inlined in records or
+  events; `payloadRef` + `payloadHash` / `contentRef` + `contentHash` only.
+  FIXTURES.md laws apply verbatim (injected clock/rng, no ambient
+  nondeterminism, byte-identical replays, `simulated: true`).
+- Dependency policy for wave 4: zero new runtime dependencies; no root
+  manifest/lockfile edits by workers; TL serializes any root reconciliation
+  at T4.

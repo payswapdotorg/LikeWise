@@ -464,7 +464,11 @@ export type SolutionEventType =
   | "twin-version-published"
   | "twin-quality-assessed"
   | "reconstruction-job-submitted"
-  | "reconstruction-job-completed";
+  | "reconstruction-job-completed"
+  | "performance-published"
+  | "render-job-submitted"
+  | "render-job-completed"
+  | "render-artifact-reviewed";
 
 export interface SolutionEvent {
   readonly id: OpaqueId;
@@ -493,7 +497,11 @@ export type YouErrorCode =
   | "YOU_CONTENT_HASH_MISMATCH"
   | "YOU_TWIN_NOT_FOUND"
   | "YOU_HTIR_DOMAIN_INVALID"
-  | "YOU_RECONSTRUCTION_UNSUPPORTED";
+  | "YOU_RECONSTRUCTION_UNSUPPORTED"
+  | "YOU_PERFORMANCE_NOT_FOUND"
+  | "YOU_TIMELINE_INVALID"
+  | "YOU_RENDER_UNSUPPORTED"
+  | "YOU_RENDER_ARTIFACT_NOT_FOUND";
 
 // ---------------------------------------------------------------------------
 // Evidence / Capture / Consent — frozen v2 (wave 2, TL freeze at T1->W2)
@@ -790,6 +798,144 @@ export interface ReconstructionJobResult {
    * Structured effort/latency/cost observations; unmeasured values carry
    * explicit markers (e.g. `{ measured: false }`) — never invented numbers.
    */
+  readonly effortObservations: Readonly<Record<string, string | number | boolean>>;
+  readonly completedAt: string | null;
+  readonly simulated: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Performance / Render — frozen v4 (wave 4, TL freeze at T3->W4)
+//
+// Authority: docs/you/CONTRACTS.md "Wave-4 contract freeze (v4)".
+// Dispatched by: docs/you/WORK_ORDERS.md (W4A / W4B / W4C).
+// Same laws as v1/v2/v3: workers MUST NOT modify this file; the freeze is
+// ADDITIVE — no v1/v2/v3 shape is altered. All ids opaque; performance
+// payload/content is never inlined in records — contentRef + contentHash on
+// the same content-store abstraction as wave-2 evidence; timestamps from the
+// injected clock in fixture mode; truth law (fixture results stay
+// `simulated: true`; unmeasured effort/latency/cost carries explicit
+// not-measured markers).
+// ---------------------------------------------------------------------------
+
+/** Provider-neutral performance track kind (timeline track taxonomy). */
+export type PerformanceTrackKind =
+  | "motion"
+  | "cue"
+  | "layer"
+  | (string & {});
+
+/**
+ * A timed cue on a performance timeline. The cue payload is content-addressed
+ * (payloadRef + payloadHash) — never inlined in the record or events.
+ */
+export interface PerformanceCue {
+  readonly id: OpaqueId;
+  readonly track: PerformanceTrackKind;
+  readonly startMs: number;
+  readonly endMs: number;
+  readonly payloadRef: string;
+  readonly payloadHash: string;
+}
+
+/** Ordered performance timeline (cues sorted by startMs; immutable). */
+export interface PerformanceTimeline {
+  readonly id: OpaqueId;
+  readonly cues: readonly PerformanceCue[];
+  readonly durationMs: number;
+}
+
+/** Reusable parameterized performance recipe (template authority = W4A). */
+export interface PerformanceTemplate {
+  readonly id: OpaqueId;
+  readonly name: string;
+  readonly timeline: PerformanceTimeline;
+  readonly parameters: Readonly<Record<string, string | number | boolean>>;
+}
+
+/** A concrete performance bound to a twin version. */
+export interface Performance {
+  readonly id: OpaqueId;
+  readonly twinVersionId: OpaqueId;
+  readonly timeline: PerformanceTimeline;
+  readonly basedOnTemplateId: OpaqueId | null;
+  readonly createdAt: string;
+}
+
+/** Provider-neutral render method (adapter taxonomy, W4C lane). */
+export type RenderMethod =
+  | "motion-extraction"
+  | "retargeting"
+  | "image-render"
+  | "video-render"
+  | "3d-render"
+  | (string & {});
+
+/** Provider-neutral render output artifact kind. */
+export type RenderOutputKind =
+  | "image"
+  | "video"
+  | "mesh"
+  | "animation"
+  | (string & {});
+
+/**
+ * Provider-neutral render job spec. State truth = the performance/render
+ * application service (Worker A lane); adapters (Worker C lane) are
+ * replaceable and never authorities.
+ */
+export interface RenderJobSpec {
+  readonly id: OpaqueId;
+  readonly performanceId: OpaqueId;
+  readonly method: RenderMethod;
+  readonly outputKinds: readonly RenderOutputKind[];
+  readonly parameters: Readonly<Record<string, string | number | boolean>>;
+  readonly createdAt: string;
+}
+
+export type RenderJobStatus =
+  | "queued"
+  | "running"
+  | "completed"
+  | "failed";
+
+/**
+ * Immutable render output artifact. Content-addressed on the same
+ * content-store abstraction as wave-2 evidence (contentRef + contentHash;
+ * never inlined).
+ */
+export interface RenderArtifact {
+  readonly id: OpaqueId;
+  readonly jobId: OpaqueId;
+  readonly kind: RenderOutputKind;
+  readonly contentRef: string;
+  readonly contentHash: string;
+  readonly createdAt: string;
+  readonly simulated: boolean;
+}
+
+export type RenderArtifactReviewStatus =
+  | "pending"
+  | "accepted"
+  | "rejected"
+  | "superseded";
+
+/** Output review record (W4B review flow; append-only, never overwritten). */
+export interface RenderArtifactReview {
+  readonly id: OpaqueId;
+  readonly artifactId: OpaqueId;
+  readonly status: RenderArtifactReviewStatus;
+  readonly reviewedAt: string;
+}
+
+/**
+ * Render job outcome. Honest markers: effort/latency/cost are structured
+ * fields with explicit not-measured labels when unmeasured (truth law);
+ * fixture results stay `simulated: true`.
+ */
+export interface RenderJobResult {
+  readonly jobId: OpaqueId;
+  readonly status: RenderJobStatus;
+  readonly artifacts: readonly RenderArtifact[];
   readonly effortObservations: Readonly<Record<string, string | number | boolean>>;
   readonly completedAt: string | null;
   readonly simulated: boolean;
