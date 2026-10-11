@@ -11,3 +11,5 @@ import "./twinService.test.js";
 import "./twinFixtureScenario.test.js";
 import "./performanceService.test.js";
 import "./performanceFixtureScenario.test.js";
+import "./editingService.test.js";
+import "./editingFixtureScenario.test.js";
