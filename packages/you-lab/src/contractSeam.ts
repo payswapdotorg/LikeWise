@@ -26,13 +26,33 @@ import type {
   EvidenceReview,
   EvidenceReviewStatus,
   EvidenceType,
+  HtirDomainBlock,
+  HtirDomainKind,
   ProvenanceRecord,
+  ReconstructionJobResult,
+  ReconstructionJobSpec,
+  ReconstructionJobStatus,
+  ReconstructionMethod,
+  TwinDeficiency,
+  TwinDeficiencyClass,
+  TwinEvidenceBinding,
+  TwinQualityState,
+  TwinVersion,
+  TwinVersionStatus,
   SolutionEntity,
   SolutionPatchOperation,
   SolutionQualityMap,
 } from "../../shared/src/you/contract.js";
 import type { CandidateOperation, EditorArtifact, NeutralEntity } from "./adapters/editorAdapterSeam.js";
 import type { CaptureObservation, NeutralCaptureModality } from "./capture/captureAdapterSeam.js";
+import type {
+  NeutralDomainBlock,
+  NeutralReconstructionEvidence,
+  NeutralReconstructionRequest,
+  ReconstructionAdapter,
+  ReconstructionEffortFields,
+  ReconstructionOutput,
+} from "./reconstruction/reconstructionAdapterSeam.js";
 import type { TechnologyRegistry } from "./technology/registry.js";
 import type { EditorCapabilityProfile } from "./technology/editorCapability.js";
 
@@ -243,6 +263,295 @@ export function toEvidenceReview(
     qualityObservations: toQualityObservations(qualityEntries),
     notes: construction.notes,
     reviewedAt: construction.reviewedAt,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// W3C: mapping onto the frozen v3 twin/reconstruction contracts
+//
+// Reconstruction adapters (you-lab) are provider-neutral and simulated; the
+// twin/reconstruction application service (Worker A lane) owns ids, consent,
+// retention, status and provenance — never the adapter. The mappings below
+// are 1:1 by design: the neutral reconstruction shapes
+// (reconstruction/reconstructionAdapterSeam.ts) are structurally aligned
+// with the frozen v3 ReconstructionJobSpec / ReconstructionJobResult /
+// HtirDomainBlock / TwinVersion shapes, so the seam never redeclares or
+// mutates contract semantics. Domain-block content is referenced, never
+// inlined: the neutral payload bytes are DROPPED here (contentRef +
+// contentHash only). Truth law: adapter outputs are simulated, so every
+// constructed v3 shape stays `simulated: true`.
+// ---------------------------------------------------------------------------
+
+/**
+ * Map a frozen v3 ReconstructionJobSpec onto the neutral adapter request.
+ * Every evidence binding must resolve to exactly one evidence descriptor by
+ * (id, contentHash) — an unresolved binding or hash mismatch is a typed
+ * rejection, never a silent repair.
+ */
+export function toNeutralReconstructionRequest(
+  spec: ReconstructionJobSpec,
+  evidence: readonly NeutralReconstructionEvidence[],
+): NeutralReconstructionRequest {
+  if (spec.targetDomains.length === 0) {
+    throw new Error("toNeutralReconstructionRequest: a reconstruction job requires at least one target domain");
+  }
+  const evidenceById = new Map<string, NeutralReconstructionEvidence>();
+  for (const item of evidence) {
+    if (evidenceById.has(item.evidenceId)) {
+      throw new Error(`toNeutralReconstructionRequest: duplicate resolved evidence id ${item.evidenceId}`);
+    }
+    evidenceById.set(item.evidenceId, item);
+  }
+  const resolved: NeutralReconstructionEvidence[] = [];
+  for (const binding of spec.evidenceBindings) {
+    const match = evidenceById.get(binding.evidenceId);
+    if (!match) {
+      throw new Error(`toNeutralReconstructionRequest: evidence binding ${binding.evidenceId} has no resolved evidence`);
+    }
+    if (match.contentHash !== binding.evidenceContentHash) {
+      throw new Error(`toNeutralReconstructionRequest: content-hash mismatch for evidence ${binding.evidenceId}`);
+    }
+    resolved.push(match);
+    evidenceById.delete(binding.evidenceId);
+  }
+  if (evidenceById.size > 0) {
+    const leftover = [...evidenceById.keys()].sort();
+    throw new Error(`toNeutralReconstructionRequest: unresolved extra evidence: ${leftover.join(", ")}`);
+  }
+  return {
+    requestId: spec.id,
+    twinVersionId: spec.twinVersionId,
+    method: spec.method as ReconstructionMethod,
+    targetDomains: spec.targetDomains,
+    evidence: resolved,
+    submittedAt: spec.createdAt,
+  };
+}
+
+/** Provenance context injected by the caller (the twin service owns it — never the adapter). */
+export interface ReconstructionBlockContext {
+  readonly provenance: ProvenanceRecord;
+}
+
+/**
+ * Construct frozen v3 HtirDomainBlocks from neutral adapter blocks. The
+ * payload bytes are dropped at the seam (content-addressed law: contentRef +
+ * contentHash only). Malformed blocks are typed rejections — never silently
+ * repaired.
+ */
+export function toHtirDomainBlocks(
+  blocks: readonly NeutralDomainBlock[],
+  context: ReconstructionBlockContext,
+): readonly HtirDomainBlock[] {
+  const out: HtirDomainBlock[] = [];
+  for (const block of blocks) {
+    if (block.domain.length === 0) {
+      throw new Error("toHtirDomainBlocks: empty domain");
+    }
+    if (block.contentRef.length === 0) {
+      throw new Error(`toHtirDomainBlocks: ${block.domain}: contentRef must reference stored content`);
+    }
+    if (!/^[0-9a-f]{64}$/.test(block.contentHash)) {
+      throw new Error(`toHtirDomainBlocks: ${block.domain}: contentHash must be a sha-256 hex digest`);
+    }
+    if (!Number.isFinite(block.confidence) || block.confidence < 0 || block.confidence > 1) {
+      throw new Error(`toHtirDomainBlocks: ${block.domain}: confidence outside [0, 1]`);
+    }
+    out.push({
+      id: block.blockId,
+      domain: block.domain as HtirDomainKind,
+      contentRef: block.contentRef,
+      contentHash: block.contentHash,
+      confidence: block.confidence,
+      simulated: block.simulated,
+      provenance: context.provenance,
+    });
+  }
+  return out;
+}
+
+/**
+ * Project structured effort MetricFields onto the frozen v3
+ * effortObservations record. Honest markers: not-measured fields carry the
+ * explicit "not-measured (simulated)" marker; estimates carry simulated
+ * markers + basis; only genuinely measured values may claim measured=true
+ * (none exist in fixture mode).
+ */
+export function toEffortObservations(
+  fields: ReconstructionEffortFields,
+  producedBlockCount: number,
+  evidenceBindingCount: number,
+): Readonly<Record<string, string | number | boolean>> {
+  const out: Record<string, string | number | boolean> = {
+    domainBlocksProduced: producedBlockCount,
+    evidenceBindingsProcessed: evidenceBindingCount,
+    simulated: true,
+  };
+  appendMetricField(out, "computeEffort", fields.effort);
+  appendMetricField(out, "latencyMs", fields.latency);
+  appendMetricField(out, "costUnits", fields.cost);
+  return out;
+}
+
+function appendMetricField(
+  out: Record<string, string | number | boolean>,
+  key: string,
+  field: ReconstructionEffortFields["effort"],
+): void {
+  if (field.kind === "not-measured") {
+    out[`${key}.measured`] = false;
+    out[key] = field.marker;
+  } else if (field.kind === "estimate") {
+    out[`${key}.measured`] = false;
+    out[`${key}.estimate`] = field.value;
+    out[`${key}.unit`] = field.unit;
+    out[`${key}.simulated`] = true;
+  } else {
+    out[`${key}.measured`] = true;
+    out[key] = field.value;
+    out[`${key}.unit`] = field.unit;
+    out[`${key}.source`] = field.source;
+  }
+}
+
+/** Inputs for the frozen ReconstructionJobResult construction (service-owned timing/provenance). */
+export interface ReconstructionJobCompletion {
+  readonly spec: ReconstructionJobSpec;
+  readonly output: ReconstructionOutput;
+  /** ISO-8601 from the injected clock. */
+  readonly completedAt: string;
+  readonly blockProvenance: ProvenanceRecord;
+}
+
+/**
+ * Construct a frozen v3 ReconstructionJobResult from an adapter output.
+ * Status maps 1:1 ("completed" | "failed"); failed jobs produce no domain
+ * blocks and carry the failure reason in the effort observations.
+ */
+export function toReconstructionJobResult(completion: ReconstructionJobCompletion): ReconstructionJobResult {
+  const { spec, output } = completion;
+  if (output.adapterId.length === 0 || output.requestId !== spec.id) {
+    throw new Error("toReconstructionJobResult: adapter output does not belong to this job spec");
+  }
+  const blocks =
+    output.status === "completed" ? toHtirDomainBlocks(output.producedBlocks, { provenance: completion.blockProvenance }) : [];
+  const observations: Record<string, string | number | boolean> = {
+    ...toEffortObservations(output.effort, blocks.length, spec.evidenceBindings.length),
+  };
+  if (output.status === "failed") {
+    observations["failureReason"] = output.failureReason ?? "unspecified";
+  }
+  return {
+    jobId: spec.id,
+    status: output.status as ReconstructionJobStatus,
+    producedDomainBlocks: blocks,
+    effortObservations: observations,
+    completedAt: completion.completedAt,
+    simulated: output.simulated,
+  };
+}
+
+/**
+ * Convenience: run a frozen v3 ReconstructionJobSpec through a
+ * provider-neutral adapter and construct the frozen v3
+ * ReconstructionJobResult (spec -> neutral request -> adapter -> frozen
+ * result). Pure orchestration — no business logic; the adapter remains the
+ * only reconstructor and the service remains the authority.
+ */
+export function reconstructThroughAdapter(
+  spec: ReconstructionJobSpec,
+  adapter: ReconstructionAdapter,
+  evidence: readonly NeutralReconstructionEvidence[],
+  completion: { readonly completedAt: string; readonly blockProvenance: ProvenanceRecord },
+): ReconstructionJobResult {
+  const request = toNeutralReconstructionRequest(spec, evidence);
+  const output = adapter.reconstruct(request);
+  return toReconstructionJobResult({ spec, output, ...completion });
+}
+
+/** Neutral twin-deficiency construction (mapped 1:1 onto the frozen shape). */
+export interface TwinDeficiencyConstruction {
+  readonly id: string;
+  readonly deficiencyClass: string;
+  readonly domain: string;
+  readonly severity: number;
+  readonly remediationHint: string | null;
+  readonly remediationEvidenceRequestId: string | null;
+}
+
+/**
+ * Construct a frozen v3 TwinQualityState with projected domain scores
+ * (sorted keys, values in [0,1]) and typed deficiencies. Out-of-range
+ * severities are typed rejections — never silently clamped.
+ */
+export function toTwinQualityState(
+  domainScores: readonly QualityObservationEntry[],
+  deficiencies: readonly TwinDeficiencyConstruction[],
+  assessedAt: string,
+): TwinQualityState {
+  const frozen: TwinDeficiency[] = deficiencies.map((entry) => {
+    if (entry.id.length === 0 || entry.deficiencyClass.length === 0 || entry.domain.length === 0) {
+      throw new Error("toTwinQualityState: deficiency id/class/domain must be non-empty");
+    }
+    if (!Number.isFinite(entry.severity) || entry.severity < 0 || entry.severity > 1) {
+      throw new Error(`toTwinQualityState: severity for "${entry.id}" outside [0, 1]`);
+    }
+    return {
+      id: entry.id,
+      deficiencyClass: entry.deficiencyClass as TwinDeficiencyClass,
+      domain: entry.domain as HtirDomainKind,
+      severity: entry.severity,
+      remediationHint: entry.remediationHint,
+      remediationEvidenceRequestId: entry.remediationEvidenceRequestId,
+    };
+  });
+  return {
+    domainScores: toQualityObservations(domainScores),
+    deficiencies: frozen,
+    assessedAt,
+  };
+}
+
+/** Inputs for the frozen TwinVersion assembly (service-owned identity/state). */
+export interface TwinAssemblyConstruction {
+  readonly twinVersionId: string;
+  readonly twinId: string;
+  /** Monotonic per twin; immutable once published. */
+  readonly version: number;
+  readonly status: TwinVersionStatus;
+  readonly evidenceBindings: readonly TwinEvidenceBinding[];
+  readonly quality: TwinQualityState;
+  /** ISO-8601 from the injected clock. */
+  readonly createdAt: string;
+  readonly provenance: ProvenanceRecord;
+  readonly blockProvenance: ProvenanceRecord;
+}
+
+/**
+ * Assemble a frozen v3 TwinVersion from adapter outputs (neutral domain
+ * blocks). The version is immutable by construction (frozen shape); the
+ * payload bytes never cross the seam.
+ */
+export function toTwinVersion(
+  construction: TwinAssemblyConstruction,
+  blocks: readonly NeutralDomainBlock[],
+): TwinVersion {
+  if (construction.twinId.length === 0) {
+    throw new Error("toTwinVersion: twinId must be non-empty");
+  }
+  if (!Number.isInteger(construction.version) || construction.version < 1) {
+    throw new Error(`toTwinVersion: version must be a positive integer (got ${construction.version})`);
+  }
+  return {
+    id: construction.twinVersionId,
+    twinId: construction.twinId,
+    version: construction.version,
+    status: construction.status,
+    domainBlocks: toHtirDomainBlocks(blocks, { provenance: construction.blockProvenance }),
+    evidenceBindings: construction.evidenceBindings,
+    quality: construction.quality,
+    createdAt: construction.createdAt,
+    provenance: construction.provenance,
   };
 }
 
