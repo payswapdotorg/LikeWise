@@ -379,6 +379,68 @@ Executed by the TL station on main after the W1C merge (3b059e3):
   landed, turn unspawned; the wave machine owns it — void would reset
   the queue position).
 
+### W3C merge record (2026-10-11)
+
+- Status: MERGED. Owner: Worker C (GLM-5.3 agent session, Full-Stack),
+  station-verified by TL. Branch: `you/w3c-reconstruction`. Base SHA:
+  `ad9dae1`. PR #20; merge commit `91171b3`; worker commit `3ae9882`
+  (19 files, +3491/−2, ALL inside `packages/you-lab/**` — 17 new +
+  `contractSeam.ts` +309 / `index.ts` +130/−2).
+- Station battery (gate-parity, re-run at TL station): shared 180/180;
+  services 57/57; you-lab **179/179** (baseline 113 + 66 new);
+  scoped tsc exit 0; lint 0 errors / 70 warnings = exact baseline.
+- Registry: 12 reconstruction candidates in the evaluation = 11 new
+  researched REAL profiles + smplx reused (W2C). All 11 new license
+  claims `verified: true` with source URLs; every profile carries
+  non-empty `provenance.unverifiedClaims` (truth law). License split
+  disclosed: 3 permissive (colmap BSD-3, open3d MIT, pifu MIT), 1
+  copyleft (openmvs AGPL-3.0-or-later), 5 research-only/NC (pifuhd,
+  icon, econ, gaussian-splatting/Inria, gaussianavatars), 1
+  no-license-found (instantavatar), 1 registration-based custom
+  (animatablenerf PRL v1.0).
+- Production-eligible pick (derived deterministically from verified
+  facts): COLMAP — BSD-3-Clause, last commit 2026-10-11, release 4.2.1
+  2026-09-29. The adapter is an EVALUATION SIMULATION: no real COLMAP
+  runtime executed (W4+ compute-plane territory); all effort/latency/
+  cost fields stay `not-measured (simulated)`.
+- TL review: seam discipline held — only `contractSeam.ts` touches
+  frozen contract types (+309 seam-local mapping); FIXTURES.md laws
+  held (seeded rng/clock, byte-identical replay tests, golden
+  benchmark scores); registry integrity tests (license+sourceURL,
+  unique ids, no unverified-as-verified) all green; zero new deps;
+  `contract.ts` untouched.
+- Delivery-path note: first FULLY-AUTONOMOUS push delivery of the PAT
+  era — machine canary create → turn spawn → worker auth probe
+  (accepted) → implement → gates → push → END REPORT, with zero TL
+  continuation. The GLM-5.3 peak-hours capacity wall (up ~10:40-12:29Z)
+  burned transient broken chats (detail-500, platform-GC'd); the wave
+  machine was patched mid-window (capacity law: banner = WAIT, never
+  void; stop attempt burn) — see station ops log.
+- Cosmetic (disclosed, not rewritten): the worker commit message opens
+  "10 researched REAL profiles" while 11 are shipped and enumerated in
+  the same message. No history rewrite (force-push forbidden); this
+  record is the reconciliation.
+
+### T3 integration record (2026-10-11)
+
+- WAVE 3 COMPLETE: freeze (cd69cf3) → W3A (PR #18, d85838f/bfc4103) →
+  W3B (PR #19, 9bdbb97/897aacd) → W3C (PR #20, 3ae9882/91171b3) →
+  T3 integrated.
+- Integrated main battery (post-merge, at 91171b3): root `pnpm run
+  typecheck` exit 0 (all 11 tsconfigs); lint 0 errors / 70 warnings =
+  exact baseline; integrated you-battery **534/534** (shared 180 +
+  services 57 + ui 118 + you-lab 179); root manifest + lockfile
+  untouched vs freeze (wave-3 dependency policy PASS — zero new
+  dependencies).
+- Operational era note: wave 3 closed across the pod-recycle-#4 era
+  (vaults wiped, PAT lost) and the PAT re-seed window; all three lanes
+  delivered via direct push once the PAT returned (W3A pre-recycle
+  merges, W3B push-after-emission-relay, W3C fully-autonomous push).
+- Phase-0 gate: unchanged (GREENLIT-ON-RECORDED-EVIDENCE; live demo
+  staging remains environmental-deferred). W3 surfaces (twin services,
+  Twin Studio, reconstruction lab) are now part of the station battery
+  evidence set.
+
 ## W1 — Solution Runtime / Operator Gate
 
 ### W1A Core/API
