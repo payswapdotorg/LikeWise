@@ -35,3 +35,8 @@ import "./performanceTemplate.test.js";
 import "./renderJob.test.js";
 import "./renderArtifact.test.js";
 import "./performanceLedger.test.js";
+import "./editingSession.test.js";
+import "./editChangeSet.test.js";
+import "./candidateVersion.test.js";
+import "./importExport.test.js";
+import "./editingLedger.test.js";
