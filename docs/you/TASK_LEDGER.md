@@ -777,3 +777,19 @@ Workers never mark their own work DONE; they submit evidence to TL.
   EditChangeSet content-addressed ops; candidate-version lineage;
   ImportExportFormat interchange; typed refusal taxonomy).
 - Contract change requests: none.
+
+### W5A merge record addendum (2026-10-11)
+
+- Correction: the worker's final push restructured the lane into two logical
+  commits (655deb1 shared machinery + d8a24c1 services) AFTER the TL branch
+  battery ran at the interim tip 9eb35cc (25 files / +5180). Final merged
+  tree vs freeze: 29 code files (all inside the frozen write surface —
+  re-verified; zero outside; contract.ts untouched), import/export module
+  split out as packages/shared/src/you/importExport.ts.
+- Final-tree verification (the superseding evidence): FULL station battery
+  at merged main (36fd49d) = **9/9 GREEN** including the batch
+  ui/web/desktop/you-lab tsc chunk (passed after tab-GC memory relief —
+  the earlier SIGKILLs were purely environmental) · integrated you-battery
+  counts per the gate logs at the merge head.
+- The lane remains MERGED (PR #24, d699a8a); this addendum closes the
+  record with final-tree numbers per the truth law.
