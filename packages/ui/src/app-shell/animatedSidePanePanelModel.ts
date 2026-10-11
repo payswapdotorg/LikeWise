@@ -7,13 +7,15 @@ export type OpenTabLauncherItemId =
   | "browser"
   | "developer-tools"
   | "solution"
-  | "capture";
+  | "capture"
+  | "twin";
 
 export function resolveOpenTabLauncherItemIds({
   developerToolsEnabled,
   hasReviewTab,
   hasSolutionTab,
   hasCaptureTab = false,
+  hasTwinTab = false,
   canOpenSelectionSideConversation = false,
   supportsEmbeddedBrowser = true,
 }: {
@@ -23,6 +25,8 @@ export function resolveOpenTabLauncherItemIds({
   hasSolutionTab: boolean;
   /** YOU Capture tab 已开时不再提供入口（W2B，同幂等聚焦语义）。缺省 false。 */
   hasCaptureTab?: boolean;
+  /** YOU Twin tab 已开时不再提供入口（W3B，同幂等聚焦语义）。缺省 false。 */
+  hasTwinTab?: boolean;
   canOpenSelectionSideConversation?: boolean;
   supportsEmbeddedBrowser?: boolean;
 }): OpenTabLauncherItemId[] {
@@ -52,6 +56,10 @@ export function resolveOpenTabLauncherItemIds({
 
   if (!hasCaptureTab) {
     itemIds.push("capture");
+  }
+
+  if (!hasTwinTab) {
+    itemIds.push("twin");
   }
 
   return itemIds;

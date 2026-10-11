@@ -1025,6 +1025,7 @@ const enUS: Record<string, string> = {
   "sidePane.review": "Review",
   "you.solution.tabTitle": "Solution",
   "you.capture.tabTitle": "Capture",
+  "you.twin.tabTitle": "Twin",
   "whiteboard.title": "Whiteboard",
   "whiteboard.defaultName": "Whiteboard",
   "whiteboard.nameLabel": "Whiteboard name",

@@ -4,6 +4,7 @@ import { inferMediaPreview, isPptxPreviewPath, type CodeViewerSource } from "@/l
 import { normalizeCodeViewerSource } from "@/lib/codeViewerSource.js";
 import { resolveSolutionTabState } from "@/you/solutionTabRegistration.js";
 import { resolveCaptureTabState } from "@/you/captureTabRegistration.js";
+import { resolveTwinTabState } from "@/you/twinTabRegistration.js";
 
 export interface BrowserSidePaneTab {
   id: string;
@@ -108,6 +109,19 @@ export interface SolutionSidePaneTab {
 export interface CaptureStudioSidePaneTab {
   id: "capture";
   type: "capture";
+  ownerTaskId?: string | null;
+  workspaceKey?: string | null;
+  openedAt?: number;
+}
+
+/**
+ * YOU Twin surface tab（W3B）——与 Solution/Capture 同级的 native workspace 表面。
+ * 固定单例 id：一个 workspace 一个 Twin tab（重复打开幂等地聚焦既有 tab）；
+ * 内容与视图状态由 `packages/ui/src/you/**` 子树自持（twin 系列模块）。
+ */
+export interface TwinStudioSidePaneTab {
+  id: "twin";
+  type: "twin";
   ownerTaskId?: string | null;
   workspaceKey?: string | null;
   openedAt?: number;
@@ -552,6 +566,7 @@ export type WorkspaceSidePaneTab =
   | DeveloperToolsSidePaneTab
   | SolutionSidePaneTab
   | CaptureStudioSidePaneTab
+  | TwinStudioSidePaneTab
   | TerminalSidePaneTab
   | BrowserUseSidePaneTab
   | SubagentSessionSidePaneTab
@@ -1089,6 +1104,8 @@ const WORKSPACE_GLOBAL_SIDE_PANE_TAB_TYPES = new Set<WorkspaceSidePaneTab["type"
   "solution",
   // Capture/Evidence 同为 workspace 级表面（W2B，同 ADR-002 语义）。
   "capture",
+  // Twin 同为 workspace 级表面（W3B，同 ADR-002 语义）。
+  "twin",
 ]);
 
 function isWorkspaceGlobalSidePaneTab(tab: WorkspaceSidePaneTab): boolean {
@@ -1644,6 +1661,19 @@ export function openCaptureStudioSidePane(
   },
 ): WorkspaceSidePaneState {
   return resolveCaptureTabState(current, options);
+}
+
+/**
+ * 打开（或幂等聚焦）YOU Twin 表面 tab（W3B 注册点）。
+ * 纯转移逻辑在 `@/you/twinTabRegistration.js`（you 子树自合，可被 tsx 直接加载）。
+ */
+export function openTwinStudioSidePane(
+  current: WorkspaceSidePaneState | null,
+  options: {
+    workspaceKey?: string | null;
+  },
+): WorkspaceSidePaneState {
+  return resolveTwinTabState(current, options);
 }
 
 export function openTerminalSidePane(

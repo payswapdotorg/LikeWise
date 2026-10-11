@@ -11,6 +11,7 @@ export interface SidePaneTabPresentationLabels {
   developerToolsTitle: string;
   solutionTitle: string;
   captureTitle: string;
+  twinTitle: string;
   terminalTitle: string;
   subagentTypeLabel: string;
   subagentDirectoryTitle: string;
@@ -74,6 +75,10 @@ export function getSidePaneTabSearchHint(tab: WorkspaceSidePaneTab): string {
   if (tab.type === "capture") {
     return "you capture evidence consent review upload retention simulated guided";
   }
+  // YOU Twin surface（W3B）：搜索面覆盖孪生/质量/对比/重建标注。
+  if (tab.type === "twin") {
+    return "you twin htir domain blocks quality deficiency compare reconstruction version simulated canonical superseded";
+  }
   if (tab.type === "terminal" || tab.type === "bash-output")
     return `${tab.title} terminal shell command`;
   return tab.source.path ?? tab.source.title;
@@ -94,6 +99,7 @@ export function getLocalizedSidePaneTabTitle(
       "developerTools.title": labels.developerToolsTitle,
       "you.solution.tabTitle": labels.solutionTitle,
       "you.capture.tabTitle": labels.captureTitle,
+      "you.twin.tabTitle": labels.twinTitle,
       "terminal.title": labels.terminalTitle,
       "sidePane.subagent": labels.subagentTypeLabel,
       "sidePane.subagentDirectory": labels.subagentDirectoryTitle,
@@ -131,6 +137,7 @@ export function getSidePaneTabTypeLabel(
   if (tab.type === "developer-tools") return labels.developerToolsTitle;
   if (tab.type === "solution") return labels.solutionTitle;
   if (tab.type === "capture") return labels.captureTitle;
+  if (tab.type === "twin") return labels.twinTitle;
   if (tab.type === "terminal" || tab.type === "bash-output") return labels.terminalTitle;
   return labels.codeViewerTitle;
 }

@@ -16,6 +16,7 @@ import {
   PackageIcon,
   PaletteIcon,
   PersonStandingIcon,
+  ScanFaceIcon,
   SquareTerminalIcon,
   TerminalIcon,
   WaypointsIcon,
@@ -340,6 +341,11 @@ export function SidePaneTabIcon({ tab }: { tab: WorkspaceSidePaneTab }) {
     return <CameraIcon className="size-3.5" />;
   }
 
+  // YOU Twin surface（W3B）：与 Solution/Capture 同级的 workspace 表面，固定人像扫描图标。
+  if (tab.type === "twin") {
+    return <ScanFaceIcon className="size-3.5" />;
+  }
+
   if (tab.type === "terminal" || tab.type === "bash-output") {
     return <SquareTerminalIcon className="size-3.5" />;
   }
@@ -556,6 +562,11 @@ export function getSidePaneTabTitle(
   // YOU Capture/Evidence surface（W2B）：标题走中央文案表（you.capture.tabTitle）。
   if (tab.type === "capture") {
     return formatMessage({ id: "you.capture.tabTitle" });
+  }
+
+  // YOU Twin surface（W3B）：标题走中央文案表（you.twin.tabTitle）。
+  if (tab.type === "twin") {
+    return formatMessage({ id: "you.twin.tabTitle" });
   }
 
   if (tab.type === "terminal" || tab.type === "bash-output") {
