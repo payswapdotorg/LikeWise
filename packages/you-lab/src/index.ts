@@ -1,5 +1,7 @@
 // @zcode/you-lab — public entry (W1C: Technology/Editor/Lab foundation; W2C:
-// capture technology candidates, capture adapters and benchmarks).
+// capture technology candidates, capture adapters and benchmarks; W3C:
+// reconstruction technology candidates, reconstruction adapters and
+// benchmarks).
 //
 // Provider-neutral editor and organization capability infrastructure:
 // technology registry, editor capability profiles, the editor adapter seam,
@@ -8,7 +10,14 @@
 // provider-neutral capture adapter seam with deterministic mock adapters,
 // researched capture-technology registry profiles, capture candidate
 // evaluation criteria, the deterministic capture benchmark, and the v2
-// EvidenceRecord/qualityObservations seam mapping.
+// EvidenceRecord/qualityObservations seam mapping. W3C adds the
+// provider-neutral reconstruction adapter seam (typed job specs -> typed
+// HTIR domain blocks) with deterministic mock adapters, the registry-derived
+// production-eligible COLMAP evaluation adapter, researched
+// reconstruction-technology registry profiles, candidate evaluation
+// criteria, the deterministic reconstruction benchmark, and the v3
+// ReconstructionJobSpec/ReconstructionJobResult/HtirDomainBlock/TwinVersion
+// seam mapping.
 
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -32,6 +41,13 @@ export {
   CAPTURE_SEED_PROFILES,
   createCaptureRegistry,
 } from "./technology/captureSeedProfiles.js";
+
+export {
+  GEOMETRY_RECONSTRUCTION_SEED_PROFILES,
+  createReconstructionRegistry,
+} from "./technology/reconstructionSeedProfiles.js";
+
+export { NEURAL_RECONSTRUCTION_SEED_PROFILES } from "./technology/reconstructionNeuralSeedProfiles.js";
 
 export {
   deriveEditorCapabilityProfiles,
@@ -103,9 +119,20 @@ export {
   toEvidenceRecord,
   toEvidenceReview,
   toQualityObservations,
+  toEffortObservations,
+  toHtirDomainBlocks,
+  toNeutralReconstructionRequest,
+  toReconstructionJobResult,
+  reconstructThroughAdapter,
+  toTwinQualityState,
+  toTwinVersion,
   type CaptureEvidenceContext,
   type EvidenceReviewConstruction,
   type QualityObservationEntry,
+  type ReconstructionBlockContext,
+  type ReconstructionJobCompletion,
+  type TwinAssemblyConstruction,
+  type TwinDeficiencyConstruction,
 } from "./contractSeam.js";
 
 export { canonicalJson, daysBetweenIso, fnv1a32, roundTo, sortedUnique } from "./determinism.js";
@@ -196,6 +223,101 @@ export {
 } from "./capture/observationScorer.js";
 
 // ---------------------------------------------------------------------------
+// W3C: reconstruction adapter seam, deterministic mocks, evaluation and
+// benchmark
+// ---------------------------------------------------------------------------
+
+export {
+  RECONSTRUCTION_BENCHMARK_DOMAINS,
+  RECONSTRUCTION_UNSUPPORTED_CODE,
+  NEUTRAL_HTIR_DOMAIN_BYTE_LENGTHS,
+  NEUTRAL_HTIR_DOMAIN_DEFAULT_BYTE_LENGTH,
+  NEUTRAL_RECONSTRUCTION_SUPPORT,
+  UnsupportedReconstructionCombinationError,
+  clampConfidence,
+  isSha256Hex,
+  neutralDomainBlockId,
+  neutralDomainContentRef,
+  neutralHtirDomainByteLength,
+  notMeasuredEffortFields,
+  sha256Hex,
+  synthesizeNeutralDomainBytes,
+  unsupportedReconstructionDomains,
+  type NeutralDomainBlock,
+  type NeutralHtirDomain,
+  type NeutralReconstructionEvidence,
+  type NeutralReconstructionMethod,
+  type NeutralReconstructionRequest,
+  type NeutralReconstructionStatus,
+  type ReconstructionAdapter,
+  type ReconstructionAdapterProfile,
+  type ReconstructionEffortFields,
+  type ReconstructionOutput,
+  type ReconstructionRuntimeClass,
+} from "./reconstruction/reconstructionAdapterSeam.js";
+
+export {
+  deriveReconstructionEvidence,
+  type ReconstructionEvidenceFixture,
+  type SyntheticReconstructionEvidenceSpec,
+} from "./reconstruction/reconstructionEvidence.js";
+
+export { createMockReconstructionAdapter, mockReconstructionGenerator, type MockReconstructionConfig } from "./reconstruction/mockReconstructionAdapter.js";
+
+export {
+  COLMAP_EVALUATION_ADAPTER_ID,
+  colmapEvaluationGenerator,
+  createColmapPhotogrammetryAdapter,
+  type ColmapAdapterFacts,
+} from "./reconstruction/colmapPhotogrammetryAdapter.js";
+
+export {
+  RECONSTRUCTION_CANDIDATE_IDS,
+  RECONSTRUCTION_RESEARCH_DATE,
+  assessProductionEligibility,
+  deriveReconstructionCandidateProfiles,
+  rankProductionEligible,
+  reconstructionCandidateIdsForMethod,
+  type EligibilityOptions,
+  type ProductionEligibilityAssessment,
+  type ReconstructionCandidateProfile,
+  type ReconstructionEvaluationCriteria,
+} from "./reconstruction/reconstructionEvaluation.js";
+
+export {
+  MOCK_RECONSTRUCTION_CANDIDATES,
+  createStandardReconstructionCandidates,
+  type ReconstructionCandidateSpec,
+} from "./reconstruction/reconstructionCandidates.js";
+
+export {
+  GOLDEN_RECONSTRUCTION_REPORT_RUN_ID,
+  RECONSTRUCTION_BENCHMARK_FIXTURES,
+  RECONSTRUCTION_FIXTURE_SET_VERSION,
+  evidenceSetDigest,
+  fixtureEvidence,
+  type ReconstructionBenchmarkFixture,
+} from "./reconstruction/reconstructionFixtures.js";
+
+export {
+  RECONSTRUCTION_BENCH_SUBMITTED_AT,
+  runReconstructionBenchmark,
+  runStandardReconstructionBenchmark,
+  type CandidateReconstructionResult,
+  type FixtureReconstructionScore,
+  type ReconstructionBenchmarkReport,
+} from "./reconstruction/reconstructionRunner.js";
+
+export {
+  DOMAIN_BLOCK_WEIGHTS,
+  SCORER_RECONSTRUCTION_VERSION,
+  achievableConfidence,
+  reconstructionQualityEntries,
+  scoreDomainBlocks,
+  type DomainBlockQualityParts,
+} from "./reconstruction/domainBlockScorer.js";
+
+// ---------------------------------------------------------------------------
 // Test-suite entry for the station command
 //
 // `pnpm exec tsx --test packages/you-lab/src` passes the DIRECTORY to the
@@ -225,6 +347,7 @@ if (isTestRunnerDirectoryEntry()) {
   await import("./technology/registry.test.js");
   await import("./technology/editorCapability.test.js");
   await import("./technology/captureSeedProfiles.test.js");
+  await import("./technology/reconstructionSeedProfiles.test.js");
   await import("./adapters/mockEditorAdapter.test.js");
   await import("./organization/compiler.test.js");
   await import("./benchmarks/benchmark.test.js");
@@ -235,6 +358,11 @@ if (isTestRunnerDirectoryEntry()) {
   await import("./capture/observationScorer.test.js");
   await import("./capture/captureBenchmark.test.js");
   await import("./capture/captureEvaluation.test.js");
+  await import("./reconstruction/mockReconstructionAdapter.test.js");
+  await import("./reconstruction/colmapPhotogrammetryAdapter.test.js");
+  await import("./reconstruction/reconstructionEvaluation.test.js");
+  await import("./reconstruction/reconstructionBenchmark.test.js");
+  await import("./reconstruction/reconstructionSeam.test.js");
   await import("./contractSeam.test.js");
   await import("./consumer-sim.test.js");
 }
