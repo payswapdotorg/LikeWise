@@ -623,3 +623,41 @@ Workers never mark their own work DONE; they submit evidence to TL.
   event-ledger integrity law; the RenderMethodRegistry seam leaves
   method authority with the registry lane (W4C) without a contract
   change.
+
+### W4B merge record (2026-10-11)
+
+- Status: MERGED. Owner: Worker B (GLM-5.3 agent session, Full-Stack),
+  station-verified by TL. Branch: `you/w4b-studio`. Base SHA: `c327881`
+  (W4 contract-freeze). PR #22; merge commit `a6a4059`; worker-lane
+  commit `8d9b62d` (44 files, +7721/−11 — 24 new `ui/src/you` modules
+  incl. 7 test files, plus the pre-expanded registration seams).
+- Delivery-path note: the w4b2 worker posted a VERIFIED report at 15:15Z
+  (ui 164/164, lint 0/70, tsc 0, double-run identical) but its sandbox
+  pod expired before any push window opened — the local commit
+  `0221570` died with the filesystem. TL recovery: full-fidelity
+  narrative reconstruction — the batch store's 250 tool calls were
+  replayed in emission order (75 file-tool ops + the worker's
+  python-heredoc file surgeries interleaved; scripts/replay_full.py);
+  the tree matched the report's 44-file list with ZERO insertion-count
+  mismatches before any gate ran. Worker identity preserved on the
+  lane commit; scratch debug scripts excluded (not in the report's
+  write surface).
+- Station battery (branch @ c327881): tsc all chunks exit 0 · lint
+  0 errors / 70 warnings · shared 180/180 · services 57/57 ·
+  ui **164/164** (worker's claim, exact parity) · you-lab 179/179.
+- Integrated battery (merge commit `a6a4059`): 9/9 GREEN — shared
+  224/224 · services 76/76 · ui 164/164 · you-lab 179/179 · lint
+  0/70 — W4A and W4B coexist with zero interaction (disjoint write
+  surfaces; the only shared-adjacent file is each lane's own
+  test-discovery `index.ts`).
+- Deviations: one, ACCEPTED — `packages/ui/src/App.tsx` +2/−0 additive
+  handler pass-through (identical to the W2B/W3B seam precedent; required
+  for the disclosed `WorkspaceShellLayout` prop to typecheck).
+- Contract change requests: none.
+- TL review: timeline surface keeps payload references content-addressed
+  (never inlined); render job ladder rendered purely from controller
+  projections (zero business logic in the UI — W1B/W2B/W3B pattern
+  held); the simulated controller is honestly `TODO(T4)` for the live
+  binding; consent gating routes through the wave-2 authority projection
+  (no second consent path); i18n key parity en-US/zh-CN asserted by
+  test; the 46 UX tests include golden determinism replays.
