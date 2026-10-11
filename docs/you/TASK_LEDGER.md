@@ -793,3 +793,12 @@ Workers never mark their own work DONE; they submit evidence to TL.
   counts per the gate logs at the merge head.
 - The lane remains MERGED (PR #24, d699a8a); this addendum closes the
   record with final-tree numbers per the truth law.
+
+### W5A merge record correction (2026-10-11)
+
+- Exact final-tree numbers (rev-parse-verified diff 0c5b54e..15b594e code
+  files): **24 code files, all inside the frozen write surface** (the "29"
+  in the addendum was the restructuring delta between the interim tip and
+  the final push, not the final delta vs freeze). contract.ts untouched.
+  Battery at the merged tree: 9/9 GREEN (all tsc chunks, lint 0e/70w, all
+  four test suites passing).
