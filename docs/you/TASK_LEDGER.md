@@ -576,3 +576,50 @@ Workers never mark their own work DONE; they submit evidence to TL.
 - Station gate at freeze: shared tsc exit 0; the integrated battery stands
   at 534/534 (T3 record) — the freeze is additive and touches no runtime
   surface outside the contract module.
+
+### W4A merge record (2026-10-11)
+
+- Status: MERGED. Owner: Worker A (GLM-5.3 agent session, Full-Stack),
+  station-verified by TL. Branch: `you/w4a-core`. Base SHA: `c327881`
+  (the W4 contract-freeze commit). PR #21; merge commit `7958b97`;
+  worker commit `84737cd` (22 files, +4687/−0 — 11 new shared/you
+  modules+tests, 11 new services/you modules+tests; the only edits to
+  existing files are the two test-discovery `index.ts` entries inside
+  `packages/*/src/you`).
+- Station battery (gate-parity): shared **224/224** (baseline 180 + 44
+  new); services **76/76** (baseline 57 + 19 new); ui 118/118;
+  you-lab 179/179; lint 0 errors / 70 warnings = exact baseline.
+  Typecheck: worker pod root `pnpm run typecheck` exit 0 (all 11
+  tsconfigs); TL station chunk `tsc -b shared services you-lab` exit 0
+  — the ui chunk OOM'd at the station (environmental, the documented
+  T2 host constraint; W4A touches zero ui files and the shared public
+  entry is unchanged, so the ui typecheck surface is inherited from the
+  T3-verified tree; the worker's ui battery 118/118 is the runtime
+  corroboration).
+- Zero new dependencies; `contract.ts` untouched; frozen write surface
+  held (shared/src/you + services/src/you only).
+- Services delivered: performanceService (authority),
+  performanceRenderFlow, performanceArtifactReviewFlow,
+  performanceLedgerOps, performanceProjection, performanceServiceTypes
+  (incl. RenderMethodRegistry seam), performanceFixtureScenario(+Types);
+  shared: performanceTimeline, performanceTemplate, renderJob,
+  renderArtifact, performanceLedger.
+- Fixtures: seeded 18-step scenario (golden ledgerHash `f304e891`,
+  13 events, store 11) covering template registration + duplicate-name
+  refusal → real wave-3 TwinService binding (canonical version) →
+  template instantiation (timeline verbatim, param override+defaults) →
+  direct publication → invalid-timeline refusal (track overlap) →
+  render job lifecycle → artifact reviews (accept/reject/supersede) →
+  event ledger replay fold equal to the live projection.
+- Delivery-path note: autonomous push (PAT era, wall-cycle window
+  15:0xZ) — create → spawn → implement → gates → push → END REPORT
+  with zero TL continuation; the GLM-5.3 capacity wall (13:45→~14:58Z)
+  burned transient chats (GC'd) including one w4a lane before this
+  one landed.
+- TL review: review-state machine mirrors the wave-2 evidence-review
+  discipline (append-only, supersession linkage); timeline validators
+  are stateless/no-clock (deterministic by construction); the ledger
+  replay-fold proof (fixture ledger equals live projection) holds the
+  event-ledger integrity law; the RenderMethodRegistry seam leaves
+  method authority with the registry lane (W4C) without a contract
+  change.
