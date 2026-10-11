@@ -715,18 +715,134 @@ Acceptance:
 
 ## W6A — Learning Authority
 
+Branch: `you/w6a-core`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch (the W6 contract-freeze commit on main).
+
 Objective:
-Learning ledger, preference scopes, trajectory references and rights.
+Implement the learning ledger, signal capture, the validation ladder,
+preference projections, trajectory references and rights enforcement
+application services on the frozen v6 contracts.
+
+Frozen write surface (wave 6):
+- `packages/shared/src/you/**` — EXCEPT `you/contract.ts` is TL-frozen
+  (implement around it; request a TL contract update if a change is needed);
+- `packages/services/src/you/**` (the you services subtree Worker A owns
+  since W1A).
+
+Zero edits to any other existing file: no UI, no you-lab, no root
+manifest/lockfile, no new dependencies, no `packages/shared/src/index.ts`
+changes (the v6 types already re-export through the public entry).
+
+Acceptance:
+- learning signal capture: append-only LearningSignal records across all
+  six kinds (feedback / manual-takeover / edit-session /
+  expert-intervention / repeated-intent / capability-gap) with
+  content-addressed evidenceRefs, typed `YOU_LEARNING_SIGNAL_INVALID`
+  refusals (stateless validators, no clock);
+- learning ledger + validation ladder: candidate -> validated | rejected
+  transitions (append-only; supersession via supersededById linkage, never
+  in-place mutation); typed `YOU_LEARNING_RECORD_NOT_FOUND`;
+- rights enforcement: LearningRecord usable only within its LearningRights
+  grant (consentRef + consentHash traceable to the wave-2 consent
+  authority; no second consent path); usage outside the grant is a typed
+  `YOU_LEARNING_RIGHTS_REQUIRED` refusal; records without rights are inert;
+- preference projections: LearningPreference records scoped by the v1
+  LearningScope union, derived from validated records (derivedFromRecordId
+  lineage), typed `YOU_PREFERENCE_SCOPE_INVALID` refusals; projections
+  never mutate the ledger;
+- trajectory references: content-addressed ordered stepRefs, byte-identical
+  replay from seed;
+- deterministic fixtures: seeded scenarios spanning the full ladder
+  (signal capture -> candidate -> validated; a rejected path; a superseded
+  path; a rights-refusal path; a preference derivation; a trajectory
+  replay) — injected clock/rng, `simulated: true`;
+- event ledger integration: learning-signal-captured /
+  learning-record-validated / learning-record-rejected /
+  preference-updated through the existing ledger machinery;
+- tests (node:test) covering the validation ladder transition table,
+  rights enforcement, immutability, preference lineage, trajectory replay,
+  error taxonomy.
 
 ## W6B — Learning UX
 
+Branch: `you/w6b-studio`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch.
+
 Objective:
-Teach-me/learn-this confirmation, replay, transparency and user controls.
+Teach-me/learn-this confirmation flows, learning replay, transparency
+surfaces and user controls on the W6A service seams.
+
+Frozen write surface (wave 6):
+- `packages/ui/src/you/**` + the disclosed registration-only seams (the
+  same pre-expanded seam list as W2B-W5B).
+
+Zero edits to any other existing file: no services, no you-lab, no root
+manifest/lockfile, no new dependencies.
+
+Acceptance:
+- teach-me/learn-this confirmation UX: learning-signal kind picker,
+  scope ladder rendered from controller projections — zero business logic
+  in the UI (W1B-W5B controller pattern; simulated controller until T6
+  binding);
+- learning replay surface: TrajectoryReference step list (content-addressed
+  labels, never inlined content) with deterministic replay projection;
+- transparency surfaces: learning ledger view (status ladder
+  candidate/validated/rejected/superseded), rights display (usage classes
+  + consent linkage), preference list with derived-from lineage;
+- user controls: consent withdrawal projection routed through the wave-2
+  consent authority (no second consent path); preference clear/adjust as
+  projected intents;
+- loading/error/empty states for every region; the v6 typed error codes
+  (`YOU_LEARNING_SIGNAL_INVALID` / `YOU_LEARNING_RECORD_NOT_FOUND` /
+  `YOU_LEARNING_RIGHTS_REQUIRED` / `YOU_PREFERENCE_SCOPE_INVALID`) as
+  typed error panels;
+- i18n: en-US + zh-CN strings for every visible label;
+- dedicated UX tests under the you subtree (registration wiring, panel
+  projections, teach-me flow, replay view, transparency surfaces, error
+  surfaces; node:test).
 
 ## W6C — Organization Learning
 
+Branch: `you/w6c-learnlab`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch.
+
 Objective:
-Learn better organizations, tools, editors and pipelines from manual takeovers.
+Research, register and benchmark what the Lab can learn from manual
+takeovers — provider-neutral organization/tool/editor/pipeline learning
+candidates and the learning-adapter seam with mock and fixture adapters.
+
+Frozen write surface (wave 6):
+- `packages/you-lab/**` ONLY. Zero edits outside.
+
+Acceptance:
+- learning technology registry additions: researched REAL profiles for
+  the candidate set — organization-improvement methods (rule-induction
+  class, preference-learning class, bandit/selection class), tool/
+  editor-selection learners (contextual ranking class, cost-aware
+  selection class), pipeline-improvement methods (program-synthesis
+  class, workflow-mining class) — license (SPDX + source URL),
+  maintenance evidence, compatibility notes, provenance; `unverified:
+  true` where not verified (truth law — never invent);
+- capability profiles: learner capability records derived from the
+  registry (input signal kinds, scopes supported, output classes);
+- provider-neutral learning adapter seam: typed learning invocation
+  (LearningSignal + candidate scope) -> LearningRecord-shaped candidate
+  results (content-addressed per the frozen v6 contract); deterministic
+  `mockLearningAdapter` (seed-derived, no network);
+- production-eligible adapter: the best-license/maintenance candidate
+  integrated behind the seam as a profile-backed evaluation adapter (real
+  runtime integration is W7+ compute-plane territory; honest markers —
+  `not-measured (simulated)`);
+- benchmark harness: deterministic fixtures (seeded synthetic takeover
+  trajectories), runner scoring candidates on learning fidelity and
+  determinism, recording effort as structured fields with honest markers;
+- seam mapping onto frozen v6 contracts (LearningSignal ->
+  LearningRecord candidate construction; rights threading; only the seam
+  module touches contract types);
+- tests (node:test) covering registry integrity (license + source URL,
+  unique ids, no unverified-as-verified), adapter determinism
+  (byte-identical replay from seed), golden benchmark scores, seam mapping
+  validity (adapter outputs construct valid v6 shapes).
 
 ## W7A — Agent Embodiment Authority
 

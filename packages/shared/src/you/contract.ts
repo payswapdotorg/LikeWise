@@ -471,7 +471,11 @@ export type SolutionEventType =
   | "render-artifact-reviewed"
   | "change-set-applied"
   | "candidate-version-proposed"
-  | "import-export-completed";
+  | "import-export-completed"
+  | "learning-signal-captured"
+  | "learning-record-validated"
+  | "learning-record-rejected"
+  | "preference-updated";
 
 export interface SolutionEvent {
   readonly id: OpaqueId;
@@ -508,7 +512,11 @@ export type YouErrorCode =
   | "YOU_EDIT_SESSION_NOT_FOUND"
   | "YOU_CHANGESET_INVALID"
   | "YOU_EDITOR_UNSUPPORTED"
-  | "YOU_IMPORT_EXPORT_FAILED";
+  | "YOU_IMPORT_EXPORT_FAILED"
+  | "YOU_LEARNING_SIGNAL_INVALID"
+  | "YOU_LEARNING_RECORD_NOT_FOUND"
+  | "YOU_LEARNING_RIGHTS_REQUIRED"
+  | "YOU_PREFERENCE_SCOPE_INVALID";
 
 // ---------------------------------------------------------------------------
 // Evidence / Capture / Consent — frozen v2 (wave 2, TL freeze at T1->W2)
@@ -1077,5 +1085,130 @@ export interface RoundTripBenchmarkReport {
   readonly format: ImportExportFormat;
   readonly fidelityScore: number;
   readonly effortObservations: Readonly<Record<string, string | number | boolean>>;
+  readonly simulated: boolean;
+}
+
+
+// ---------------------------------------------------------------------------
+// Learning — frozen v6 (wave 6, TL freeze at T5->W6)
+//
+// Authority: docs/you/CONTRACTS.md "Wave-6 contract freeze (v6)".
+// Dispatched by: docs/you/WORK_ORDERS.md (W6A / W6B / W6C).
+// Same laws as v1/v2/v3/v4/v5: workers MUST NOT modify this file; the freeze
+// is ADDITIVE — no earlier shape is altered. All ids opaque; learning
+// evidence and validated content are never inlined in records — evidenceRefs
+// (wave-2 evidence abstraction) and contentRef + contentHash on the same
+// content-store abstraction; timestamps from the injected clock in fixture
+// mode; truth law (fixture learning stays `simulated: true`). RIGHTS LAW:
+// a learning record is usable only within its LearningRights consent grant
+// (consentRef + consentHash, the wave-2 consent authority — there is no
+// second consent path); records without rights are inert.
+// ---------------------------------------------------------------------------
+
+/**
+ * Learning scope taxonomy: the v1-common frozen `LearningScope` union
+ * (GLOBAL/TENANT/APPLICATION/PROJECT/USER/TWIN/ASSET/TASK —
+ * docs/you/ARCHITECTURE.md section 12). Reused verbatim by the v6 learning
+ * shapes; not redeclared (additive law).
+ */
+
+/**
+ * Provider-neutral kind of captured learning signal (the learning plane:
+ * feedback, manual takeover, edit sessions, expert intervention, repeated
+ * intent, capability gaps).
+ */
+export type LearningSignalKind =
+  | "feedback"
+  | "manual-takeover"
+  | "edit-session"
+  | "expert-intervention"
+  | "repeated-intent"
+  | "capability-gap";
+
+/**
+ * A captured learning signal (append-only; the raw input to the learning
+ * ladder). Evidence is content-addressed — never inlined.
+ */
+export interface LearningSignal {
+  readonly id: OpaqueId;
+  readonly kind: LearningSignalKind;
+  readonly scope: LearningScope;
+  readonly subjectRef: OpaqueId | null;
+  readonly evidenceRefs: readonly string[];
+  readonly capturedAt: string;
+  readonly simulated: boolean;
+}
+
+export type LearningRecordStatus =
+  | "candidate"
+  | "validated"
+  | "rejected"
+  | "superseded";
+
+/**
+ * Sanctioned usage classes for a validated learning record (the rights
+ * law: usage outside the grant is a typed refusal).
+ */
+export type LearningRightUsage =
+  | "organization-improvement"
+  | "tool-selection"
+  | "editor-selection"
+  | "pipeline-improvement"
+  | "capability-gap-analysis"
+  | "personalization";
+
+/**
+ * The rights grant bound to a learning record. Consent is content-addressed
+ * and traceable to the wave-2 consent authority (consentRef + consentHash).
+ */
+export interface LearningRights {
+  readonly usage: readonly LearningRightUsage[];
+  readonly consentRef: string;
+  readonly consentHash: string;
+  readonly expiresAt: string | null;
+}
+
+/**
+ * A validated learning artifact (the learning-ledger node). The validation
+ * ladder: candidate -> validated | rejected; supersession is append-only
+ * linkage, never in-place mutation. Content-addressed; `simulated: true` in
+ * fixture mode.
+ */
+export interface LearningRecord {
+  readonly id: OpaqueId;
+  readonly signalId: OpaqueId;
+  readonly status: LearningRecordStatus;
+  readonly scope: LearningScope;
+  readonly contentRef: string;
+  readonly contentHash: string;
+  readonly rights: LearningRights;
+  readonly validatedAt: string;
+  readonly supersededById: OpaqueId | null;
+  readonly simulated: boolean;
+}
+
+/**
+ * A scoped preference derived from validated learning (or seeded by the
+ * operator). Preferences are projections, never authorities — the record
+ * remains the source of truth.
+ */
+export interface LearningPreference {
+  readonly id: OpaqueId;
+  readonly scope: LearningScope;
+  readonly key: string;
+  readonly value: string;
+  readonly derivedFromRecordId: OpaqueId | null;
+  readonly updatedAt: string;
+}
+
+/**
+ * A content-addressed trajectory reference (the replay substrate for
+ * teach-me/learn-this flows). Steps are ordered refs; never inlined.
+ */
+export interface TrajectoryReference {
+  readonly id: OpaqueId;
+  readonly scope: LearningScope;
+  readonly stepRefs: readonly string[];
+  readonly createdAt: string;
   readonly simulated: boolean;
 }

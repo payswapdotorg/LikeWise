@@ -902,3 +902,28 @@ Workers never mark their own work DONE; they submit evidence to TL.
   batteries — exact parity both times).
 - Phase-0 gate: unchanged. W5 surfaces (editing services, Editing Studio,
   editor lab) join the station battery evidence set.
+
+### W6 contract freeze + dispatch record (2026-10-11)
+
+- Frozen by the TL (this station) at the T5->W6 transition. Contract freeze
+  commit: THIS COMMIT. Machine authority: `packages/shared/src/you/
+  contract.ts` v6 (ADDITIVE — LearningSignalKind, LearningSignal,
+  LearningRecordStatus, LearningRightUsage, LearningRights, LearningRecord,
+  LearningPreference, TrajectoryReference; the scope taxonomy REUSES the
+  v1-common frozen LearningScope union verbatim — a duplicate-declaration
+  compile error was caught and removed pre-commit, zero v1-v5 shape
+  altered; additive events learning-signal-captured /
+  learning-record-validated / learning-record-rejected /
+  preference-updated; additive error codes YOU_LEARNING_SIGNAL_INVALID /
+  YOU_LEARNING_RECORD_NOT_FOUND / YOU_LEARNING_RIGHTS_REQUIRED /
+  YOU_PREFERENCE_SCOPE_INVALID).
+- Docs: CONTRACTS.md "Wave-6 contract freeze (v6)" (rights law: learning
+  usable only within its LearningRights consent grant — no second consent
+  path); WORK_ORDERS.md W6A/W6B/W6C expanded to full binding orders.
+- Wave-6 lanes: W6A Learning Authority (`you/w6a-core`, shared + services
+  surfaces); W6B Learning UX (`you/w6b-studio`, ui surface + registration
+  seams); W6C Organization Learning (`you/w6c-learnlab`, you-lab only).
+- Verified at freeze: shared tsc exit 0; shared you battery 254/254
+  unchanged (zero regression from the additive shapes).
+- Dispatch follows immediately with the in-context order protocol (title
+  message + binding order as message 2 + exact-command kick as message 3).

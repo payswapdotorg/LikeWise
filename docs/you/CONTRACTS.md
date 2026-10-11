@@ -468,3 +468,47 @@ Frozen by the TL at the T4->W5 transition for Work Orders W5A / W5B / W5C.
 - Dependency policy for wave 5: zero new runtime dependencies; no root
   manifest/lockfile edits by workers; TL serializes any root
   reconciliation at T5.
+
+## Wave-6 contract freeze (v6)
+
+Frozen by the TL at the T5->W6 transition for Work Orders W6A / W6B /
+W6C.
+
+- Machine authority: `packages/shared/src/you/contract.ts` (the same file
+  as v1-v5; the freeze is ADDITIVE — no earlier shape was altered. New:
+  LearningSignalKind, LearningSignal, LearningRecordStatus,
+  LearningRightUsage, LearningRights, LearningRecord, LearningPreference,
+  TrajectoryReference; the learning SCOPE taxonomy reuses the v1-common
+  frozen `LearningScope` union verbatim (GLOBAL/TENANT/APPLICATION/PROJECT/
+  USER/TWIN/ASSET/TASK) — not redeclared; additive event types
+  learning-signal-captured / learning-record-validated /
+  learning-record-rejected / preference-updated; additive error codes
+  YOU_LEARNING_SIGNAL_INVALID / YOU_LEARNING_RECORD_NOT_FOUND /
+  YOU_LEARNING_RIGHTS_REQUIRED / YOU_PREFERENCE_SCOPE_INVALID).
+- Workers MUST NOT modify `contract.ts`. A worker needing a contract change
+  stops and requests a TL contract update in its delivery report.
+- Wave-6 consumption: Worker A implements the learning application
+  services + fixtures on the frozen types (learning ledger append-only
+  machinery, signal capture, the validation ladder, preference
+  projections, trajectory references, rights enforcement). Worker B
+  imports the frozen types from `@zcode/shared` and builds the
+  teach-me/learn-this UX on Worker A's service seams via the W1B-W5B
+  controller pattern (simulated controller until T6 binding; no business
+  logic in the UI). Worker C researches organization/tool/editor/pipeline
+  learning candidates inside `packages/you-lab` (what the Lab can learn
+  from manual takeovers) and implements the learning-adapter seam + mock +
+  benchmark on the lab foundation, mapping onto the frozen contract at
+  `contractSeam.ts`.
+- RIGHTS LAW (wave-6 core): a learning record is usable only within its
+  LearningRights consent grant (consentRef + consentHash traceable to the
+  wave-2 consent authority — there is no second consent path); records
+  without rights are inert; usage outside the grant is a typed refusal
+  (YOU_LEARNING_RIGHTS_REQUIRED).
+- Learning evidence and validated content are never inlined in records or
+  events; evidenceRefs (wave-2 evidence abstraction) and
+  contentRef + contentHash on the same content-store abstraction.
+  FIXTURES.md laws apply verbatim (injected clock/rng, no ambient
+  nondeterminism, byte-identical replays, `simulated: true`).
+- Dependency policy for wave 6: zero new runtime dependencies; no root
+  manifest/lockfile edits by workers; TL serializes any root
+  reconciliation at T6.
