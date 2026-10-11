@@ -36,6 +36,7 @@ import {
   activateDeveloperToolsSidePane,
   openSolutionSidePane,
   openCaptureStudioSidePane,
+  openTwinStudioSidePane,
   openBrowserSidePane,
   openOrActivateBrowserSidePaneByUrl,
   findBrowserSidePaneTabByUrl,
@@ -811,6 +812,20 @@ export function useAppPanels(options: {
       });
       logger.info(
         `[App] 打开右侧面板 mode=capture workspace=${workspaceAbsPath} tabs=${next.tabs.length}`,
+      );
+      return next;
+    });
+  }, [commitOpenedSidePaneState, revealSidePaneForCurrentOwner, workspaceAbsPath]);
+
+  // YOU Twin surface（W3B 注册点）：幂等打开/聚焦 native Twin tab。
+  const handleOpenTwinStudio = useCallback(() => {
+    revealSidePaneForCurrentOwner();
+    commitOpenedSidePaneState((current) => {
+      const next = openTwinStudioSidePane(current, {
+        workspaceKey: activeWorkspaceKeyRef.current,
+      });
+      logger.info(
+        `[App] 打开右侧面板 mode=twin workspace=${workspaceAbsPath} tabs=${next.tabs.length}`,
       );
       return next;
     });
@@ -1619,6 +1634,7 @@ export function useAppPanels(options: {
     handleOpenDeveloperTools,
     handleOpenSolution,
     handleOpenCaptureStudio,
+    handleOpenTwinStudio,
     handleOpenTerminalTab,
     handleOpenModelTrajectory,
     handleOpenSubagentSession,

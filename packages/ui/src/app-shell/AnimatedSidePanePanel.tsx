@@ -52,6 +52,7 @@ import { WorkflowWorkspaceSidePane } from "@/app-shell/WorkflowWorkspaceSidePane
 import { WorkflowArtifactSidePane } from "@/app-shell/WorkflowArtifactSidePane.js";
 import { SolutionSurface } from "@/you/SolutionSurface.js";
 import { CaptureStudioSurface } from "@/you/CaptureStudioSurface.js";
+import { TwinStudioSurface } from "@/you/TwinStudioSurface.js";
 import {
   getSidePaneTabTitle,
   SidePaneTabDragOverlay,
@@ -99,6 +100,7 @@ import {
   MessageSquareTextIcon,
   PersonStandingIcon,
   PlusIcon,
+  ScanFaceIcon,
   SquareTerminalIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -319,6 +321,7 @@ export function AnimatedSidePanePanel({
   onOpenDeveloperTools,
   onOpenSolution,
   onOpenCaptureStudio,
+  onOpenTwinStudio,
   onOpenTerminalTab,
   onOpenReviewTab,
   onOpenSelectionSideConversation,
@@ -388,6 +391,8 @@ export function AnimatedSidePanePanel({
   onOpenSolution: () => void;
   /** YOU Capture/Evidence surface（W2B）：幂等打开/聚焦 Capture tab。 */
   onOpenCaptureStudio: () => void;
+  /** YOU Twin surface（W3B）：幂等打开/聚焦 Twin tab。 */
+  onOpenTwinStudio: () => void;
   onOpenTerminalTab: () => void;
   onOpenReviewTab: () => void;
   onOpenSelectionSideConversation: () => void;
@@ -460,6 +465,7 @@ export function AnimatedSidePanePanel({
   const hasReviewTab = visibleTabs.some((tab) => tab.type === "git");
   const hasSolutionTab = tabs.some((tab) => tab.type === "solution");
   const hasCaptureTab = tabs.some((tab) => tab.type === "capture");
+  const hasTwinTab = tabs.some((tab) => tab.type === "twin");
   const canOpenSelectionSideConversation = shouldOfferSelectionSideConversation({
     activeTaskId,
   });
@@ -791,6 +797,17 @@ export function AnimatedSidePanePanel({
             <span>{intl.formatMessage({ id: "you.capture.tabTitle" })}</span>
           </DropdownMenuItem>
         ) : null}
+        {!hasTwinTab ? (
+          <DropdownMenuItem
+            data-side-pane-add-item="twin"
+            onSelect={() => {
+              onOpenTwinStudio();
+            }}
+          >
+            <ScanFaceIcon className="size-4" />
+            <span>{intl.formatMessage({ id: "you.twin.tabTitle" })}</span>
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -837,6 +854,12 @@ export function AnimatedSidePanePanel({
       icon: CameraIcon,
       onOpen: onOpenCaptureStudio,
     },
+    twin: {
+      id: "twin",
+      label: intl.formatMessage({ id: "you.twin.tabTitle" }),
+      icon: ScanFaceIcon,
+      onOpen: onOpenTwinStudio,
+    },
   };
   const openTabLauncherItems: OpenTabLauncherItem[] = resolveOpenTabLauncherItemIds({
     canOpenSelectionSideConversation,
@@ -844,6 +867,7 @@ export function AnimatedSidePanePanel({
     hasReviewTab,
     hasSolutionTab,
     hasCaptureTab,
+    hasTwinTab,
     supportsEmbeddedBrowser,
   })
     .filter((itemId) => !isOfficeMode || (itemId !== "terminal" && itemId !== "review"))
@@ -935,6 +959,7 @@ export function AnimatedSidePanePanel({
         }),
         solutionTitle: intl.formatMessage({ id: "you.solution.tabTitle" }),
         captureTitle: intl.formatMessage({ id: "you.capture.tabTitle" }),
+        twinTitle: intl.formatMessage({ id: "you.twin.tabTitle" }),
         terminalTitle: intl.formatMessage({ id: "terminal.title" }),
         subagentTypeLabel: intl.formatMessage({ id: "sidePane.subagent" }),
         subagentDirectoryTitle: intl.formatMessage({
@@ -1326,6 +1351,14 @@ export function AnimatedSidePanePanel({
                             tab={tab}
                             workspaceKey={workspaceKey}
                             isActive={isVisible && tab.id === visibleActiveTabId}
+                          />
+                        ) : tab.type === "twin" ? (
+                          <TwinStudioSurface
+                            key={tab.id}
+                            tab={tab}
+                            workspaceKey={workspaceKey}
+                            isActive={isVisible && tab.id === visibleActiveTabId}
+                            onOpenCaptureStudio={onOpenCaptureStudio}
                           />
                         ) : (
                           <HumanBrowserView

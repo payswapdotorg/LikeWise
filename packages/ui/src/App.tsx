@@ -233,6 +233,7 @@ export function App({
     handleOpenDeveloperTools,
     handleOpenSolution,
     handleOpenCaptureStudio,
+    handleOpenTwinStudio,
     handleOpenTerminalTab,
     handleOpenSubagentSession,
     handleOpenBackgroundBash,
@@ -1248,6 +1249,7 @@ export function App({
         handleOpenDeveloperTools={handleOpenDeveloperTools}
         handleOpenSolution={handleOpenSolution}
         handleOpenCaptureStudio={handleOpenCaptureStudio}
+        handleOpenTwinStudio={handleOpenTwinStudio}
         handleOpenTerminalTab={handleOpenTerminalTabIfWritable}
         handleToggleGit={handleToggleGitIfWritable}
         handleToggleSidePane={handleToggleSidePane}

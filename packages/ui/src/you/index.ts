@@ -22,3 +22,10 @@ import "./captureSimulatedController.test.js";
 import "./captureStudioDemo.test.js";
 import "./captureRegistration.test.js";
 import "./captureMessages.test.js";
+// W3B — Twin Studio 逻辑测试。
+import "./twinTabRegistration.test.js";
+import "./twinMessages.test.js";
+import "./twinStudioStore.test.js";
+import "./twinStudioProjection.test.js";
+import "./twinSimulatedController.test.js";
+import "./twinStudioDemo.test.js";
