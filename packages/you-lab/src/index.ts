@@ -1,6 +1,7 @@
 // @zcode/you-lab — public entry (W1C: Technology/Editor/Lab foundation; W2C:
 // capture technology candidates, capture adapters and benchmarks; W3C:
 // reconstruction technology candidates, reconstruction adapters and
+// benchmarks; W4C: render technology candidates, render adapters and
 // benchmarks).
 //
 // Provider-neutral editor and organization capability infrastructure:
@@ -17,7 +18,16 @@
 // reconstruction-technology registry profiles, candidate evaluation
 // criteria, the deterministic reconstruction benchmark, and the v3
 // ReconstructionJobSpec/ReconstructionJobResult/HtirDomainBlock/TwinVersion
-// seam mapping.
+// seam mapping. W4C adds the provider-neutral render adapter seam (typed
+// render job specs consuming performance timelines -> typed content-addressed
+// render artifacts) with deterministic mock adapters covering the
+// image/video/mesh/animation output kinds, the registry-derived
+// production-eligible three.js evaluation adapter, researched
+// motion-extraction/retargeting/image/video/3D render technology registry
+// profiles, candidate evaluation criteria, the deterministic render
+// benchmark, and the v4
+// RenderJobSpec/RenderJobResult/RenderArtifact/PerformanceTimeline seam
+// mapping.
 
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -48,6 +58,13 @@ export {
 } from "./technology/reconstructionSeedProfiles.js";
 
 export { NEURAL_RECONSTRUCTION_SEED_PROFILES } from "./technology/reconstructionNeuralSeedProfiles.js";
+
+export {
+  RENDER_SEED_PROFILES,
+  createRenderRegistry,
+} from "./technology/renderSeedProfiles.js";
+
+export { RENDER_MOTION_SEED_PROFILES } from "./technology/renderMotionSeedProfiles.js";
 
 export {
   deriveEditorCapabilityProfiles,
@@ -126,11 +143,19 @@ export {
   reconstructThroughAdapter,
   toTwinQualityState,
   toTwinVersion,
+  toNeutralRenderTimeline,
+  toNeutralRenderRequest,
+  toRenderArtifacts,
+  toRenderEffortObservations,
+  toRenderJobResult,
+  renderThroughAdapter,
   type CaptureEvidenceContext,
   type EvidenceReviewConstruction,
   type QualityObservationEntry,
   type ReconstructionBlockContext,
   type ReconstructionJobCompletion,
+  type RenderArtifactContext,
+  type RenderJobCompletion,
   type TwinAssemblyConstruction,
   type TwinDeficiencyConstruction,
 } from "./contractSeam.js";
@@ -318,6 +343,103 @@ export {
 } from "./reconstruction/domainBlockScorer.js";
 
 // ---------------------------------------------------------------------------
+// W4C: render adapter seam, deterministic mocks, evaluation and benchmark
+// ---------------------------------------------------------------------------
+
+export {
+  NEUTRAL_RENDER_SUPPORT,
+  NEUTRAL_RENDER_KIND_BYTE_LENGTHS,
+  NEUTRAL_RENDER_KIND_DEFAULT_BYTE_LENGTH,
+  RENDER_BENCHMARK_OUTPUT_KINDS,
+  RENDER_UNSUPPORTED_CODE,
+  UnimplementedRenderMethodError,
+  UnsupportedRenderOutputKindsError,
+  assertRenderRequestSupported,
+  clampFidelity,
+  neutralRenderArtifactId,
+  neutralRenderContentRef,
+  neutralRenderKindByteLength,
+  notMeasuredRenderEffortFields,
+  synthesizeNeutralRenderBytes,
+  unsupportedRenderOutputKinds,
+  type NeutralPerformanceCue,
+  type NeutralPerformanceTimeline,
+  type NeutralPerformanceTrackKind,
+  type NeutralRenderArtifact,
+  type NeutralRenderMethod,
+  type NeutralRenderOutputKind,
+  type NeutralRenderRequest,
+  type NeutralRenderStatus,
+  type RenderAdapter,
+  type RenderAdapterProfile,
+  type RenderEffortFields,
+  type RenderOutput,
+  type RenderRuntimeClass,
+} from "./render/renderAdapterSeam.js";
+
+export {
+  createMockRenderAdapter,
+  mockRenderGenerator,
+  timelineLift,
+  type MockRenderConfig,
+} from "./render/mockRenderAdapter.js";
+
+export {
+  THREEJS_EVALUATION_ADAPTER_ID,
+  createThreejsRasterizationAdapter,
+  threejsEvaluationGenerator,
+  type ThreejsAdapterFacts,
+} from "./render/threejsRasterizationAdapter.js";
+
+export {
+  RENDER_CANDIDATE_IDS,
+  RENDER_RESEARCH_DATE,
+  assessRenderProductionEligibility,
+  deriveRenderCandidateProfiles,
+  rankRenderProductionEligible,
+  renderCandidateIdsForMethod,
+  type RenderCandidateProfile,
+  type RenderEligibilityOptions,
+  type RenderEvaluationCriteria,
+  type RenderProductionEligibilityAssessment,
+} from "./render/renderEvaluation.js";
+
+export {
+  MOCK_RENDER_CANDIDATES,
+  createStandardRenderCandidates,
+  type RenderCandidateSpec,
+} from "./render/renderCandidates.js";
+
+export {
+  GOLDEN_RENDER_REPORT_RUN_ID,
+  RENDER_BENCHMARK_FIXTURES,
+  RENDER_FIXTURE_SET_VERSION,
+  fixtureTimeline,
+  synthesizePerformanceTimeline,
+  timelineDigest,
+  type RenderBenchmarkFixture,
+  type SyntheticPerformanceSpec,
+} from "./render/renderFixtures.js";
+
+export {
+  RENDER_BENCH_SUBMITTED_AT,
+  runRenderBenchmark,
+  runStandardRenderBenchmark,
+  type CandidateRenderResult,
+  type FixtureRenderScore,
+  type RenderBenchmarkReport,
+} from "./render/renderRunner.js";
+
+export {
+  RENDER_ARTIFACT_WEIGHTS,
+  SCORER_RENDER_VERSION,
+  achievableRenderFidelity,
+  isValidlyAddressed,
+  scoreRenderArtifacts,
+  type RenderArtifactQualityParts,
+} from "./render/renderArtifactScorer.js";
+
+// ---------------------------------------------------------------------------
 // Test-suite entry for the station command
 //
 // `pnpm exec tsx --test packages/you-lab/src` passes the DIRECTORY to the
@@ -348,6 +470,7 @@ if (isTestRunnerDirectoryEntry()) {
   await import("./technology/editorCapability.test.js");
   await import("./technology/captureSeedProfiles.test.js");
   await import("./technology/reconstructionSeedProfiles.test.js");
+  await import("./technology/renderSeedProfiles.test.js");
   await import("./adapters/mockEditorAdapter.test.js");
   await import("./organization/compiler.test.js");
   await import("./benchmarks/benchmark.test.js");
@@ -363,6 +486,10 @@ if (isTestRunnerDirectoryEntry()) {
   await import("./reconstruction/reconstructionEvaluation.test.js");
   await import("./reconstruction/reconstructionBenchmark.test.js");
   await import("./reconstruction/reconstructionSeam.test.js");
+  await import("./render/mockRenderAdapter.test.js");
+  await import("./render/renderEvaluation.test.js");
+  await import("./render/renderBenchmark.test.js");
+  await import("./render/renderSeam.test.js");
   await import("./contractSeam.test.js");
   await import("./consumer-sim.test.js");
 }
