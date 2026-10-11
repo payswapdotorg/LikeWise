@@ -29,3 +29,10 @@ import "./twinStudioStore.test.js";
 import "./twinStudioProjection.test.js";
 import "./twinSimulatedController.test.js";
 import "./twinStudioDemo.test.js";
+// W4B — Performance Studio 逻辑测试。
+import "./performanceTabRegistration.test.js";
+import "./performanceMessages.test.js";
+import "./performanceStudioStore.test.js";
+import "./performanceStudioProjection.test.js";
+import "./performanceSimulatedController.test.js";
+import "./performanceStudioDemo.test.js";

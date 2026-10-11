@@ -8,7 +8,8 @@ export type OpenTabLauncherItemId =
   | "developer-tools"
   | "solution"
   | "capture"
-  | "twin";
+  | "twin"
+  | "performance";
 
 export function resolveOpenTabLauncherItemIds({
   developerToolsEnabled,
@@ -16,6 +17,7 @@ export function resolveOpenTabLauncherItemIds({
   hasSolutionTab,
   hasCaptureTab = false,
   hasTwinTab = false,
+  hasPerformanceTab = false,
   canOpenSelectionSideConversation = false,
   supportsEmbeddedBrowser = true,
 }: {
@@ -27,6 +29,8 @@ export function resolveOpenTabLauncherItemIds({
   hasCaptureTab?: boolean;
   /** YOU Twin tab 已开时不再提供入口（W3B，同幂等聚焦语义）。缺省 false。 */
   hasTwinTab?: boolean;
+  /** YOU Performance tab 已开时不再提供入口（W4B，同幂等聚焦语义）。缺省 false。 */
+  hasPerformanceTab?: boolean;
   canOpenSelectionSideConversation?: boolean;
   supportsEmbeddedBrowser?: boolean;
 }): OpenTabLauncherItemId[] {
@@ -60,6 +64,10 @@ export function resolveOpenTabLauncherItemIds({
 
   if (!hasTwinTab) {
     itemIds.push("twin");
+  }
+
+  if (!hasPerformanceTab) {
+    itemIds.push("performance");
   }
 
   return itemIds;

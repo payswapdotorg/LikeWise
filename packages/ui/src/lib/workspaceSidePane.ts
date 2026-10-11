@@ -5,6 +5,7 @@ import { normalizeCodeViewerSource } from "@/lib/codeViewerSource.js";
 import { resolveSolutionTabState } from "@/you/solutionTabRegistration.js";
 import { resolveCaptureTabState } from "@/you/captureTabRegistration.js";
 import { resolveTwinTabState } from "@/you/twinTabRegistration.js";
+import { resolvePerformanceTabState } from "@/you/performanceTabRegistration.js";
 
 export interface BrowserSidePaneTab {
   id: string;
@@ -122,6 +123,20 @@ export interface CaptureStudioSidePaneTab {
 export interface TwinStudioSidePaneTab {
   id: "twin";
   type: "twin";
+  ownerTaskId?: string | null;
+  workspaceKey?: string | null;
+  openedAt?: number;
+}
+
+/**
+ * YOU Performance surface tab（W4B）——与 Solution/Capture/Twin 同级的 native
+ * workspace 表面。固定单例 id：一个 workspace 一个 Performance tab（重复打开幂等地
+ * 聚焦既有 tab）；内容与视图状态由 `packages/ui/src/you/**` 子树自持
+ *（performance 系列模块）。
+ */
+export interface PerformanceStudioSidePaneTab {
+  id: "performance";
+  type: "performance";
   ownerTaskId?: string | null;
   workspaceKey?: string | null;
   openedAt?: number;
@@ -567,6 +582,7 @@ export type WorkspaceSidePaneTab =
   | SolutionSidePaneTab
   | CaptureStudioSidePaneTab
   | TwinStudioSidePaneTab
+  | PerformanceStudioSidePaneTab
   | TerminalSidePaneTab
   | BrowserUseSidePaneTab
   | SubagentSessionSidePaneTab
@@ -1106,6 +1122,8 @@ const WORKSPACE_GLOBAL_SIDE_PANE_TAB_TYPES = new Set<WorkspaceSidePaneTab["type"
   "capture",
   // Twin 同为 workspace 级表面（W3B，同 ADR-002 语义）。
   "twin",
+  // Performance 同为 workspace 级表面（W4B，同 ADR-002 语义）。
+  "performance",
 ]);
 
 function isWorkspaceGlobalSidePaneTab(tab: WorkspaceSidePaneTab): boolean {
@@ -1674,6 +1692,19 @@ export function openTwinStudioSidePane(
   },
 ): WorkspaceSidePaneState {
   return resolveTwinTabState(current, options);
+}
+
+/**
+ * 打开（或幂等聚焦）YOU Performance 表面 tab（W4B 注册点）。
+ * 纯转移逻辑在 `@/you/performanceTabRegistration.js`（you 子树自合，可被 tsx 直接加载）。
+ */
+export function openPerformanceStudioSidePane(
+  current: WorkspaceSidePaneState | null,
+  options: {
+    workspaceKey?: string | null;
+  },
+): WorkspaceSidePaneState {
+  return resolvePerformanceTabState(current, options);
 }
 
 export function openTerminalSidePane(

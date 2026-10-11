@@ -7,6 +7,7 @@ import {
   BotMessageSquareIcon,
   BugIcon,
   CameraIcon,
+  ClapperboardIcon,
   FileCode2Icon,
   FileDiffIcon,
   MapIcon,
@@ -346,6 +347,12 @@ export function SidePaneTabIcon({ tab }: { tab: WorkspaceSidePaneTab }) {
     return <ScanFaceIcon className="size-3.5" />;
   }
 
+  // YOU Performance surface（W4B）：与 Solution/Capture/Twin 同级的 workspace 表面，
+  // 固定场记板（clapperboard）图标。
+  if (tab.type === "performance") {
+    return <ClapperboardIcon className="size-3.5" />;
+  }
+
   if (tab.type === "terminal" || tab.type === "bash-output") {
     return <SquareTerminalIcon className="size-3.5" />;
   }
@@ -567,6 +574,11 @@ export function getSidePaneTabTitle(
   // YOU Twin surface（W3B）：标题走中央文案表（you.twin.tabTitle）。
   if (tab.type === "twin") {
     return formatMessage({ id: "you.twin.tabTitle" });
+  }
+
+  // YOU Performance surface（W4B）：标题走中央文案表（you.performance.tabTitle）。
+  if (tab.type === "performance") {
+    return formatMessage({ id: "you.performance.tabTitle" });
   }
 
   if (tab.type === "terminal" || tab.type === "bash-output") {

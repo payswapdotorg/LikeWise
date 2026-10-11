@@ -53,6 +53,7 @@ import { WorkflowArtifactSidePane } from "@/app-shell/WorkflowArtifactSidePane.j
 import { SolutionSurface } from "@/you/SolutionSurface.js";
 import { CaptureStudioSurface } from "@/you/CaptureStudioSurface.js";
 import { TwinStudioSurface } from "@/you/TwinStudioSurface.js";
+import { PerformanceStudioSurface } from "@/you/PerformanceStudioSurface.js";
 import {
   getSidePaneTabTitle,
   SidePaneTabDragOverlay,
@@ -95,6 +96,7 @@ import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   BugIcon,
   CameraIcon,
+  ClapperboardIcon,
   FileDiffIcon,
   GlobeIcon,
   MessageSquareTextIcon,
@@ -322,6 +324,7 @@ export function AnimatedSidePanePanel({
   onOpenSolution,
   onOpenCaptureStudio,
   onOpenTwinStudio,
+  onOpenPerformanceStudio,
   onOpenTerminalTab,
   onOpenReviewTab,
   onOpenSelectionSideConversation,
@@ -393,6 +396,8 @@ export function AnimatedSidePanePanel({
   onOpenCaptureStudio: () => void;
   /** YOU Twin surface（W3B）：幂等打开/聚焦 Twin tab。 */
   onOpenTwinStudio: () => void;
+  /** YOU Performance surface（W4B）：幂等打开/聚焦 Performance tab。 */
+  onOpenPerformanceStudio: () => void;
   onOpenTerminalTab: () => void;
   onOpenReviewTab: () => void;
   onOpenSelectionSideConversation: () => void;
@@ -466,6 +471,7 @@ export function AnimatedSidePanePanel({
   const hasSolutionTab = tabs.some((tab) => tab.type === "solution");
   const hasCaptureTab = tabs.some((tab) => tab.type === "capture");
   const hasTwinTab = tabs.some((tab) => tab.type === "twin");
+  const hasPerformanceTab = tabs.some((tab) => tab.type === "performance");
   const canOpenSelectionSideConversation = shouldOfferSelectionSideConversation({
     activeTaskId,
   });
@@ -808,6 +814,17 @@ export function AnimatedSidePanePanel({
             <span>{intl.formatMessage({ id: "you.twin.tabTitle" })}</span>
           </DropdownMenuItem>
         ) : null}
+        {!hasPerformanceTab ? (
+          <DropdownMenuItem
+            data-side-pane-add-item="performance"
+            onSelect={() => {
+              onOpenPerformanceStudio();
+            }}
+          >
+            <ClapperboardIcon className="size-4" />
+            <span>{intl.formatMessage({ id: "you.performance.tabTitle" })}</span>
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -860,6 +877,12 @@ export function AnimatedSidePanePanel({
       icon: ScanFaceIcon,
       onOpen: onOpenTwinStudio,
     },
+    performance: {
+      id: "performance",
+      label: intl.formatMessage({ id: "you.performance.tabTitle" }),
+      icon: ClapperboardIcon,
+      onOpen: onOpenPerformanceStudio,
+    },
   };
   const openTabLauncherItems: OpenTabLauncherItem[] = resolveOpenTabLauncherItemIds({
     canOpenSelectionSideConversation,
@@ -868,6 +891,7 @@ export function AnimatedSidePanePanel({
     hasSolutionTab,
     hasCaptureTab,
     hasTwinTab,
+    hasPerformanceTab,
     supportsEmbeddedBrowser,
   })
     .filter((itemId) => !isOfficeMode || (itemId !== "terminal" && itemId !== "review"))
@@ -960,6 +984,7 @@ export function AnimatedSidePanePanel({
         solutionTitle: intl.formatMessage({ id: "you.solution.tabTitle" }),
         captureTitle: intl.formatMessage({ id: "you.capture.tabTitle" }),
         twinTitle: intl.formatMessage({ id: "you.twin.tabTitle" }),
+        performanceTitle: intl.formatMessage({ id: "you.performance.tabTitle" }),
         terminalTitle: intl.formatMessage({ id: "terminal.title" }),
         subagentTypeLabel: intl.formatMessage({ id: "sidePane.subagent" }),
         subagentDirectoryTitle: intl.formatMessage({
@@ -1359,6 +1384,13 @@ export function AnimatedSidePanePanel({
                             workspaceKey={workspaceKey}
                             isActive={isVisible && tab.id === visibleActiveTabId}
                             onOpenCaptureStudio={onOpenCaptureStudio}
+                          />
+                        ) : tab.type === "performance" ? (
+                          <PerformanceStudioSurface
+                            key={tab.id}
+                            tab={tab}
+                            workspaceKey={workspaceKey}
+                            isActive={isVisible && tab.id === visibleActiveTabId}
                           />
                         ) : (
                           <HumanBrowserView

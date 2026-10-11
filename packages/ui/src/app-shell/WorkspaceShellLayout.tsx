@@ -305,6 +305,7 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
   handleOpenSolution,
   handleOpenCaptureStudio,
   handleOpenTwinStudio,
+  handleOpenPerformanceStudio,
   handleOpenTerminalTab,
   handleToggleGit,
   handleOpenGitReview,
@@ -1468,6 +1469,7 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
       onOpenSolution={handleOpenSolution}
       onOpenCaptureStudio={handleOpenCaptureStudio}
       onOpenTwinStudio={handleOpenTwinStudio}
+      onOpenPerformanceStudio={handleOpenPerformanceStudio}
       onOpenTerminalTab={handleOpenTerminalTab}
       onOpenReviewTab={handleToggleGit}
       onOpenSelectionSideConversation={handleOpenSelectionSideConversationLauncher}
