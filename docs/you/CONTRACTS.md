@@ -554,3 +554,60 @@ W7C.
 - Dependency policy for wave 7: zero new runtime dependencies; no root
   manifest/lockfile edits by workers; TL serializes any root
   reconciliation at T7.
+
+## Wave-8 contract freeze (v8)
+
+Frozen by the TL at the T7->W8 transition for Work Orders W8A / W8B /
+W8C.
+
+- Machine authority: `packages/shared/src/you/contract.ts` (the same file
+  as v1-v7; the freeze is ADDITIVE — no earlier shape was altered. New:
+  ArenaRunStatus, ArenaRun (one automation attempt against a
+  CapabilityGap; append-only run ladder), ArenaRetryPolicy
+  (deterministic retry ladder configuration), ArenaLearningPermission
+  (none/aggregate/full — what the learning machine may derive from an
+  escalation), EscalationAuthorization (the user authorization gate),
+  ArenaProviderDescriptor (provider-neutral arena client boundary),
+  ToolGapProjection / KnowledgeGapProjection (projections, never
+  authorities); additive event types arena-run-recorded /
+  escalation-authorized / escalation-cancelled /
+  learning-permission-recorded / gap-projection-published; additive
+  error codes YOU_ESCALATION_NOT_FOUND / YOU_ESCALATION_STATE_INVALID /
+  YOU_ESCALATION_AUTHORIZATION_REQUIRED / YOU_ARENA_RUN_NOT_FOUND /
+  YOU_RETRY_POLICY_INVALID / YOU_ARENA_ADAPTER_UNSUPPORTED /
+  YOU_GAP_PROJECTION_INVALID).
+- Workers MUST NOT modify `contract.ts`. A worker needing a contract
+  change stops and requests a TL contract update in its delivery
+  report.
+- Wave-8 consumption: Worker A implements the arena authority services
+  (CapabilityGap persistence + the append-only run ladder,
+  ArenaRetryPolicy validation, EscalationAuthorization lifecycle, the
+  provider-neutral Arena client boundary). Worker B builds the
+  Escalation UX on Worker A's seams (the W1B-W7B controller pattern;
+  simulated controller until T8 binding): authorization, progress,
+  expert-result review, learning permission. Worker C researches gap
+  detection + retry/backoff approaches and implements the Arena adapter
+  seam + mock + benchmark + ToolGap/Knowledge projections inside
+  `packages/you-lab`.
+- ARENA BOUNDARY LAW (v1 §15 restated as the wave-8 core): the Arena
+  never silently mutates YOU state. Every arena result returns as a
+  typed payload (ArenaExpertResult) applied through YOU's own
+  authority. The escalation lifecycle stays the v1 ArenaEscalation
+  ladder (requested -> authorized -> in-progress -> delivered ->
+  applied | rejected | cancelled).
+- ESCALATION AUTHORIZATION LAW: an escalation NEVER runs without an
+  explicit, in-scope, unexpired EscalationAuthorization granted by the
+  user. Authorization grants are immutable records; expiry and
+  withdrawal create new records — nothing is mutated in place. The
+  services refuse unauthorized escalation paths with
+  YOU_ESCALATION_AUTHORIZATION_REQUIRED.
+- ARENA LEARNING PERMISSION LAW: escalation-derived signals never enter
+  the learning machine without an explicit ArenaLearningPermission
+  (none/aggregate/full) recorded on the authorization (the wave-6
+  rights law extended to the arena boundary).
+- GAP PERSISTENCE LAW: CapabilityGap records are immutable; the run
+  ladder (ArenaRun) is append-only; projections (ToolGap /
+  KnowledgeGap) are derived, never authoritative.
+- PROVIDER NEUTRALITY: arena providers are adapters behind a
+  fail-closed seam (the W4C/W6C/W7C precedent). Provider references
+  are opaque; real runtime integration stays W9+ compute-plane work.

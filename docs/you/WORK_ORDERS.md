@@ -958,18 +958,134 @@ Acceptance:
 
 ## W8A — Arena Authority
 
+Branch: `you/w8a-arena`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch (the W8 contract-freeze commit on main).
+
 Objective:
-CapabilityGap persistence and provider-neutral Arena API/client boundary.
+CapabilityGap persistence (the append-only gap + run ledgers), the
+ArenaRetryPolicy validation, the EscalationAuthorization lifecycle, and
+the provider-neutral Arena API/client boundary on the frozen v8
+contracts.
+
+Frozen write surface (wave 8):
+- `packages/shared/src/you/**` — EXCEPT `you/contract.ts` is TL-frozen;
+- `packages/services/src/you/**`.
+
+Zero edits to any other existing file; no new dependencies.
+
+Acceptance:
+- CapabilityGap persistence: gap records persisted on the append-only
+  ledger (gap-opened linkage to intent/strategies/failure evidence per
+  the v1 shape); the ArenaRun ladder append-only (started -> completed |
+  failed | aborted terminals locked); typed `YOU_ARENA_RUN_NOT_FOUND`;
+- ArenaRetryPolicy validation: stateless validators (attempt bounds,
+  backoff class format, eligibility category gates,
+  requires-authorization flag); typed `YOU_RETRY_POLICY_INVALID`;
+  policies that require authorization refuse unauthorized escalation
+  paths with `YOU_ESCALATION_AUTHORIZATION_REQUIRED`;
+- EscalationAuthorization lifecycle: grant (scope/expiry/learning
+  permission), expiry, withdrawal — immutable records, new records on
+  change, never mutation; typed `YOU_ESCALATION_NOT_FOUND` and
+  `YOU_ESCALATION_STATE_INVALID` (the v1 ArenaEscalation ladder
+  enforced);
+- provider-neutral Arena client boundary: an ArenaClient seam whose
+  typed invocations return typed payloads (ArenaExpertResult shapes;
+  content-addressed artifacts; fail-closed on unknown providers —
+  typed `YOU_ARENA_ADAPTER_UNSUPPORTED`); ArenaProviderDescriptor
+  registry services (opaque provider refs);
+- ARENA BOUNDARY LAW: no arena service mutates YOU state — results
+  return as typed payloads applied through YOU's own authority;
+- deterministic fixtures: seeded scenarios (gap detected -> run ladder
+  recorded -> authorization granted -> escalation lifecycle walked ->
+  result applied -> learning permission recorded; refusal paths:
+  unauthorized escalation, expired authorization, invalid transition,
+  invalid policy, unknown provider) — injected clock/rng,
+  byte-identical replay, `simulated: true`;
+- event ledger integration: arena-run-recorded / escalation-authorized
+  / escalation-cancelled / learning-permission-recorded /
+  gap-projection-published;
+- tests (node:test) covering the run-ladder transition table, the
+  authorization lifecycle, the policy validators, error taxonomy.
 
 ## W8B — Escalation UX
 
+Branch: `you/w8b-escalation`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch.
+
 Objective:
-User authorization, progress, expert-result review and learning permission.
+User authorization, escalation progress, expert-result review and
+learning-permission UX on the W8A service seams.
+
+Frozen write surface (wave 8):
+- `packages/ui/src/you/**` + the disclosed registration-only seams (the
+  same pre-expanded seam list as W2B-W7B).
+
+Zero edits to any other existing file; no new dependencies.
+
+Acceptance:
+- authorization surface: the escalation gate (scope, expiry, learning
+  permission picker none/aggregate/full) from controller projections —
+  zero business logic in the UI (W1B-W7B controller pattern; simulated
+  controller until T8 binding);
+- progress surface: the escalation status ladder (requested ->
+  authorized -> in-progress -> delivered -> applied | rejected |
+  cancelled) rendered from projected events — never UI-local state;
+- expert-result review: ArenaExpertResult panels (typed-payload /
+  artifact / guidance; content-addressed artifact labels;
+  applies-as-changeset actions as projected intents);
+- gap display: CapabilityGap panels (category, confidence, attempted
+  strategies, failure-evidence links) from projections;
+- learning-permission display + withdrawal projection (the wave-6
+  rights-law display pattern);
+- loading/error/empty states for every region; the v8 typed error codes
+  (YOU_ESCALATION_NOT_FOUND / YOU_ESCALATION_STATE_INVALID /
+  YOU_ESCALATION_AUTHORIZATION_REQUIRED / YOU_ARENA_RUN_NOT_FOUND /
+  YOU_RETRY_POLICY_INVALID / YOU_ARENA_ADAPTER_UNSUPPORTED /
+  YOU_GAP_PROJECTION_INVALID) as typed error panels;
+- i18n: en-US + zh-CN strings for every visible label;
+- dedicated UX tests under the you subtree (node:test).
 
 ## W8C — Arena Automation
 
+Branch: `you/w8c-automation`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch.
+
 Objective:
-Gap detection, retry policy, Arena adapter, ToolGap/Knowledge projections.
+Research, register and benchmark gap-detection and retry/backoff
+approaches; implement the Arena adapter seam plus deterministic mock
+and the ToolGap/Knowledge projections.
+
+Frozen write surface (wave 8):
+- `packages/you-lab/**` ONLY. Zero edits outside.
+
+Acceptance:
+- gap-detection research: deterministic detector approaches for the v1
+  CapabilityGapCategory classes (tool/editor/model/skill/knowledge/
+  data/expert) — researched REAL approaches with license (SPDX + source
+  URL), maintenance evidence, compatibility notes, provenance;
+  `unverified: true` where not verified (truth law — never invent);
+- retry/backoff registry: researched REAL retry/backoff approaches
+  (circuit-breaker class, hedged-request class, exponential backoff
+  with jitter class, token-bucket class) — license, maintenance
+  evidence, provenance; production-eligible pick behind the seam;
+- Arena adapter seam: typed provider-neutral adapter (the
+  ArenaProviderDescriptor boundary; invocation -> typed result
+  records, content-addressed); deterministic `mockArenaAdapter`
+  (seed-derived, no network); fail-closed evaluation adapter (refuses
+  construction if the registry derivation shifts — the W6C/W7C
+  pattern);
+- ToolGap/Knowledge projections: projection builders from CapabilityGap
+  records (ToolGapProjection / KnowledgeGapProjection shapes; derived
+  remediation strings; typed `YOU_GAP_PROJECTION_INVALID` on
+  malformed gap records);
+- benchmark harness: deterministic fixtures, runner scoring detectors
+  and adapters on validity + determinism, structured effort fields with
+  honest markers (real runtime integration is W9+ compute-plane work);
+- seam mapping onto frozen v8 contracts (the contractSeam.ts
+  consolidation; only the seam module touches contract types);
+- tests (node:test) covering registry integrity, adapter determinism
+  (byte-identical replay from seed), golden benchmark scores, seam
+  mapping validity, projection builders.
 
 ## W9A — Lab Persistence
 

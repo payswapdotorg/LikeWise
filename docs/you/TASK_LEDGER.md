@@ -1202,3 +1202,27 @@ Workers never mark their own work DONE; they submit evidence to TL.
   ("latest create wins").
 - Phase-0 gate: unchanged. W7 surfaces (embodiment services, Avatar
   Studio, soul/realtime lab) join the station battery evidence set.
+
+### W8 contract freeze + dispatch record (2026-10-12)
+
+- Frozen by the TL (this station) at the T7->W8 transition. Contract
+  freeze commit: THIS COMMIT. Machine authority:
+  `packages/shared/src/you/contract.ts` v8 (ADDITIVE — ArenaRunStatus,
+  ArenaRun append-only run ladder, ArenaRetryPolicy,
+  ArenaLearningPermission, EscalationAuthorization,
+  ArenaProviderDescriptor, ToolGapProjection / KnowledgeGapProjection;
+  events arena-run-recorded / escalation-authorized /
+  escalation-cancelled / learning-permission-recorded /
+  gap-projection-published; error codes YOU_ESCALATION_NOT_FOUND /
+  YOU_ESCALATION_STATE_INVALID / YOU_ESCALATION_AUTHORIZATION_REQUIRED
+  / YOU_ARENA_RUN_NOT_FOUND / YOU_RETRY_POLICY_INVALID /
+  YOU_ARENA_ADAPTER_UNSUPPORTED / YOU_GAP_PROJECTION_INVALID).
+- Docs: CONTRACTS.md "Wave-8 contract freeze (v8)" (the ARENA BOUNDARY
+  LAW + ESCALATION AUTHORIZATION LAW + ARENA LEARNING PERMISSION LAW +
+  GAP PERSISTENCE LAW + provider neutrality); WORK_ORDERS.md
+  W8A/W8B/W8C expanded to full binding orders.
+- Wave-8 lanes: W8A Arena Authority (`you/w8a-arena`), W8B Escalation
+  UX (`you/w8b-escalation`), W8C Arena Automation
+  (`you/w8c-automation`); branches pre-cut at the freeze.
+- Verified at freeze: shared tsc exit 0; shared battery 344/344
+  unchanged.

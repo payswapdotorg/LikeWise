@@ -479,7 +479,12 @@ export type SolutionEventType =
   | "avatar-session-opened"
   | "embodiment-state-changed"
   | "soul-reassigned"
-  | "avatar-session-closed";
+  | "avatar-session-closed"
+  | "arena-run-recorded"
+  | "escalation-authorized"
+  | "escalation-cancelled"
+  | "learning-permission-recorded"
+  | "gap-projection-published";
 
 export interface SolutionEvent {
   readonly id: OpaqueId;
@@ -524,7 +529,14 @@ export type YouErrorCode =
   | "YOU_BODY_NOT_FOUND"
   | "YOU_SOUL_BINDING_INVALID"
   | "YOU_AVATAR_SESSION_NOT_FOUND"
-  | "YOU_EMBODIMENT_STATE_INVALID";
+  | "YOU_EMBODIMENT_STATE_INVALID"
+  | "YOU_ESCALATION_NOT_FOUND"
+  | "YOU_ESCALATION_STATE_INVALID"
+  | "YOU_ESCALATION_AUTHORIZATION_REQUIRED"
+  | "YOU_ARENA_RUN_NOT_FOUND"
+  | "YOU_RETRY_POLICY_INVALID"
+  | "YOU_ARENA_ADAPTER_UNSUPPORTED"
+  | "YOU_GAP_PROJECTION_INVALID";
 
 // ---------------------------------------------------------------------------
 // Evidence / Capture / Consent — frozen v2 (wave 2, TL freeze at T1->W2)
@@ -1322,4 +1334,114 @@ export interface RealtimeChannelDescriptor {
   readonly streamRef: string;
   readonly streamHash: string;
   readonly latencyClass: string;
+}
+
+// ---------------------------------------------------------------------------
+// Arena machine — frozen v8 (wave 8, TL freeze at T7->W8)
+//
+// Authority: docs/you/CONTRACTS.md "Wave-8 contract freeze (v8)".
+// Dispatched by: docs/you/WORK_ORDERS.md (W8A / W8B / W8C).
+// Same laws as v1-v7: workers MUST NOT modify this file; the freeze is
+// ADDITIVE — no earlier shape is altered. The Arena never silently
+// mutates YOU state (docs/you/ARCHITECTURE.md §15): every result returns
+// as a typed payload applied through YOU's own authority. Escalations
+// are USER-AUTHORIZED (never auto-run; the rights-law extension); the
+// escalation lifecycle is the v1 ArenaEscalationStatus ladder. Learning
+// from escalations requires an explicit ArenaLearningPermission. All
+// ids opaque; timestamps from the injected clock in fixture mode; truth
+// law (fixture arena runs stay `simulated: true`).
+// ---------------------------------------------------------------------------
+
+export type ArenaRunStatus =
+  | "started"
+  | "completed"
+  | "failed"
+  | "aborted";
+
+/**
+ * One automation attempt against a CapabilityGap. The run ladder is
+ * append-only (a projection of attempts, never mutated in place);
+ * the retry authority is the ArenaRetryPolicy.
+ */
+export interface ArenaRun {
+  readonly id: OpaqueId;
+  readonly gapId: OpaqueId;
+  readonly strategy: string;
+  readonly attempt: number;
+  readonly status: ArenaRunStatus;
+  readonly startedAt: string;
+  readonly completedAt: string | null;
+  readonly outcomeEvidenceRef: OpaqueId | null;
+  readonly simulated: boolean;
+}
+
+/**
+ * Deterministic retry ladder configuration. Authority = the arena
+ * service (W8A); research/registry authority = the W8C lane.
+ */
+export interface ArenaRetryPolicy {
+  readonly maxAttempts: number;
+  readonly backoffClass: string;
+  readonly eligibilityCategories: readonly CapabilityGapCategory[];
+  readonly requiresAuthorization: boolean;
+}
+
+/**
+ * What the user permits the learning machine to derive from an
+ * escalation (the W6 rights law extended to the arena boundary).
+ */
+export type ArenaLearningPermission =
+  | "none"
+  | "aggregate"
+  | "full";
+
+/**
+ * The user authorization gate on an escalation. An escalation NEVER
+ * runs without one (the ESCALATION AUTHORIZATION LAW). Grants are
+ * immutable records; expiry and withdrawal are new records, never
+ * mutations.
+ */
+export interface EscalationAuthorization {
+  readonly id: OpaqueId;
+  readonly escalationId: OpaqueId;
+  readonly authorizedBy: OpaqueId;
+  readonly scope: string;
+  readonly grantedAt: string;
+  readonly expiresAt: string | null;
+  readonly learningPermission: ArenaLearningPermission;
+}
+
+/**
+ * Provider-neutral arena client boundary. Provider references are
+ * opaque (registry authority = the W8C lane); real runtime integration
+ * stays behind the adapter seam.
+ */
+export interface ArenaProviderDescriptor {
+  readonly id: OpaqueId;
+  readonly providerKind: string;
+  readonly capabilityClasses: readonly string[];
+  readonly endpointRef: string | null;
+}
+
+/**
+ * ToolGap projection onto the tool inventory. A projection, never an
+ * authority: derived from CapabilityGap records, consumed for display
+ * and remediation planning.
+ */
+export interface ToolGapProjection {
+  readonly gapId: OpaqueId;
+  readonly toolId: OpaqueId | null;
+  readonly requiredCapability: string;
+  readonly remediation: string;
+}
+
+/**
+ * KnowledgeGap projection onto knowledge domains. A projection, never
+ * an authority.
+ */
+export interface KnowledgeGapProjection {
+  readonly gapId: OpaqueId;
+  readonly domain: string;
+  readonly missingKnowledgeRef: string | null;
+  readonly remediation: string;
 }
