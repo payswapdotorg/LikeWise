@@ -14,6 +14,7 @@ export interface SidePaneTabPresentationLabels {
   twinTitle: string;
   performanceTitle: string;
   editingTitle: string;
+  learningTitle: string;
   terminalTitle: string;
   subagentTypeLabel: string;
   subagentDirectoryTitle: string;
@@ -89,6 +90,10 @@ export function getSidePaneTabSearchHint(tab: WorkspaceSidePaneTab): string {
   if (tab.type === "editing") {
     return "you editing session changeset candidate lineage parent compare editor native embedded external interchange export import takeover consent simulated";
   }
+  // YOU Learning surface（W6B）：搜索面覆盖 teach-me/scope/ledger/rights/preference/replay 标注。
+  if (tab.type === "learning") {
+    return "you learning teach-me learn-this signal kind scope ladder ledger validated rejected superseded rights preference trajectory replay consent simulated";
+  }
   if (tab.type === "terminal" || tab.type === "bash-output")
     return `${tab.title} terminal shell command`;
   return tab.source.path ?? tab.source.title;
@@ -112,6 +117,7 @@ export function getLocalizedSidePaneTabTitle(
       "you.twin.tabTitle": labels.twinTitle,
       "you.performance.tabTitle": labels.performanceTitle,
       "you.editing.tabTitle": labels.editingTitle,
+      "you.learning.tabTitle": labels.learningTitle,
       "terminal.title": labels.terminalTitle,
       "sidePane.subagent": labels.subagentTypeLabel,
       "sidePane.subagentDirectory": labels.subagentDirectoryTitle,
@@ -152,6 +158,7 @@ export function getSidePaneTabTypeLabel(
   if (tab.type === "twin") return labels.twinTitle;
   if (tab.type === "performance") return labels.performanceTitle;
   if (tab.type === "editing") return labels.editingTitle;
+  if (tab.type === "learning") return labels.learningTitle;
   if (tab.type === "terminal" || tab.type === "bash-output") return labels.terminalTitle;
   return labels.codeViewerTitle;
 }

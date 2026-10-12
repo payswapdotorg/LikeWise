@@ -55,6 +55,7 @@ import { CaptureStudioSurface } from "@/you/CaptureStudioSurface.js";
 import { TwinStudioSurface } from "@/you/TwinStudioSurface.js";
 import { PerformanceStudioSurface } from "@/you/PerformanceStudioSurface.js";
 import { EditingStudioSurface } from "@/you/EditingStudioSurface.js";
+import { LearningStudioSurface } from "@/you/LearningStudioSurface.js";
 import {
   getSidePaneTabTitle,
   SidePaneTabDragOverlay,
@@ -100,6 +101,7 @@ import {
   ClapperboardIcon,
   FileDiffIcon,
   FilePenLineIcon,
+  GraduationCapIcon,
   GlobeIcon,
   MessageSquareTextIcon,
   PersonStandingIcon,
@@ -328,6 +330,7 @@ export function AnimatedSidePanePanel({
   onOpenTwinStudio,
   onOpenPerformanceStudio,
   onOpenEditingStudio,
+  onOpenLearningStudio,
   onOpenTerminalTab,
   onOpenReviewTab,
   onOpenSelectionSideConversation,
@@ -403,6 +406,8 @@ export function AnimatedSidePanePanel({
   onOpenPerformanceStudio: () => void;
   /** YOU Editing surface（W5B）：幂等打开/聚焦 Editing tab。 */
   onOpenEditingStudio: () => void;
+  /** YOU Learning surface（W6B）：幂等打开/聚焦 Learning tab。 */
+  onOpenLearningStudio: () => void;
   onOpenTerminalTab: () => void;
   onOpenReviewTab: () => void;
   onOpenSelectionSideConversation: () => void;
@@ -478,6 +483,7 @@ export function AnimatedSidePanePanel({
   const hasTwinTab = tabs.some((tab) => tab.type === "twin");
   const hasPerformanceTab = tabs.some((tab) => tab.type === "performance");
   const hasEditingTab = tabs.some((tab) => tab.type === "editing");
+  const hasLearningTab = tabs.some((tab) => tab.type === "learning");
   const canOpenSelectionSideConversation = shouldOfferSelectionSideConversation({
     activeTaskId,
   });
@@ -842,6 +848,17 @@ export function AnimatedSidePanePanel({
             <span>{intl.formatMessage({ id: "you.editing.tabTitle" })}</span>
           </DropdownMenuItem>
         ) : null}
+        {!hasLearningTab ? (
+          <DropdownMenuItem
+            data-side-pane-add-item="learning"
+            onSelect={() => {
+              onOpenLearningStudio();
+            }}
+          >
+            <GraduationCapIcon className="size-4" />
+            <span>{intl.formatMessage({ id: "you.learning.tabTitle" })}</span>
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -906,6 +923,12 @@ export function AnimatedSidePanePanel({
       icon: FilePenLineIcon,
       onOpen: onOpenEditingStudio,
     },
+    learning: {
+      id: "learning",
+      label: intl.formatMessage({ id: "you.learning.tabTitle" }),
+      icon: GraduationCapIcon,
+      onOpen: onOpenLearningStudio,
+    },
   };
   const openTabLauncherItems: OpenTabLauncherItem[] = resolveOpenTabLauncherItemIds({
     canOpenSelectionSideConversation,
@@ -916,6 +939,7 @@ export function AnimatedSidePanePanel({
     hasTwinTab,
     hasPerformanceTab,
     hasEditingTab,
+    hasLearningTab,
     supportsEmbeddedBrowser,
   })
     .filter((itemId) => !isOfficeMode || (itemId !== "terminal" && itemId !== "review"))
@@ -1010,6 +1034,7 @@ export function AnimatedSidePanePanel({
         twinTitle: intl.formatMessage({ id: "you.twin.tabTitle" }),
         performanceTitle: intl.formatMessage({ id: "you.performance.tabTitle" }),
         editingTitle: intl.formatMessage({ id: "you.editing.tabTitle" }),
+        learningTitle: intl.formatMessage({ id: "you.learning.tabTitle" }),
         terminalTitle: intl.formatMessage({ id: "terminal.title" }),
         subagentTypeLabel: intl.formatMessage({ id: "sidePane.subagent" }),
         subagentDirectoryTitle: intl.formatMessage({
@@ -1419,6 +1444,13 @@ export function AnimatedSidePanePanel({
                           />
                         ) : tab.type === "editing" ? (
                           <EditingStudioSurface
+                            key={tab.id}
+                            tab={tab}
+                            workspaceKey={workspaceKey}
+                            isActive={isVisible && tab.id === visibleActiveTabId}
+                          />
+                        ) : tab.type === "learning" ? (
+                          <LearningStudioSurface
                             key={tab.id}
                             tab={tab}
                             workspaceKey={workspaceKey}

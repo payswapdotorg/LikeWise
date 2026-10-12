@@ -39,6 +39,7 @@ import {
   openTwinStudioSidePane,
   openPerformanceStudioSidePane,
   openEditingStudioSidePane,
+  openLearningStudioSidePane,
   openBrowserSidePane,
   openOrActivateBrowserSidePaneByUrl,
   findBrowserSidePaneTabByUrl,
@@ -861,6 +862,20 @@ export function useAppPanels(options: {
     });
   }, [commitOpenedSidePaneState, revealSidePaneForCurrentOwner, workspaceAbsPath]);
 
+  // YOU Learning surface（W6B 注册点）：幂等打开/聚焦 native Learning tab。
+  const handleOpenLearningStudio = useCallback(() => {
+    revealSidePaneForCurrentOwner();
+    commitOpenedSidePaneState((current) => {
+      const next = openLearningStudioSidePane(current, {
+        workspaceKey: activeWorkspaceKeyRef.current,
+      });
+      logger.info(
+        `[App] 打开右侧面板 mode=learning workspace=${workspaceAbsPath} tabs=${next.tabs.length}`,
+      );
+      return next;
+    });
+  }, [commitOpenedSidePaneState, revealSidePaneForCurrentOwner, workspaceAbsPath]);
+
   const handleOpenTerminalTab = useCallback(() => {
     if (isOfficeMode) return;
     revealSidePaneForCurrentOwner();
@@ -1667,6 +1682,7 @@ export function useAppPanels(options: {
     handleOpenTwinStudio,
     handleOpenPerformanceStudio,
     handleOpenEditingStudio,
+    handleOpenLearningStudio,
     handleOpenTerminalTab,
     handleOpenModelTrajectory,
     handleOpenSubagentSession,
