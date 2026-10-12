@@ -1032,3 +1032,96 @@ Workers never mark their own work DONE; they submit evidence to TL.
   Studio (`you/w7b-studio`), W7C Soul/Realtime (`you/w7c-soultech`);
   branches pre-cut at the freeze.
 - Verified at freeze: shared tsc exit 0; shared battery 310/310 unchanged.
+
+### W7A merge record (2026-10-12)
+
+- Status: MERGED. Owner: Worker A (GLM-5.3 agent session, Full-Stack),
+  station-verified by TL. Branch: `you/w7a-core`. Base SHA: `972fa31`.
+  PR #30; merge commit `8766c24`; station-lane commit `dd01f0f` (17
+  files, +3094/−0 — 15 new + 2 modified test-discovery index.ts entries;
+  worker pod commit d092f2f).
+- Delivery-path note: EMISSION — patch staged at the pod project root,
+  harvested byte-exact (sha256
+  8c19e93ee7f167a7ecb967494ed370a63c04a0c76c1233e86a8c8b5b65d8f4cd,
+  3206 lines) from the pod project root.
+- Worker report: shared **344/344** (310 baseline + 34 new) · services
+  **140/140** (119 + 21 new) · ui 275/275 · you-lab 316/316 (both
+  unchanged) · `tsc -b packages/shared packages/services` exit 0 (single
+  batch, no OOM split needed) · lint 0 errors / 70 warnings (exact
+  baseline).
+- Station battery: EXACT PARITY with the report at the station lane
+  verification (shared 344/344 · services 140/140 · tsc 0 · lint 0e/70w);
+  re-verified at the integrated merge head ed5501c by the recovery
+  session (below).
+- Fixtures: seeded scenario "you-w7a-embodiment-scenario" — body
+  registration (content-addressed appearance), soul bindings A/B
+  (system-one/system-two), session open, full eight-rung ladder walk,
+  suspend/resume, close, re-possession via soul-reassigned on the same
+  Body (byte-identical Body record — the body/soul separation law),
+  second session close, nine typed refusal paths, ledger readout with
+  projection == replay; injected DeterministicClock + splitmix32 RNG;
+  byte-identical trace replay asserted; simulated: true throughout.
+- TL review: write surface exact (17/17 files in the frozen surface;
+  contract.ts untouched — the v7 freeze honored); namespaced v7 shapes
+  implemented (AgentBody content-addressed, SoulBinding validation,
+  AvatarSession append-only lifecycle, the 9-state embodiment ladder);
+  the EmbodimentService.replay surface persisted for W7B consumption.
+- Disclosures (worker): (a) oxfmt --check red at baseline 972fa31 on 412
+  files incl. contract.ts (fmt is not an enforced gate; no new lint
+  diagnostics introduced); (b) "embodiment policy enforcement" realized
+  as the frozen ladder/lifecycle/separation policies (no separate
+  policy-engine surface specified in the acceptance list).
+- Contract change requests: none.
+
+### W7C merge record (2026-10-12)
+
+- Status: MERGED. Owner: Worker C (GLM-5.3 agent session, Full-Stack),
+  station-verified by TL. Branch: `you/w7c-soultech`. Base SHA: `972fa31`.
+  PR #31; merge commit `ed5501c`; station-lane commit `3b52197` (22
+  files, +4157/−3 — 19 new files + 2 modified seams (contractSeam.ts,
+  index.ts) + 1 additive registry.ts change (+5/−1 "ietf-rfc" signal
+  kind, the W2C/W5C precedent)).
+- Delivery-path note: EMISSION — patch staged at the pod project root,
+  harvested byte-exact (sha256
+  185b078a2b3c2e4881d6ccec7eb58edcfdffdde1214163d7abb96f3b7ac1d446,
+  4330 lines).
+- Worker report: shared 310/310 · services 119/119 · ui 275/275 (all
+  unchanged — the lane ran at the freeze base without W7A merged) ·
+  you-lab **369/369** (316 baseline + 53 new) · scoped you-lab tsc exit
+  0 · lint 0 errors / 70 warnings (root baseline exact).
+- Station battery (recovery session, integrated head ed5501c): shared
+  **344/344** · services **140/140** · ui **275/275** · you-lab
+  **369/369** = **1128/1128 GREEN** (W7A + W7C combined) · root lint
+  0 errors / 70 warnings · you-lab tsc exit 0. Zero dependency drift;
+  contract.ts untouched (the v7 freeze honored).
+- Registry: 15 researched REAL profiles (6 providers / 3 routing / 6
+  realtime); license claims 15/15 verified:true with fetched source URLs
+  (7× Apache-2.0, 3× MIT, 1× BSD-3-Clause, 1× ISC, 1× GPL-3.0, 2×
+  custom/non-SPDX); maintenance signals 20/20 verified:true (GitHub
+  releases/commits atom feeds + rfc-editor); compatibility summaries
+  15/15 flagged unverified (engineering assessments); non-empty
+  provenance.unverifiedClaims on every profile (truth law).
+- Production pick: llama-cpp — MIT (LICENSE fetched) + freshest verified
+  maintenance of the binding-capable classes (b11559, 2026-10-11 — 1 day
+  before the research date; deterministic tie with ollama broken by
+  routing-profile coverage then id, the W4C/W5C/W6C ranking precedent);
+  behind the seam as llama-cpp-soul-eval, FAIL-CLOSED (refuses
+  construction if the registry derivation shifts); simulated execution
+  only — real runtime integration is W8+ compute-plane work.
+- Disclosures (worker): WHIP publication DAY is month-precision (RFC
+  text states March 2025; datatracker API Cloudflare-blocked HTTP 403
+  from the sandbox) — disclosed in unverifiedClaims.
+- Contract change requests: none.
+
+### W7A/W7C records sequencing disclosure (2026-10-12)
+
+- The prior TL session executed the W7A and W7C full cycles (harvest →
+  station verify → merge: PRs #30 and #31) but lost session context
+  immediately after the W7C merge; the merge-record docs commits were
+  not authored before the loss. This recovery session re-verified the
+  integrated battery at the merge head ed5501c (1128/1128 GREEN, lint
+  0e/70w, you-lab tsc 0 — numbers above are station-measured, not
+  report-transcribed) and authored these records retroactively. The
+  W7A/W7C merges themselves were verified against the worker reports
+  (byte-exact emission patches) at merge time by the prior session, per
+  its registry done-records. Disclosed per the truth law.
