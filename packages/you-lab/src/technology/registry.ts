@@ -26,8 +26,12 @@ export interface LicenseClaim {
 // W5C: "gitlab-release" added additively for editor candidates whose release
 // feed lives on a GitLab forge (GIMP publishes releases on
 // gitlab.gnome.org, not GitHub); the signal cites that forge's release feed.
+// W7C: "ietf-rfc" added additively for soul/realtime candidates that are
+// standards-track protocol documents rather than software (WHIP is
+// RFC 9725); the signal cites the RFC publication date per the RFC itself
+// (month precision when the RFC text states no day — never an invented day).
 
-export type MaintenanceSignalKind = "npm-publish" | "github-release" | "pypi-upload" | "github-commit" | "gitlab-release";
+export type MaintenanceSignalKind = "npm-publish" | "github-release" | "pypi-upload" | "github-commit" | "gitlab-release" | "ietf-rfc";
 
 export interface MaintenanceSignal {
   readonly kind: MaintenanceSignalKind;
