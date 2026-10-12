@@ -367,6 +367,12 @@ export function SidePaneTabIcon({ tab }: { tab: WorkspaceSidePaneTab }) {
     return <GraduationCapIcon className="size-3.5" />;
   }
 
+  // YOU Avatar surface（W7B）：与 Solution/Capture/Twin/Performance/Editing/Learning
+  // 同级的 workspace 表面，固定机器人（bot）图标。
+  if (tab.type === "avatar") {
+    return <BotIcon className="size-3.5" />;
+  }
+
   if (tab.type === "terminal" || tab.type === "bash-output") {
     return <SquareTerminalIcon className="size-3.5" />;
   }
@@ -603,6 +609,11 @@ export function getSidePaneTabTitle(
   // YOU Learning surface（W6B）：标题走中央文案表（you.learning.tabTitle）。
   if (tab.type === "learning") {
     return formatMessage({ id: "you.learning.tabTitle" });
+  }
+
+  // YOU Avatar surface（W7B）：标题走中央文案表（you.avatar.tabTitle）。
+  if (tab.type === "avatar") {
+    return formatMessage({ id: "you.avatar.tabTitle" });
   }
 
   if (tab.type === "terminal" || tab.type === "bash-output") {

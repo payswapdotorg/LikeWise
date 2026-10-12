@@ -11,7 +11,8 @@ export type OpenTabLauncherItemId =
   | "twin"
   | "performance"
   | "editing"
-  | "learning";
+  | "learning"
+  | "avatar";
 
 export function resolveOpenTabLauncherItemIds({
   developerToolsEnabled,
@@ -22,6 +23,7 @@ export function resolveOpenTabLauncherItemIds({
   hasPerformanceTab = false,
   hasEditingTab = false,
   hasLearningTab = false,
+  hasAvatarTab = false,
   canOpenSelectionSideConversation = false,
   supportsEmbeddedBrowser = true,
 }: {
@@ -39,6 +41,8 @@ export function resolveOpenTabLauncherItemIds({
   hasEditingTab?: boolean;
   /** YOU Learning tab 已开时不再提供入口（W6B，同幂等聚焦语义）。缺省 false。 */
   hasLearningTab?: boolean;
+  /** YOU Avatar tab 已开时不再提供入口（W7B，同幂等聚焦语义）。缺省 false。 */
+  hasAvatarTab?: boolean;
   canOpenSelectionSideConversation?: boolean;
   supportsEmbeddedBrowser?: boolean;
 }): OpenTabLauncherItemId[] {
@@ -84,6 +88,10 @@ export function resolveOpenTabLauncherItemIds({
 
   if (!hasLearningTab) {
     itemIds.push("learning");
+  }
+
+  if (!hasAvatarTab) {
+    itemIds.push("avatar");
   }
 
   return itemIds;

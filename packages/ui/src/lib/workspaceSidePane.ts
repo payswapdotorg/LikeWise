@@ -8,6 +8,7 @@ import { resolveTwinTabState } from "@/you/twinTabRegistration.js";
 import { resolvePerformanceTabState } from "@/you/performanceTabRegistration.js";
 import { resolveEditingTabState } from "@/you/editingTabRegistration.js";
 import { resolveLearningTabState } from "@/you/learningTabRegistration.js";
+import { resolveAvatarTabState } from "@/you/avatarTabRegistration.js";
 
 export interface BrowserSidePaneTab {
   id: string;
@@ -167,6 +168,20 @@ export interface EditingStudioSidePaneTab {
 export interface LearningStudioSidePaneTab {
   id: "learning";
   type: "learning";
+  ownerTaskId?: string | null;
+  workspaceKey?: string | null;
+  openedAt?: number;
+}
+
+/**
+ * YOU Avatar surface tab（W7B）——与 Solution/Capture/Twin/Performance/Editing/
+ * Learning 同级的 native workspace 表面。固定单例 id：一个 workspace 一个 Avatar
+ * tab（重复打开幂等地聚焦既有 tab）；内容与视图状态由
+ * `packages/ui/src/you/**` 子树自持（avatar 系列模块）。
+ */
+export interface AvatarStudioSidePaneTab {
+  id: "avatar";
+  type: "avatar";
   ownerTaskId?: string | null;
   workspaceKey?: string | null;
   openedAt?: number;
@@ -615,6 +630,7 @@ export type WorkspaceSidePaneTab =
   | PerformanceStudioSidePaneTab
   | EditingStudioSidePaneTab
   | LearningStudioSidePaneTab
+  | AvatarStudioSidePaneTab
   | TerminalSidePaneTab
   | BrowserUseSidePaneTab
   | SubagentSessionSidePaneTab
@@ -1160,6 +1176,8 @@ const WORKSPACE_GLOBAL_SIDE_PANE_TAB_TYPES = new Set<WorkspaceSidePaneTab["type"
   "editing",
   // Learning 同为 workspace 级表面（W6B，同 ADR-002 语义）。
   "learning",
+  // Avatar 同为 workspace 级表面（W7B，同 ADR-002 语义）。
+  "avatar",
 ]);
 
 function isWorkspaceGlobalSidePaneTab(tab: WorkspaceSidePaneTab): boolean {
@@ -1767,6 +1785,19 @@ export function openLearningStudioSidePane(
   },
 ): WorkspaceSidePaneState {
   return resolveLearningTabState(current, options);
+}
+
+/**
+ * 打开（或幂等聚焦）YOU Avatar 表面 tab（W7B 注册点）。
+ * 纯转移逻辑在 `@/you/avatarTabRegistration.js`（you 子树自含，可被 tsx 直接加载）。
+ */
+export function openAvatarStudioSidePane(
+  current: WorkspaceSidePaneState | null,
+  options: {
+    workspaceKey?: string | null;
+  },
+): WorkspaceSidePaneState {
+  return resolveAvatarTabState(current, options);
 }
 
 export function openTerminalSidePane(

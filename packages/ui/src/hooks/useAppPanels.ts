@@ -40,6 +40,7 @@ import {
   openPerformanceStudioSidePane,
   openEditingStudioSidePane,
   openLearningStudioSidePane,
+  openAvatarStudioSidePane,
   openBrowserSidePane,
   openOrActivateBrowserSidePaneByUrl,
   findBrowserSidePaneTabByUrl,
@@ -876,6 +877,20 @@ export function useAppPanels(options: {
     });
   }, [commitOpenedSidePaneState, revealSidePaneForCurrentOwner, workspaceAbsPath]);
 
+  // YOU Avatar surface（W7B 注册点）：幂等打开/聚焦 native Avatar tab。
+  const handleOpenAvatarStudio = useCallback(() => {
+    revealSidePaneForCurrentOwner();
+    commitOpenedSidePaneState((current) => {
+      const next = openAvatarStudioSidePane(current, {
+        workspaceKey: activeWorkspaceKeyRef.current,
+      });
+      logger.info(
+        `[App] 打开右侧面板 mode=avatar workspace=${workspaceAbsPath} tabs=${next.tabs.length}`,
+      );
+      return next;
+    });
+  }, [commitOpenedSidePaneState, revealSidePaneForCurrentOwner, workspaceAbsPath]);
+
   const handleOpenTerminalTab = useCallback(() => {
     if (isOfficeMode) return;
     revealSidePaneForCurrentOwner();
@@ -1683,6 +1698,7 @@ export function useAppPanels(options: {
     handleOpenPerformanceStudio,
     handleOpenEditingStudio,
     handleOpenLearningStudio,
+    handleOpenAvatarStudio,
     handleOpenTerminalTab,
     handleOpenModelTrajectory,
     handleOpenSubagentSession,
