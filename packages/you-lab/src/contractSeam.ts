@@ -1,5 +1,5 @@
-/* eslint-disable max-lines -- the single seam to the frozen YOU contract v1+v2+v3+v4+v5 is consolidated BY DESIGN: exactly one module maps every neutral you-lab shape onto the frozen contracts (the only-module law asserted by tests), so the full W1C/W2C/W3C/W4C/W5C mapping surface intentionally lives in this one file. */
-// SINGLE seam to the frozen YOU contract v1+v2+v3+v4+v5
+/* eslint-disable max-lines -- the single seam to the frozen YOU contract v1+v2+v3+v4+v5+v6 is consolidated BY DESIGN: exactly one module maps every neutral you-lab shape onto the frozen contracts (the only-module law asserted by tests), so the full W1C/W2C/W3C/W4C/W5C/W6C mapping surface intentionally lives in this one file. */
+// SINGLE seam to the frozen YOU contract v1+v2+v3+v4+v5+v6
 // (packages/shared/src/you/contract.ts).
 //
 // SEAM NOTE (W1C sandbox): importing "@zcode/shared" from packages/you-lab
@@ -44,6 +44,12 @@ import type {
   ImportExportFormat,
   ImportExportResult as FrozenImportExportResult,
   ImportExportStatus,
+  LearningRecord as FrozenLearningRecord,
+  LearningRightUsage,
+  LearningRights as FrozenLearningRights,
+  LearningScope,
+  LearningSignal as FrozenLearningSignal,
+  LearningSignalKind,
   PerformanceTimeline,
   ProvenanceRecord,
   ReconstructionJobResult,
@@ -95,6 +101,17 @@ import type {
 } from "./editing/editingAdapterSeam.js";
 import type { EditingAdapter } from "./editing/editingAdapterSeam.js";
 import type { CandidateRoundTripResult } from "./editing/roundTripRunner.js";
+import type {
+  LearningAdapter,
+  NeutralLearningOutput,
+  NeutralLearningRequest,
+  NeutralLearningRights,
+  NeutralLearningRightUsage,
+  NeutralLearningScope,
+  NeutralLearningSignalKind,
+} from "./learning/learningAdapterSeam.js";
+import type { CandidateLearningResult } from "./learning/learningRunner.js";
+import { canonicalJson } from "./determinism.js";
 
 /**
  * Build a frozen-contract EditorRecommendation from a derived capability
@@ -1038,4 +1055,220 @@ export function editingThroughAdapter(
     proposedAt: completion.proposedAt,
   });
   return { session, changeSet, candidateVersion, output };
+}
+
+
+// ---------------------------------------------------------------------------
+// W6C: seam mapping onto the frozen v6 learning contracts (LearningSignal /
+// LearningRecord / LearningRights / LearningSignalKind / LearningRightUsage
+// and the v1-common LearningScope). The neutral W6C shapes in
+// learning/learningAdapterSeam.ts are structurally aligned with the frozen
+// v6 shapes, so this mapping is 1:1 and never redeclares or mutates contract
+// semantics. The learning scope / signal-kind / usage-class mappings also
+// happen here — the ONLY place neutral learning shapes meet the frozen v6
+// literals. RIGHTS LAW: learning rights are threaded from the injected
+// context (adapters never mint consent — enforced on the full path below);
+// records without rights are inert. Adapter outputs are always "candidate"
+// records — the validation ladder belongs to the learning service (W6A).
+// ---------------------------------------------------------------------------
+
+/** Map a neutral learning scope onto the frozen v1/v6 LearningScope (1:1, validated). */
+export function mapLearningScope(scope: NeutralLearningScope): LearningScope {
+  if (scope.length === 0) {
+    throw new Error("mapLearningScope: empty scope (truth law — refusing to map an unaddressed scope)");
+  }
+  if (
+    scope === "GLOBAL" || scope === "TENANT" || scope === "APPLICATION" || scope === "PROJECT" ||
+    scope === "USER" || scope === "TWIN" || scope === "ASSET" || scope === "TASK"
+  ) {
+    // The neutral open union (string & {}) does not narrow through === on
+    // its literal members; the guard above guarantees the cast is sound.
+    return scope as LearningScope;
+  }
+  throw new Error(`mapLearningScope: neutral scope "${scope}" has no frozen v6 mapping (open-union extension requires a TL contract update)`);
+}
+
+/** Map a neutral learning signal kind onto the frozen v6 LearningSignalKind (1:1, validated). */
+export function mapLearningSignalKind(kind: NeutralLearningSignalKind): LearningSignalKind {
+  if (kind.length === 0) {
+    throw new Error("mapLearningSignalKind: empty kind (truth law — refusing to map an unaddressed kind)");
+  }
+  if (
+    kind === "feedback" || kind === "manual-takeover" || kind === "edit-session" ||
+    kind === "expert-intervention" || kind === "repeated-intent" || kind === "capability-gap"
+  ) {
+    // Open-union guard — the cast is sound (see mapLearningScope).
+    return kind as LearningSignalKind;
+  }
+  throw new Error(`mapLearningSignalKind: neutral kind "${kind}" has no frozen v6 mapping (open-union extension requires a TL contract update)`);
+}
+
+/** Map a neutral learning usage class onto the frozen v6 LearningRightUsage (1:1, validated). */
+export function mapLearningRightUsage(usage: NeutralLearningRightUsage): LearningRightUsage {
+  if (usage.length === 0) {
+    throw new Error("mapLearningRightUsage: empty usage class (truth law — refusing to map an unaddressed usage)");
+  }
+  if (
+    usage === "organization-improvement" || usage === "tool-selection" || usage === "editor-selection" ||
+    usage === "pipeline-improvement" || usage === "capability-gap-analysis" || usage === "personalization"
+  ) {
+    // Open-union guard — the cast is sound (see mapLearningScope).
+    return usage as LearningRightUsage;
+  }
+  throw new Error(`mapLearningRightUsage: neutral usage "${usage}" has no frozen v6 mapping (open-union extension requires a TL contract update)`);
+}
+
+/** Map injected neutral learning rights onto the frozen v6 LearningRights (threaded, never minted). */
+export function toFrozenLearningRights(rights: NeutralLearningRights): FrozenLearningRights {
+  const usage = rights.usage.map(mapLearningRightUsage);
+  const paired = (rights.consentRef.length > 0) === (rights.consentHash.length > 0);
+  if (!paired) {
+    throw new Error("toFrozenLearningRights: unpaired consent binding — consentRef and consentHash must be carried together (inert grants carry both empty; the wave-2 consent authority has no half-bound grants)");
+  }
+  if (rights.consentRef.length > 0 && usage.length === 0) {
+    throw new Error("toFrozenLearningRights: bound rights grant without usage classes (a consent-bound grant must sanction at least one usage class)");
+  }
+  return {
+    usage,
+    consentRef: rights.consentRef,
+    consentHash: rights.consentHash,
+    expiresAt: rights.expiresAt,
+  };
+}
+
+/** Inputs for frozen v6 LearningSignal construction (service-owned identity/timing). */
+export interface LearningSignalConstruction {
+  readonly id: string;
+  readonly kind: NeutralLearningSignalKind;
+  readonly scope: NeutralLearningScope;
+  readonly subjectRef: string | null;
+  /** Content-addressed evidence refs — never inlined, never empty, no duplicates, no whitespace padding. */
+  readonly evidenceRefs: readonly string[];
+  readonly capturedAt: string;
+}
+
+/** Build a frozen v6 LearningSignal from the construction (evidence never inlined). */
+export function toFrozenLearningSignal(construction: LearningSignalConstruction): FrozenLearningSignal {
+  if (construction.id.length === 0) throw new Error("toFrozenLearningSignal: empty id");
+  if (construction.evidenceRefs.length === 0) {
+    throw new Error("toFrozenLearningSignal: empty evidenceRefs (a learning signal carries at least one content-addressed evidence ref)");
+  }
+  const seen = new Set<string>();
+  for (const ref of construction.evidenceRefs) {
+    if (ref.length === 0 || ref.trim() !== ref) {
+      throw new Error("toFrozenLearningSignal: evidence refs must be non-empty and carry no surrounding whitespace");
+    }
+    if (seen.has(ref)) {
+      throw new Error(`toFrozenLearningSignal: duplicate evidence ref ${ref}`);
+    }
+    seen.add(ref);
+  }
+  return {
+    id: construction.id,
+    kind: mapLearningSignalKind(construction.kind),
+    scope: mapLearningScope(construction.scope),
+    subjectRef: construction.subjectRef,
+    evidenceRefs: [...construction.evidenceRefs],
+    capturedAt: construction.capturedAt,
+    simulated: true, // truth law: fixture learning stays labeled simulated
+  };
+}
+
+/** Inputs for frozen v6 LearningRecord construction (content addressing + threaded rights). */
+export interface LearningRecordConstruction {
+  readonly recordId: string;
+  readonly signalId: string;
+  readonly scope: NeutralLearningScope;
+  readonly contentRef: string;
+  readonly contentHash: string;
+  /** Injected rights context — threaded verbatim, never minted here. */
+  readonly rights: NeutralLearningRights;
+  readonly validatedAt: string;
+}
+
+/** Build a frozen v6 LearningRecord candidate from the construction (sha-256 law, status "candidate"). */
+export function toFrozenLearningRecord(construction: LearningRecordConstruction): FrozenLearningRecord {
+  if (construction.recordId.length === 0) throw new Error("toFrozenLearningRecord: empty recordId");
+  if (construction.signalId.length === 0) throw new Error("toFrozenLearningRecord: empty signalId");
+  if (construction.contentRef.length === 0) throw new Error("toFrozenLearningRecord: empty contentRef");
+  if (!/^[0-9a-f]{64}$/.test(construction.contentHash)) {
+    throw new Error("toFrozenLearningRecord: contentHash is not sha-256 hex (content-addressing law)");
+  }
+  return {
+    id: construction.recordId,
+    signalId: construction.signalId,
+    status: "candidate", // adapter outputs are candidates — the validation ladder belongs to the learning service
+    scope: mapLearningScope(construction.scope),
+    contentRef: construction.contentRef,
+    contentHash: construction.contentHash,
+    rights: toFrozenLearningRights(construction.rights),
+    validatedAt: construction.validatedAt,
+    supersededById: null, // supersession linkage is service-owned append-only state
+    simulated: true, // truth law: adapter outputs are simulated learning
+  };
+}
+
+/** Honest effort observations for a learning benchmark result (structured not-measured markers). */
+export function toLearningEffortObservations(
+  result: CandidateLearningResult,
+): Readonly<Record<string, string | number | boolean>> {
+  const out: Record<string, string | number | boolean> = {
+    fixtureCount: result.fixtureScores.length,
+    simulated: true,
+  };
+  appendMetricField(out, "learningEffort", result.effort);
+  appendMetricField(out, "latencyMs", result.latency);
+  appendMetricField(out, "costUnits", result.cost);
+  return out;
+}
+
+/**
+ * Full W6C path: invoke the learning adapter and construct the frozen v6
+ * shapes (neutral signal + candidate scope -> adapter.learn() -> frozen
+ * LearningSignal + LearningRecord candidates). Rights are threaded from the
+ * injected request context and adapter-minted rights are refused; candidate
+ * records inherit the signal scope (the v6/W6A law). Pure orchestration —
+ * no business logic; the adapter remains the only learner and the service
+ * remains the authority.
+ */
+export function learningThroughAdapter(
+  adapter: LearningAdapter,
+  request: NeutralLearningRequest,
+  completion: {
+    /** Service-owned signal capture timestamp (injected clock). */
+    readonly capturedAt: string;
+    /** Service-owned candidate creation moment (validatedAt while candidate). */
+    readonly validatedAt: string;
+  },
+): { readonly signal: FrozenLearningSignal; readonly records: readonly FrozenLearningRecord[]; readonly output: NeutralLearningOutput } {
+  const output = adapter.learn(request);
+  const signal = toFrozenLearningSignal({
+    id: request.signal.id,
+    kind: request.signal.kind,
+    scope: request.signal.scope,
+    subjectRef: request.signal.subjectRef,
+    evidenceRefs: request.signal.evidenceRefs,
+    capturedAt: completion.capturedAt,
+  });
+  const records: FrozenLearningRecord[] = [];
+  for (const candidate of output.candidates) {
+    if (candidate.scope !== request.signal.scope) {
+      throw new Error(`learningThroughAdapter: candidate ${candidate.id} scope "${candidate.scope}" diverges from the signal scope (v6 law: learning records inherit the signal scope)`);
+    }
+    if (canonicalJson(candidate.rights) !== canonicalJson(request.rights)) {
+      throw new Error(`learningThroughAdapter: candidate ${candidate.id} rights diverge from the injected context (rights law — adapters never mint consent)`);
+    }
+    records.push(
+      toFrozenLearningRecord({
+        recordId: candidate.id,
+        signalId: signal.id,
+        scope: signal.scope,
+        contentRef: candidate.contentRef,
+        contentHash: candidate.contentHash,
+        rights: request.rights,
+        validatedAt: completion.validatedAt,
+      }),
+    );
+  }
+  return { signal, records, output };
 }
