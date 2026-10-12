@@ -561,6 +561,127 @@ export {
 } from "./contractSeam.js";
 
 // ---------------------------------------------------------------------------
+// W6C: learning adapter seam, capability profiles, evaluation adapter,
+// learning benchmark
+// ---------------------------------------------------------------------------
+
+export { LEARNING_SEED_PROFILES, createLearningRegistry } from "./technology/learningSeedProfiles.js";
+
+export {
+  LEARNING_KEY_DOMAINS,
+  LEARNING_UNSUPPORTED_CODE,
+  UnsupportedLearningSignalError,
+  assertLearningRequestSupported,
+  decodeLearnedContent,
+  encodeLearningPayload,
+  intendedLearningKeyAt,
+  intendedLearningValueAt,
+  neutralLearningCandidateId,
+  neutralLearningContentRef,
+  neutralLearningSeamVersion,
+  notMeasuredLearningEffortFields,
+  sha256Hex as sha256HexLearning,
+  unsupportedLearningRequestAspects,
+  type LearnedContentEntry,
+  type LearningAdapter,
+  type LearningAdapterProfile,
+  type LearningCapabilityProfile,
+  type LearningEffortFields,
+  type NeutralLearningCandidate,
+  type NeutralLearningOutput,
+  type NeutralLearningRequest,
+  type NeutralLearningRights,
+  type NeutralLearningRightUsage,
+  type NeutralLearnerClass,
+  type NeutralLearningScope,
+  type NeutralLearningSignal,
+  type NeutralLearningSignalKind,
+} from "./learning/learningAdapterSeam.js";
+
+export {
+  deriveLearningCapabilityProfiles,
+  learningCapabilityById,
+} from "./learning/capabilityProfiles.js";
+
+export {
+  LEARNING_EVALUATION_SCOPES,
+  LEARNING_EVALUATION_USAGE_CLASSES,
+  LEARNING_RESEARCH_DATE,
+  assessLearningProductionEligibility,
+  deriveLearningCandidateProfiles,
+  learningCandidateIdsForClass,
+  rankLearningProductionEligible,
+  type LearningCandidateProfile,
+  type LearningEligibilityOptions,
+  type LearningEvaluationCriteria,
+  type LearningProductionEligibilityAssessment,
+} from "./learning/learnerEvaluation.js";
+
+export {
+  createMockLearningAdapter,
+  mockLearningGenerator,
+  type MockLearningConfig,
+} from "./learning/mockLearningAdapter.js";
+
+export {
+  VOWPAL_WABBIT_EVALUATION_ADAPTER_ID,
+  createVowpalWabbitLearningEvaluationAdapter,
+  vowpalWabbitEvaluationGenerator,
+  type VowpalWabbitAdapterFacts,
+} from "./learning/vowpalWabbitEvaluationAdapter.js";
+
+export {
+  MOCK_LEARNING_CANDIDATES,
+  createStandardLearningCandidates,
+  type LearningCandidateSpec,
+} from "./learning/learningCandidates.js";
+
+export {
+  GOLDEN_LEARNING_REPORT_RUN_ID,
+  LEARNING_BENCHMARK_FIXTURES,
+  LEARNING_FIXTURE_SET_VERSION,
+  fixtureInvocationSignal,
+  fixtureTrajectory,
+  synthesizeTakeoverTrajectory,
+  trajectoryInvocationSignal,
+  type LearningBenchmarkFixture,
+  type SyntheticTrajectorySpec,
+  type TrajectorySignal,
+} from "./learning/learningFixtures.js";
+
+export {
+  LEARNING_FIDELITY_WEIGHTS,
+  SCORER_LEARNING_VERSION,
+  intendedLearningDigest,
+  intendedLearningForSignal,
+  scoreLearningFidelity,
+  type IntendedLearningEntry,
+  type LearningFidelityParts,
+} from "./learning/learningScorer.js";
+
+export {
+  LEARNING_BENCH_SUBMITTED_AT,
+  runLearningBenchmark,
+  runStandardLearningBenchmark,
+  type CandidateLearningResult,
+  type FixtureLearningScore,
+  type LearningBenchmarkRunReport,
+} from "./learning/learningRunner.js";
+
+export {
+  learningThroughAdapter,
+  mapLearningRightUsage,
+  mapLearningScope,
+  mapLearningSignalKind,
+  toFrozenLearningRecord,
+  toFrozenLearningRights,
+  toFrozenLearningSignal,
+  toLearningEffortObservations,
+  type LearningRecordConstruction,
+  type LearningSignalConstruction,
+} from "./contractSeam.js";
+
+// ---------------------------------------------------------------------------
 // Test-suite entry for the station command
 //
 // `pnpm exec tsx --test packages/you-lab/src` passes the DIRECTORY to the
@@ -617,6 +738,11 @@ if (isTestRunnerDirectoryEntry()) {
   await import("./editing/mockEditingAdapter.test.js");
   await import("./editing/roundTripBenchmark.test.js");
   await import("./editing/editingSeam.test.js");
+  await import("./learning/capabilityProfiles.test.js");
+  await import("./learning/learningEvaluation.test.js");
+  await import("./learning/mockLearningAdapter.test.js");
+  await import("./learning/learningBenchmark.test.js");
+  await import("./learning/learningSeam.test.js");
   await import("./contractSeam.test.js");
   await import("./consumer-sim.test.js");
 }

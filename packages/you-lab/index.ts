@@ -41,6 +41,11 @@ if (isTestRunnerDirectoryEntry()) {
   await import("./src/capture/observationScorer.test.js");
   await import("./src/capture/captureBenchmark.test.js");
   await import("./src/capture/captureEvaluation.test.js");
+  await import("./src/learning/capabilityProfiles.test.js");
+  await import("./src/learning/learningEvaluation.test.js");
+  await import("./src/learning/mockLearningAdapter.test.js");
+  await import("./src/learning/learningBenchmark.test.js");
+  await import("./src/learning/learningSeam.test.js");
   await import("./src/contractSeam.test.js");
   await import("./src/consumer-sim.test.js");
 }

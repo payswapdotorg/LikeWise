@@ -15,6 +15,11 @@ import {
   toEvidenceReview,
   toQualityObservations,
   toSolutionPatchOperations,
+  learningThroughAdapter,
+  mapLearningRightUsage,
+  mapLearningScope,
+  mapLearningSignalKind,
+  toLearningEffortObservations,
   type CaptureEvidenceContext,
   type QualityObservationEntry,
 } from "./contractSeam.js";
@@ -26,6 +31,11 @@ import { generateSyntheticCapture } from "./capture/syntheticPayload.js";
 import { createMockSegmentationAdapter } from "./capture/mockSegmentationAdapter.js";
 import { createMockPoseAdapter } from "./capture/mockPoseAdapter.js";
 import { poseQualityEntries, scorePoseObservations, scoreSegmentationObservations, segmentationQualityEntries } from "./capture/observationScorer.js";
+import { createLearningRegistry } from "./technology/learningSeedProfiles.js";
+import { createVowpalWabbitLearningEvaluationAdapter, VOWPAL_WABBIT_EVALUATION_ADAPTER_ID } from "./learning/vowpalWabbitEvaluationAdapter.js";
+import { createStandardLearningCandidates } from "./learning/learningCandidates.js";
+import { fixtureInvocationSignal, LEARNING_BENCHMARK_FIXTURES } from "./learning/learningFixtures.js";
+import { LEARNING_BENCH_SUBMITTED_AT, runStandardLearningBenchmark } from "./learning/learningRunner.js";
 
 const registry = createDefaultRegistry();
 const capabilities = deriveEditorCapabilityProfiles(registry);
@@ -304,4 +314,56 @@ test("contract seam v2: full W2C path — payload -> observations -> score -> Ev
   assert.equal(record.simulated, true);
   assert.equal(review.qualityObservations["capture.segmentation.person-iou"], parts.personIoU);
   assert.equal(review.qualityObservations["capture.segmentation.score"], parts.segmentationScore);
+});
+
+// ---------------------------------------------------------------------------
+// W6C: seam mapping onto the frozen v6 learning contracts
+// ---------------------------------------------------------------------------
+
+test("contract seam v6: the learning mapping surface is exported and 1:1 with the frozen v6 literals", () => {
+  assert.equal(mapLearningScope("USER"), "USER");
+  assert.equal(mapLearningScope("GLOBAL"), "GLOBAL");
+  assert.equal(mapLearningSignalKind("manual-takeover"), "manual-takeover");
+  assert.equal(mapLearningSignalKind("capability-gap"), "capability-gap");
+  assert.equal(mapLearningRightUsage("organization-improvement"), "organization-improvement");
+  assert.equal(mapLearningRightUsage("personalization"), "personalization");
+  assert.throws(() => mapLearningScope("TENANT-WIDE" as never), /no frozen v6 mapping/);
+  assert.throws(() => mapLearningSignalKind("vibe" as never), /no frozen v6 mapping/);
+  assert.throws(() => mapLearningRightUsage("omnipotence" as never), /no frozen v6 mapping/);
+});
+
+test("contract seam v6: learningThroughAdapter + toLearningEffortObservations carry honest markers", () => {
+  const report = runStandardLearningBenchmark(createStandardLearningCandidates(createLearningRegistry()));
+  const evaluation = report.candidateResults.find((entry) => entry.candidateId === VOWPAL_WABBIT_EVALUATION_ADAPTER_ID);
+  assert.ok(evaluation);
+  const observations = toLearningEffortObservations(evaluation);
+  assert.equal(observations.simulated, true);
+  assert.equal(observations.fixtureCount, 3);
+  assert.equal(observations.learningEffort, "not-measured (simulated)");
+  assert.equal(observations["learningEffort.measured"], false);
+  assert.equal(observations["latencyMs.measured"], false);
+  assert.equal(observations["costUnits.measured"], false);
+  const fixture = LEARNING_BENCHMARK_FIXTURES[0]!;
+  const invocation = fixtureInvocationSignal(fixture);
+  const { signal, records } = learningThroughAdapter(
+    createVowpalWabbitLearningEvaluationAdapter(createLearningRegistry()),
+    {
+      requestId: "contract-seam-v6-1",
+      signal: invocation,
+      scope: invocation.scope,
+      rights: {
+        usage: ["organization-improvement", "tool-selection"],
+        consentRef: "you-lab-contract-seam-consent",
+        consentHash: "c".repeat(64),
+        expiresAt: null,
+      },
+      submittedAt: LEARNING_BENCH_SUBMITTED_AT,
+    },
+    { capturedAt: "2026-10-12T09:00:00Z", validatedAt: "2026-10-12T12:05:00Z" },
+  );
+  assert.equal(signal.kind, "manual-takeover");
+  assert.ok(records.length > 0);
+  assert.ok(records.every((record) => record.status === "candidate" && record.simulated === true));
+  assert.ok(records.every((record) => /^[0-9a-f]{64}$/.test(record.contentHash)));
+  assert.ok(records.every((record) => record.contentRef.startsWith("content-store://you-lab/learning/")));
 });
