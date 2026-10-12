@@ -56,6 +56,7 @@ import { TwinStudioSurface } from "@/you/TwinStudioSurface.js";
 import { PerformanceStudioSurface } from "@/you/PerformanceStudioSurface.js";
 import { EditingStudioSurface } from "@/you/EditingStudioSurface.js";
 import { LearningStudioSurface } from "@/you/LearningStudioSurface.js";
+import { AvatarStudioSurface } from "@/you/AvatarStudioSurface.js";
 import {
   getSidePaneTabTitle,
   SidePaneTabDragOverlay,
@@ -96,6 +97,7 @@ import type { MessageFileLinkTarget } from "@/components/ai-elements/message.js"
 import { getVisibleSidePaneTabs } from "@/lib/workspaceSidePane.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
+  BotIcon,
   BugIcon,
   CameraIcon,
   ClapperboardIcon,
@@ -331,6 +333,7 @@ export function AnimatedSidePanePanel({
   onOpenPerformanceStudio,
   onOpenEditingStudio,
   onOpenLearningStudio,
+  onOpenAvatarStudio,
   onOpenTerminalTab,
   onOpenReviewTab,
   onOpenSelectionSideConversation,
@@ -408,6 +411,8 @@ export function AnimatedSidePanePanel({
   onOpenEditingStudio: () => void;
   /** YOU Learning surface（W6B）：幂等打开/聚焦 Learning tab。 */
   onOpenLearningStudio: () => void;
+  /** YOU Avatar surface（W7B）：幂等打开/聚焦 Avatar tab。 */
+  onOpenAvatarStudio: () => void;
   onOpenTerminalTab: () => void;
   onOpenReviewTab: () => void;
   onOpenSelectionSideConversation: () => void;
@@ -484,6 +489,7 @@ export function AnimatedSidePanePanel({
   const hasPerformanceTab = tabs.some((tab) => tab.type === "performance");
   const hasEditingTab = tabs.some((tab) => tab.type === "editing");
   const hasLearningTab = tabs.some((tab) => tab.type === "learning");
+  const hasAvatarTab = tabs.some((tab) => tab.type === "avatar");
   const canOpenSelectionSideConversation = shouldOfferSelectionSideConversation({
     activeTaskId,
   });
@@ -859,6 +865,17 @@ export function AnimatedSidePanePanel({
             <span>{intl.formatMessage({ id: "you.learning.tabTitle" })}</span>
           </DropdownMenuItem>
         ) : null}
+        {!hasAvatarTab ? (
+          <DropdownMenuItem
+            data-side-pane-add-item="avatar"
+            onSelect={() => {
+              onOpenAvatarStudio();
+            }}
+          >
+            <BotIcon className="size-4" />
+            <span>{intl.formatMessage({ id: "you.avatar.tabTitle" })}</span>
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -929,6 +946,12 @@ export function AnimatedSidePanePanel({
       icon: GraduationCapIcon,
       onOpen: onOpenLearningStudio,
     },
+    avatar: {
+      id: "avatar",
+      label: intl.formatMessage({ id: "you.avatar.tabTitle" }),
+      icon: BotIcon,
+      onOpen: onOpenAvatarStudio,
+    },
   };
   const openTabLauncherItems: OpenTabLauncherItem[] = resolveOpenTabLauncherItemIds({
     canOpenSelectionSideConversation,
@@ -940,6 +963,7 @@ export function AnimatedSidePanePanel({
     hasPerformanceTab,
     hasEditingTab,
     hasLearningTab,
+    hasAvatarTab,
     supportsEmbeddedBrowser,
   })
     .filter((itemId) => !isOfficeMode || (itemId !== "terminal" && itemId !== "review"))
@@ -1035,6 +1059,7 @@ export function AnimatedSidePanePanel({
         performanceTitle: intl.formatMessage({ id: "you.performance.tabTitle" }),
         editingTitle: intl.formatMessage({ id: "you.editing.tabTitle" }),
         learningTitle: intl.formatMessage({ id: "you.learning.tabTitle" }),
+        avatarTitle: intl.formatMessage({ id: "you.avatar.tabTitle" }),
         terminalTitle: intl.formatMessage({ id: "terminal.title" }),
         subagentTypeLabel: intl.formatMessage({ id: "sidePane.subagent" }),
         subagentDirectoryTitle: intl.formatMessage({
@@ -1451,6 +1476,13 @@ export function AnimatedSidePanePanel({
                           />
                         ) : tab.type === "learning" ? (
                           <LearningStudioSurface
+                            key={tab.id}
+                            tab={tab}
+                            workspaceKey={workspaceKey}
+                            isActive={isVisible && tab.id === visibleActiveTabId}
+                          />
+                        ) : tab.type === "avatar" ? (
+                          <AvatarStudioSurface
                             key={tab.id}
                             tab={tab}
                             workspaceKey={workspaceKey}

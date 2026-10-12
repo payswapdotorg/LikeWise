@@ -50,3 +50,10 @@ import "./learningStudioStore.test.js";
 import "./learningStudioProjection.test.js";
 import "./learningSimulatedController.test.js";
 import "./learningStudioDemo.test.js";
+// W7B — Avatar Studio 逻辑测试。
+import "./avatarTabRegistration.test.js";
+import "./avatarMessages.test.js";
+import "./avatarStudioStore.test.js";
+import "./avatarStudioProjection.test.js";
+import "./avatarSimulatedController.test.js";
+import "./avatarStudioDemo.test.js";

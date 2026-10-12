@@ -65,7 +65,7 @@ test("learning, solution, capture, twin, performance and editing tabs coexist as
   const next = resolveLearningTabState(withSiblings, { workspaceKey: "ws-a" });
   assert.equal(next.tabs.length, 6);
   assert.equal(next.activeTabId, LEARNING_SIDE_PANE_TAB_ID);
-  // 既有 tab 顺序不变（learning 追加在末位——LAST，在 editing 之后）。
+  // 既有 tab 顺序不变（learning 追加在末位；avatar 由自己的 W7B 注册测试覆盖）。
   assert.deepEqual(
     next.tabs.map((tab) => tab.type),
     ["solution", "capture", "twin", "performance", "editing", "learning"],
@@ -99,11 +99,12 @@ test("launcher offers learning only when the tab is not open (learning is LAST, 
     "performance",
     "editing",
     "learning",
+    "avatar",
   ]);
 
   assert.deepEqual(
     resolveOpenTabLauncherItemIds({ ...base, hasLearningTab: true }),
-    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing"],
+    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "avatar"],
   );
 
   // 既有行为不受影响：developer tools / review / 无浏览器环境 / 缺省参数向后兼容。
@@ -115,7 +116,7 @@ test("launcher offers learning only when the tab is not open (learning is LAST, 
       hasCaptureTab: false,
       supportsEmbeddedBrowser: false,
     }),
-    ["terminal", "developer-tools", "solution", "capture", "twin", "performance", "editing", "learning"],
+    ["terminal", "developer-tools", "solution", "capture", "twin", "performance", "editing", "learning", "avatar"],
   );
 
   // 未传 hasLearningTab 时缺省 false（既有调用点零行为变化，learning 入口照常出现）。
@@ -126,7 +127,7 @@ test("launcher offers learning only when the tab is not open (learning is LAST, 
       hasSolutionTab: false,
       hasCaptureTab: false,
     }),
-    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning"],
+    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "avatar"],
   );
 
   assert.deepEqual(
@@ -149,6 +150,7 @@ test("launcher offers learning only when the tab is not open (learning is LAST, 
       "performance",
       "editing",
       "learning",
+      "avatar",
     ],
   );
 });
