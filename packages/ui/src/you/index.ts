@@ -43,3 +43,10 @@ import "./editingStudioStore.test.js";
 import "./editingStudioProjection.test.js";
 import "./editingSimulatedController.test.js";
 import "./editingStudioDemo.test.js";
+// W6B — Learning Studio 逻辑测试。
+import "./learningTabRegistration.test.js";
+import "./learningMessages.test.js";
+import "./learningStudioStore.test.js";
+import "./learningStudioProjection.test.js";
+import "./learningSimulatedController.test.js";
+import "./learningStudioDemo.test.js";

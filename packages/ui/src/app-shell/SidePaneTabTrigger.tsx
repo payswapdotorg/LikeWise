@@ -11,6 +11,7 @@ import {
   FileCode2Icon,
   FileDiffIcon,
   FilePenLineIcon,
+  GraduationCapIcon,
   MapIcon,
   MessageSquareTextIcon,
   ListTreeIcon,
@@ -360,6 +361,12 @@ export function SidePaneTabIcon({ tab }: { tab: WorkspaceSidePaneTab }) {
     return <FilePenLineIcon className="size-3.5" />;
   }
 
+  // YOU Learning surface（W6B）：与 Solution/Capture/Twin/Performance/Editing 同级的
+  // workspace 表面，固定毕业帽（graduation cap）图标。
+  if (tab.type === "learning") {
+    return <GraduationCapIcon className="size-3.5" />;
+  }
+
   if (tab.type === "terminal" || tab.type === "bash-output") {
     return <SquareTerminalIcon className="size-3.5" />;
   }
@@ -591,6 +598,11 @@ export function getSidePaneTabTitle(
   // YOU Editing surface（W5B）：标题走中央文案表（you.editing.tabTitle）。
   if (tab.type === "editing") {
     return formatMessage({ id: "you.editing.tabTitle" });
+  }
+
+  // YOU Learning surface（W6B）：标题走中央文案表（you.learning.tabTitle）。
+  if (tab.type === "learning") {
+    return formatMessage({ id: "you.learning.tabTitle" });
   }
 
   if (tab.type === "terminal" || tab.type === "bash-output") {

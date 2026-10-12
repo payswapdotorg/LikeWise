@@ -7,6 +7,7 @@ import { resolveCaptureTabState } from "@/you/captureTabRegistration.js";
 import { resolveTwinTabState } from "@/you/twinTabRegistration.js";
 import { resolvePerformanceTabState } from "@/you/performanceTabRegistration.js";
 import { resolveEditingTabState } from "@/you/editingTabRegistration.js";
+import { resolveLearningTabState } from "@/you/learningTabRegistration.js";
 
 export interface BrowserSidePaneTab {
   id: string;
@@ -152,6 +153,20 @@ export interface PerformanceStudioSidePaneTab {
 export interface EditingStudioSidePaneTab {
   id: "editing";
   type: "editing";
+  ownerTaskId?: string | null;
+  workspaceKey?: string | null;
+  openedAt?: number;
+}
+
+/**
+ * YOU Learning surface tab（W6B）——与 Solution/Capture/Twin/Performance/Editing
+ * 同级的 native workspace 表面。固定单例 id：一个 workspace 一个 Learning tab
+ *（重复打开幂等地聚焦既有 tab）；内容与视图状态由 `packages/ui/src/you/**` 子树
+ * 自持（learning 系列模块）。
+ */
+export interface LearningStudioSidePaneTab {
+  id: "learning";
+  type: "learning";
   ownerTaskId?: string | null;
   workspaceKey?: string | null;
   openedAt?: number;
@@ -599,6 +614,7 @@ export type WorkspaceSidePaneTab =
   | TwinStudioSidePaneTab
   | PerformanceStudioSidePaneTab
   | EditingStudioSidePaneTab
+  | LearningStudioSidePaneTab
   | TerminalSidePaneTab
   | BrowserUseSidePaneTab
   | SubagentSessionSidePaneTab
@@ -1142,6 +1158,8 @@ const WORKSPACE_GLOBAL_SIDE_PANE_TAB_TYPES = new Set<WorkspaceSidePaneTab["type"
   "performance",
   // Editing 同为 workspace 级表面（W5B，同 ADR-002 语义）。
   "editing",
+  // Learning 同为 workspace 级表面（W6B，同 ADR-002 语义）。
+  "learning",
 ]);
 
 function isWorkspaceGlobalSidePaneTab(tab: WorkspaceSidePaneTab): boolean {
@@ -1736,6 +1754,19 @@ export function openEditingStudioSidePane(
   },
 ): WorkspaceSidePaneState {
   return resolveEditingTabState(current, options);
+}
+
+/**
+ * 打开（或幂等聚焦）YOU Learning 表面 tab（W6B 注册点）。
+ * 纯转移逻辑在 `@/you/learningTabRegistration.js`（you 子树自含，可被 tsx 直接加载）。
+ */
+export function openLearningStudioSidePane(
+  current: WorkspaceSidePaneState | null,
+  options: {
+    workspaceKey?: string | null;
+  },
+): WorkspaceSidePaneState {
+  return resolveLearningTabState(current, options);
 }
 
 export function openTerminalSidePane(

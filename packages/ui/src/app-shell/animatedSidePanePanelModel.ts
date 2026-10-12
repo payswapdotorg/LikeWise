@@ -10,7 +10,8 @@ export type OpenTabLauncherItemId =
   | "capture"
   | "twin"
   | "performance"
-  | "editing";
+  | "editing"
+  | "learning";
 
 export function resolveOpenTabLauncherItemIds({
   developerToolsEnabled,
@@ -20,6 +21,7 @@ export function resolveOpenTabLauncherItemIds({
   hasTwinTab = false,
   hasPerformanceTab = false,
   hasEditingTab = false,
+  hasLearningTab = false,
   canOpenSelectionSideConversation = false,
   supportsEmbeddedBrowser = true,
 }: {
@@ -35,6 +37,8 @@ export function resolveOpenTabLauncherItemIds({
   hasPerformanceTab?: boolean;
   /** YOU Editing tab 已开时不再提供入口（W5B，同幂等聚焦语义）。缺省 false。 */
   hasEditingTab?: boolean;
+  /** YOU Learning tab 已开时不再提供入口（W6B，同幂等聚焦语义）。缺省 false。 */
+  hasLearningTab?: boolean;
   canOpenSelectionSideConversation?: boolean;
   supportsEmbeddedBrowser?: boolean;
 }): OpenTabLauncherItemId[] {
@@ -76,6 +80,10 @@ export function resolveOpenTabLauncherItemIds({
 
   if (!hasEditingTab) {
     itemIds.push("editing");
+  }
+
+  if (!hasLearningTab) {
+    itemIds.push("learning");
   }
 
   return itemIds;
