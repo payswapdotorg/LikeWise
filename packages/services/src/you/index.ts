@@ -15,3 +15,5 @@ import "./editingService.test.js";
 import "./editingFixtureScenario.test.js";
 import "./learningService.test.js";
 import "./learningFixtureScenario.test.js";
+import "./embodimentService.test.js";
+import "./embodimentFixtureScenario.test.js";
