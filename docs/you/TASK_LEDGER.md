@@ -927,3 +927,89 @@ Workers never mark their own work DONE; they submit evidence to TL.
   unchanged (zero regression from the additive shapes).
 - Dispatch follows immediately with the in-context order protocol (title
   message + binding order as message 2 + exact-command kick as message 3).
+
+### W6B merge record (2026-10-12)
+
+- Status: MERGED. Owner: Worker B (GLM-5.3 agent session, Full-Stack —
+  the coordinator session's delegated lane), station-verified by TL.
+  Branch: `you/w6b-studio`. Base SHA: `bbf2a18`. PR #28; merge commit
+  `b8bb82a`; station-lane commit `e958758` (45 files, +8219/−14 — 34
+  files in ui/src/you incl. 28 new modules + 5 sibling registration
+  tests + index.ts, plus 11 disclosed registration-only seam edits with
+  per-file counts: App.tsx +2, AnimatedSidePanePanel +32,
+  SidePaneTabTrigger +12, WorkspaceShellLayout +2,
+  animatedSidePanePanelModel +9/−1, sidePaneTabPresentation +7,
+  app-shell/types +2, useAppPanels +16, i18n en-US/zh-CN +1 each,
+  workspaceSidePane +31).
+- Delivery-path note: COORDINATOR-SESSION EMISSION — one worker session
+  planned and executed BOTH remaining wave-6 lanes via worktrees +
+  delegated impl agents (disclosed in-session; the TL contracted the
+  expansion with per-lane separation: separate commits, separate patches,
+  separate report blocks). Patch harvested byte-exact (sha256
+  cf87fcc8194bf5379f32f2e3f0e82f90ef4665a3fb33de095333f6a771674e8e)
+  from the pod project root.
+- Station battery: ui **275/275** (218 baseline + 57 new) · shared
+  254/254 · services 97/97 · root lint 0e/70w — exact parity with the
+  report. Typecheck: the worker's split-run parity (tsc -b ui exit 0 in
+  the pod; root batch OOM = the documented W5A environmental condition)
+  + the station ui battery 275/275 as runtime corroboration — the
+  accepted evidence class per the W5A station law (the station's own
+  ui tsc OOM-kills on the 4GB box).
+- TL review: six-kind signal picker + scope ladder from controller
+  projections (zero business logic in the UI — W1B-W5B pattern; TODO(T6)
+  rebinding markers); trajectory replay content-addressed only with
+  byte-identical determinism tests; rights display + consent withdrawal
+  routed through the wave-2 authority (no second consent path); all
+  four v6 error codes as role="alert" panels; i18n key-set + placeholder
+  parity by test.
+- Contract change requests: none.
+
+### W6C merge record (2026-10-12)
+
+- Status: MERGED. Owner: Worker C (GLM-5.3 agent session, Full-Stack —
+  the coordinator session's delegated lane), station-verified by TL.
+  Branch: `you/w6c-learnlab`. Base SHA: `bbf2a18`. PR #29; merge commit
+  `bf00f81`; station-lane commit `bd3a81c` (19 files, +3404/−2 — 9 new
+  learning modules + 5 test files + learningSeedProfiles.ts 343, plus
+  contractSeam.ts +235/−2, its test +62, index consolidation).
+- Delivery-path note: coordinator-session emission (same as W6B). Patch
+  harvested byte-exact (sha256
+  1f63c2b6c248654654f5e361b476c800216f7144d3880034f26f34977975b3aa).
+- REPORT CORRECTION (station truth supersedes): the report claimed
+  you-lab "161/161 (baseline 113 + 48 new)" — a worktree battery
+  miscount (113 was the W1C-era number). Station battery at the applied
+  patch: **316/316** (268 baseline + 48 new, every prior W1C-W5C test
+  green) — the patch itself is complete and correct; only the report's
+  baseline arithmetic was wrong. Disclosed per the truth law.
+- Registry: 9 researched REAL learner profiles (vowpal-wabbit,
+  lightgbm, xgboost, smac, prose, wittgenstein, mord, mabwiser, pm4py)
+  — every profile carries >=1 honest unverifiedClaims entry; eligibility
+  DERIVED (permissive-SPDX + 365-day maintenance gate — mord/mabwiser
+  fail the gate, pm4py AGPL-3.0 not-production-friendly); production
+  pick vowpal-wabbit (BSD-3-Clause, 15d freshness, top-ranked) with a
+  fail-closed evaluation adapter. Benchmark: golden runId 595c8561,
+  score spread 0.53-1.0, computed determinism.
+- Station battery: you-lab **316/316** · scoped tsc exit 0 · root lint
+  0e/70w. Scope clean (you-lab only); zero new deps; contract.ts
+  untouched (filesystem-walk only-module test).
+- Contract change requests: none.
+
+### T6 integration record (2026-10-12)
+
+- WAVE 6 COMPLETE: freeze (bbf2a18) → W6A (PR #27, a7b6795, emission
+  harvested byte-exact) → W6B (PR #28, e958758, coordinator-session
+  emission) → W6C (PR #29, bd3a81c, coordinator-session emission) → T6
+  integrated.
+- Integrated main battery (at bf00f81): shared **310/310** + services
+  **119/119** + ui **275/275** + you-lab **316/316** = **1020/1020
+  GREEN**; root lint 0 errors / 70 warnings (exact baseline); zero
+  dependency drift (manifest + lockfile untouched vs freeze across all
+  three lanes); contract.ts untouched by every lane (the v6 freeze
+  honored throughout; the LearningScope dedup lesson banked).
+- Operational note: wave 6 ran through one pod-death (W6C lane 1 —
+  execution-plane failure, void + re-plan), one coordinator-session
+  dual-lane delivery (contracted with per-lane separation), and the
+  emission-path harvest chain twice more (both byte-exact). The report
+  miscount on W6C's baseline was caught and corrected by station truth.
+- Phase-0 gate: unchanged. W6 surfaces (learning services, Learning UX,
+  learner lab) join the station battery evidence set.
