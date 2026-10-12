@@ -682,6 +682,140 @@ export {
 } from "./contractSeam.js";
 
 // ---------------------------------------------------------------------------
+// W7C: soul/realtime adapter seam, capability profiles, evaluation adapter,
+// soul benchmark, realtime channel seam
+// ---------------------------------------------------------------------------
+
+export { SOUL_SEED_PROFILES, createSoulRegistry } from "./technology/soulSeedProfiles.js";
+export { REALTIME_SEED_PROFILES } from "./technology/realtimeSeedProfiles.js";
+
+export {
+  SOUL_RESPONSE_DOMAINS,
+  SOUL_UNSUPPORTED_CODE,
+  UnsupportedSoulRequestError,
+  assertSoulRequestSupported,
+  decodeResponseContent,
+  encodeSoulPayload,
+  intendedResponseTopicAt,
+  intendedResponseValueAt,
+  neutralSoulContentRef,
+  neutralSoulResponseId,
+  neutralSoulSeamVersion,
+  notMeasuredSoulEffortFields,
+  projectedEmbodimentStateFor,
+  sha256Hex as sha256HexSoul,
+  unsupportedSoulRequestAspects,
+  type NeutralEmbodimentState,
+  type NeutralLatencyClass,
+  type NeutralSoulBinding,
+  type NeutralSoulClass,
+  type NeutralSoulModality,
+  type NeutralSoulOutput,
+  type NeutralSoulRequest,
+  type NeutralSoulResponseRecord,
+  type NeutralSoulRoutingProfile,
+  type NeutralRoutedPromptContext,
+  type ResponseContentEntry,
+  type SoulAdapter,
+  type SoulAdapterProfile,
+  type SoulEffortFields,
+} from "./soul/soulAdapterSeam.js";
+
+export {
+  BINDING_CAPABLE_CLASSES,
+  deriveSoulCapabilityProfiles,
+  soulCapabilityById,
+  type SoulCapabilityProfile,
+} from "./soul/capabilityProfiles.js";
+
+export {
+  SOUL_EVALUATION_LATENCY_CLASSES,
+  SOUL_EVALUATION_MODALITIES,
+  SOUL_EVALUATION_ROUTING_PROFILES,
+  SOUL_RESEARCH_DATE,
+  assessSoulProductionEligibility,
+  deriveSoulCandidateProfiles,
+  rankSoulProductionEligible,
+  soulCandidateIdsForClass,
+  type SoulCandidateProfile,
+  type SoulEligibilityOptions,
+  type SoulEvaluationCriteria,
+  type SoulProductionEligibilityAssessment,
+} from "./soul/soulEvaluation.js";
+
+export {
+  createMockSoulAdapter,
+  mockSoulGenerator,
+  type MockSoulConfig,
+} from "./soul/mockSoulAdapter.js";
+
+export {
+  LLAMA_CPP_EVALUATION_ADAPTER_ID,
+  createLlamaCppSoulEvaluationAdapter,
+  llamaCppEvaluationGenerator,
+  type LlamaCppAdapterFacts,
+} from "./soul/llamaCppEvaluationAdapter.js";
+
+export {
+  MOCK_SOUL_CANDIDATES,
+  createStandardSoulCandidates,
+  type SoulCandidateSpec,
+} from "./soul/soulCandidates.js";
+
+export {
+  GOLDEN_SOUL_REPORT_RUN_ID,
+  SOUL_BENCHMARK_FIXTURES,
+  SOUL_FIXTURE_SET_VERSION,
+  fixtureScenario,
+  synthesizeSoulScenario,
+  type SoulBenchmarkFixture,
+  type SoulScenario,
+  type SyntheticSoulScenarioSpec,
+} from "./soul/soulFixtures.js";
+
+export {
+  SOUL_FIDELITY_WEIGHTS,
+  SCORER_SOUL_VERSION,
+  intendedResponseDigest,
+  intendedResponsesForPrompt,
+  scoreSoulResponse,
+  type IntendedResponseEntry,
+  type SoulFidelityParts,
+} from "./soul/soulScorer.js";
+
+export {
+  SOUL_BENCH_SUBMITTED_AT,
+  runSoulBenchmark,
+  runStandardSoulBenchmark,
+  type CandidateSoulResult,
+  type FixtureSoulScore,
+  type SoulBenchmarkRunReport,
+} from "./soul/soulRunner.js";
+
+export {
+  buildRealtimeChannel,
+  neutralRealtimeChannelId,
+  neutralRealtimeSeamVersion,
+  neutralRealtimeStreamRef,
+  realtimeStreamManifest,
+  type NeutralRealtimeChannel,
+  type NeutralRealtimeChannelKind,
+  type NeutralRealtimeChannelParams,
+} from "./realtime/realtimeAdapterSeam.js";
+
+export {
+  mapEmbodimentState,
+  mapSoulRoutingProfile,
+  soulThroughAdapter,
+  toFrozenAvatarSession,
+  toFrozenRealtimeChannelDescriptor,
+  toFrozenSoulBinding,
+  toSoulEffortObservations,
+  type AvatarSessionConstruction,
+  type SoulBindingConstruction,
+} from "./contractSeam.js";
+
+// ---------------------------------------------------------------------------
 // Test-suite entry for the station command
 //
 // `pnpm exec tsx --test packages/you-lab/src` passes the DIRECTORY to the
@@ -743,6 +877,13 @@ if (isTestRunnerDirectoryEntry()) {
   await import("./learning/mockLearningAdapter.test.js");
   await import("./learning/learningBenchmark.test.js");
   await import("./learning/learningSeam.test.js");
+  await import("./technology/soulSeedProfiles.test.js");
+  await import("./soul/capabilityProfiles.test.js");
+  await import("./soul/soulEvaluation.test.js");
+  await import("./soul/mockSoulAdapter.test.js");
+  await import("./soul/soulBenchmark.test.js");
+  await import("./soul/soulSeam.test.js");
+  await import("./realtime/realtimeAdapterSeam.test.js");
   await import("./contractSeam.test.js");
   await import("./consumer-sim.test.js");
 }

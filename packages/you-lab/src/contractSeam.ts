@@ -1,5 +1,5 @@
-/* eslint-disable max-lines -- the single seam to the frozen YOU contract v1+v2+v3+v4+v5+v6 is consolidated BY DESIGN: exactly one module maps every neutral you-lab shape onto the frozen contracts (the only-module law asserted by tests), so the full W1C/W2C/W3C/W4C/W5C/W6C mapping surface intentionally lives in this one file. */
-// SINGLE seam to the frozen YOU contract v1+v2+v3+v4+v5+v6
+/* eslint-disable max-lines -- the single seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7 is consolidated BY DESIGN: exactly one module maps every neutral you-lab shape onto the frozen contracts (the only-module law asserted by tests), so the full W1C/W2C/W3C/W4C/W5C/W6C/W7C mapping surface intentionally lives in this one file. */
+// SINGLE seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7
 // (packages/shared/src/you/contract.ts).
 //
 // SEAM NOTE (W1C sandbox): importing "@zcode/shared" from packages/you-lab
@@ -70,6 +70,12 @@ import type {
   SolutionEntity,
   SolutionPatchOperation,
   SolutionQualityMap,
+  AvatarSession as FrozenAvatarSession,
+  AvatarSessionStatus,
+  EmbodimentState,
+  RealtimeChannelDescriptor as FrozenRealtimeChannelDescriptor,
+  SoulBinding as FrozenSoulBinding,
+  SoulRoutingProfile,
 } from "../../shared/src/you/contract.js";
 import type { CandidateOperation, EditorArtifact, NeutralEntity } from "./adapters/editorAdapterSeam.js";
 import type { CaptureObservation, NeutralCaptureModality } from "./capture/captureAdapterSeam.js";
@@ -111,6 +117,16 @@ import type {
   NeutralLearningSignalKind,
 } from "./learning/learningAdapterSeam.js";
 import type { CandidateLearningResult } from "./learning/learningRunner.js";
+import type {
+  NeutralEmbodimentState,
+  NeutralSoulOutput,
+  NeutralSoulRequest,
+  NeutralSoulResponseRecord,
+  NeutralSoulRoutingProfile,
+  SoulAdapter,
+} from "./soul/soulAdapterSeam.js";
+import type { CandidateSoulResult } from "./soul/soulRunner.js";
+import type { NeutralRealtimeChannel } from "./realtime/realtimeAdapterSeam.js";
 import { canonicalJson } from "./determinism.js";
 
 /**
@@ -1271,4 +1287,207 @@ export function learningThroughAdapter(
     );
   }
   return { signal, records, output };
+}
+
+// ---------------------------------------------------------------------------
+// W7C: seam mapping onto the frozen v7 embodiment contracts (SoulBinding /
+// SoulRoutingProfile / EmbodimentState / AvatarSession /
+// RealtimeChannelDescriptor). The neutral W7C shapes in
+// soul/soulAdapterSeam.ts and realtime/realtimeAdapterSeam.ts are
+// structurally aligned with the frozen v7 shapes, so this mapping is 1:1
+// and never redeclares or mutates contract semantics. The routing-profile
+// and embodiment-state mappings also happen here — the ONLY place neutral
+// soul shapes meet the frozen v7 literals. IDENTITY LAW: response records
+// thread the request's binding/request identity (adapters never mint
+// identity — enforced on the full path below). PROJECTION LAW: the
+// embodiment-state ladder is a projection, never an authority (the frozen
+// v7 law) — the session state below is derived from the adapter's
+// projected response states. TRUTH LAW: fixture avatar sessions stay
+// `simulated: true`.
+// ---------------------------------------------------------------------------
+
+/** Map a neutral routing profile onto the frozen v7 SoulRoutingProfile (1:1, validated). */
+export function mapSoulRoutingProfile(profile: NeutralSoulRoutingProfile): SoulRoutingProfile {
+  if (profile.length === 0) {
+    throw new Error("mapSoulRoutingProfile: empty routing profile (truth law — refusing to map an unaddressed route)");
+  }
+  if (profile === "system-one" || profile === "system-two") {
+    // Open-union guard — the cast is sound (see mapLearningScope).
+    return profile as SoulRoutingProfile;
+  }
+  throw new Error(`mapSoulRoutingProfile: neutral profile "${profile}" has no frozen v7 mapping (routing profiles are system-one/system-two; extension requires a TL contract update)`);
+}
+
+/** Map a neutral embodiment state onto the frozen v7 EmbodimentState (1:1 across the nine-state ladder, validated). */
+export function mapEmbodimentState(state: NeutralEmbodimentState): EmbodimentState {
+  if (state.length === 0) {
+    throw new Error("mapEmbodimentState: empty embodiment state (truth law — refusing to map an unaddressed state)");
+  }
+  if (
+    state === "listening" || state === "reading" || state === "typing" || state === "thinking" ||
+    state === "tool_use" || state === "speaking" || state === "interrupted" || state === "idle" ||
+    state === "unavailable"
+  ) {
+    // Open-union guard — the cast is sound (see mapLearningScope).
+    return state as EmbodimentState;
+  }
+  throw new Error(`mapEmbodimentState: neutral state "${state}" has no frozen v7 mapping (the nine-state ladder is frozen; extension requires a TL contract update)`);
+}
+
+/** Inputs for frozen v7 SoulBinding construction (provider-neutral; model refs opaque). */
+export interface SoulBindingConstruction {
+  readonly id: string;
+  readonly providerKind: string;
+  readonly modelRef: string;
+  readonly routingProfile: NeutralSoulRoutingProfile;
+  readonly capabilities: readonly string[];
+}
+
+/** Build a frozen v7 SoulBinding from the construction (validated 1:1 mapping). */
+export function toFrozenSoulBinding(construction: SoulBindingConstruction): FrozenSoulBinding {
+  if (construction.id.length === 0) throw new Error("toFrozenSoulBinding: empty id");
+  if (construction.providerKind.length === 0) throw new Error("toFrozenSoulBinding: empty providerKind (the binding names its provider kind)");
+  if (construction.modelRef.length === 0) throw new Error("toFrozenSoulBinding: empty modelRef (model references are opaque but never empty)");
+  for (const capability of construction.capabilities) {
+    if (capability.length === 0) throw new Error("toFrozenSoulBinding: empty capability entry");
+  }
+  return {
+    id: construction.id,
+    providerKind: construction.providerKind,
+    modelRef: construction.modelRef,
+    routingProfile: mapSoulRoutingProfile(construction.routingProfile),
+    capabilities: [...construction.capabilities],
+  };
+}
+
+/** Inputs for frozen v7 AvatarSession construction (service-owned identity/timing). */
+export interface AvatarSessionConstruction {
+  readonly sessionId: string;
+  readonly bodyId: string;
+  readonly soulBindingId: string;
+  readonly status: AvatarSessionStatus;
+  readonly state: NeutralEmbodimentState;
+  readonly openedAt: string;
+  /** null while the session is open; required when status is "closed". */
+  readonly closedAt: string | null;
+}
+
+/** Build a frozen v7 AvatarSession from the construction (truth law: simulated stays labeled). */
+export function toFrozenAvatarSession(construction: AvatarSessionConstruction): FrozenAvatarSession {
+  if (construction.sessionId.length === 0) throw new Error("toFrozenAvatarSession: empty sessionId");
+  if (construction.bodyId.length === 0) throw new Error("toFrozenAvatarSession: empty bodyId (a Body possesses the session)");
+  if (construction.soulBindingId.length === 0) throw new Error("toFrozenAvatarSession: empty soulBindingId (a Soul possesses the Body)");
+  if (construction.status !== "active" && construction.status !== "suspended" && construction.status !== "closed") {
+    throw new Error(`toFrozenAvatarSession: unknown status "${construction.status}" (active/suspended/closed)`);
+  }
+  if (construction.status === "closed" && (construction.closedAt === null || construction.closedAt.length === 0)) {
+    throw new Error("toFrozenAvatarSession: a closed session carries a non-empty closedAt");
+  }
+  if (construction.status !== "closed" && construction.closedAt !== null) {
+    throw new Error("toFrozenAvatarSession: an open/suspended session carries closedAt null (closing is service-owned append-only state)");
+  }
+  if (construction.openedAt.length === 0) throw new Error("toFrozenAvatarSession: empty openedAt");
+  return {
+    id: construction.sessionId,
+    bodyId: construction.bodyId,
+    soulBindingId: construction.soulBindingId,
+    status: construction.status,
+    state: mapEmbodimentState(construction.state),
+    openedAt: construction.openedAt,
+    closedAt: construction.closedAt,
+    simulated: true, // truth law: fixture avatar sessions stay labeled simulated
+  };
+}
+
+/** Build a frozen v7 RealtimeChannelDescriptor from a neutral channel (content-addressing law). */
+export function toFrozenRealtimeChannelDescriptor(channel: NeutralRealtimeChannel): FrozenRealtimeChannelDescriptor {
+  if (channel.id.length === 0) throw new Error("toFrozenRealtimeChannelDescriptor: empty id");
+  if (channel.kind.length === 0) throw new Error("toFrozenRealtimeChannelDescriptor: empty kind");
+  if (channel.streamRef.length === 0) throw new Error("toFrozenRealtimeChannelDescriptor: empty streamRef (stream references are content-addressed, never inlined)");
+  if (!/^[0-9a-f]{64}$/.test(channel.streamHash)) {
+    throw new Error("toFrozenRealtimeChannelDescriptor: streamHash is not sha-256 hex (content-addressing law)");
+  }
+  if (channel.latencyClass.length === 0) throw new Error("toFrozenRealtimeChannelDescriptor: empty latencyClass");
+  return {
+    id: channel.id,
+    kind: channel.kind,
+    streamRef: channel.streamRef,
+    streamHash: channel.streamHash,
+    latencyClass: channel.latencyClass,
+  };
+}
+
+/** Honest effort observations for a soul benchmark result (structured not-measured markers). */
+export function toSoulEffortObservations(
+  result: CandidateSoulResult,
+): Readonly<Record<string, string | number | boolean>> {
+  const out: Record<string, string | number | boolean> = {
+    fixtureCount: result.fixtureScores.length,
+    simulated: true,
+  };
+  appendMetricField(out, "soulEffort", result.effort);
+  appendMetricField(out, "latencyMs", result.latency);
+  appendMetricField(out, "costUnits", result.cost);
+  return out;
+}
+
+/**
+ * Full W7C path: invoke the soul adapter and construct the frozen v7 shapes
+ * (neutral binding + routed prompt -> adapter.invoke() -> frozen SoulBinding
+ * + AvatarSession + content-addressed response records). IDENTITY LAW:
+ * response records must thread the request's binding/request identity — an
+ * adapter minting records for another binding is refused. PROJECTION LAW:
+ * the session state is the projected embodiment state of the last response
+ * record (a projection, never an authority; no response records project to
+ * "idle"). Pure orchestration — no business logic; the adapter remains the
+ * only soul and the embodiment service remains the authority (W7A).
+ */
+export function soulThroughAdapter(
+  adapter: SoulAdapter,
+  request: NeutralSoulRequest,
+  session: {
+    /** Service-owned avatar session identity (injected). */
+    readonly sessionId: string;
+    /** The Body possessed by the Soul (injected). */
+    readonly bodyId: string;
+    /** Service-owned session-open moment (injected clock). */
+    readonly openedAt: string;
+  },
+): {
+  readonly binding: FrozenSoulBinding;
+  readonly avatarSession: FrozenAvatarSession;
+  readonly records: readonly NeutralSoulResponseRecord[];
+  readonly output: NeutralSoulOutput;
+} {
+  const output = adapter.invoke(request);
+  const binding = toFrozenSoulBinding({
+    id: request.binding.id,
+    providerKind: request.binding.providerKind,
+    modelRef: request.binding.modelRef,
+    routingProfile: request.binding.routingProfile,
+    capabilities: request.binding.capabilities,
+  });
+  for (const record of output.records) {
+    if (record.bindingId !== request.binding.id) {
+      throw new Error(`soulThroughAdapter: record ${record.id} bindingId "${record.bindingId}" diverges from the request binding (identity law — adapters never mint binding identity)`);
+    }
+    if (record.requestId !== request.requestId) {
+      throw new Error(`soulThroughAdapter: record ${record.id} requestId "${record.requestId}" diverges from the request (identity law — adapters never mint request identity)`);
+    }
+    // every record's routing profile must be a valid frozen v7 literal
+    mapSoulRoutingProfile(record.routingProfile);
+    // every record's projected embodiment state must be a valid frozen v7 literal
+    mapEmbodimentState(record.embodimentState);
+  }
+  const lastRecord = output.records[output.records.length - 1];
+  const avatarSession = toFrozenAvatarSession({
+    sessionId: session.sessionId,
+    bodyId: session.bodyId,
+    soulBindingId: binding.id,
+    status: "active",
+    state: lastRecord?.embodimentState ?? "idle",
+    openedAt: session.openedAt,
+    closedAt: null,
+  });
+  return { binding, avatarSession, records: output.records, output };
 }
