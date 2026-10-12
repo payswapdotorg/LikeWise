@@ -512,3 +512,45 @@ W6C.
 - Dependency policy for wave 6: zero new runtime dependencies; no root
   manifest/lockfile edits by workers; TL serializes any root
   reconciliation at T6.
+
+## Wave-7 contract freeze (v7)
+
+Frozen by the TL at the T6->W7 transition for Work Orders W7A / W7B /
+W7C.
+
+- Machine authority: `packages/shared/src/you/contract.ts` (the same file
+  as v1-v6; the freeze is ADDITIVE — no earlier shape was altered. New:
+  EmbodimentState (the nine-state listening/reading/typing/thinking/
+  tool_use/speaking/interrupted/idle/unavailable ladder), SoulRoutingProfile
+  (system-one/system-two — ROUTING PROFILES, not fixed model identities),
+  SoulBinding (provider-neutral LLM/VLM/runtime binding), AgentBody
+  (appearance/role/capabilities/tools/policies/memory + evaluator
+  contracts, content-addressed appearance), AvatarSessionStatus,
+  AvatarSession (a Body possessed by a Soul; append-only embodiment-state
+  events), RealtimeChannelDescriptor; additive event types
+  avatar-session-opened / embodiment-state-changed / soul-reassigned /
+  avatar-session-closed; additive error codes YOU_BODY_NOT_FOUND /
+  YOU_SOUL_BINDING_INVALID / YOU_AVATAR_SESSION_NOT_FOUND /
+  YOU_EMBODIMENT_STATE_INVALID).
+- Workers MUST NOT modify `contract.ts`. A worker needing a contract change
+  stops and requests a TL contract update in its delivery report.
+- Wave-7 consumption: Worker A implements the embodiment authority
+  services (Body registry, Soul binding validation, AvatarSession
+  lifecycle with append-only state transitions, policy enforcement).
+  Worker B builds the Avatar Studio UX on Worker A's seams (the W1B-W6B
+  controller pattern; simulated controller until T7 binding). Worker C
+  researches LLM/VLM providers, state-routing approaches and realtime
+  media stacks inside `packages/you-lab` and implements the
+  soul/realtime adapter seam + mock + benchmark, mapping onto the frozen
+  contract at `contractSeam.ts`.
+- BODY/SOUL SEPARATION LAW (wave-7 core): a Body can be possessed by
+  another Soul without changing the Body contract; re-possession is the
+  soul-reassigned event, never an in-place mutation. The embodiment-state
+  ladder is a projection, never an authority.
+- Appearance and heavy spec content are never inlined in records;
+  contentRef + contentHash on the same content-store abstraction.
+  FIXTURES.md laws apply verbatim (injected clock/rng, byte-identical
+  replays, `simulated: true`).
+- Dependency policy for wave 7: zero new runtime dependencies; no root
+  manifest/lockfile edits by workers; TL serializes any root
+  reconciliation at T7.

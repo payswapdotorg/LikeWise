@@ -1013,3 +1013,22 @@ Workers never mark their own work DONE; they submit evidence to TL.
   miscount on W6C's baseline was caught and corrected by station truth.
 - Phase-0 gate: unchanged. W6 surfaces (learning services, Learning UX,
   learner lab) join the station battery evidence set.
+
+### W7 contract freeze + dispatch record (2026-10-12)
+
+- Frozen by the TL (this station) at the T6->W7 transition. Contract
+  freeze commit: THIS COMMIT. Machine authority:
+  `packages/shared/src/you/contract.ts` v7 (ADDITIVE — EmbodimentState,
+  SoulRoutingProfile, SoulBinding, AgentBody, AvatarSessionStatus,
+  AvatarSession, RealtimeChannelDescriptor; events avatar-session-opened /
+  embodiment-state-changed / soul-reassigned / avatar-session-closed;
+  error codes YOU_BODY_NOT_FOUND / YOU_SOUL_BINDING_INVALID /
+  YOU_AVATAR_SESSION_NOT_FOUND / YOU_EMBODIMENT_STATE_INVALID).
+- Docs: CONTRACTS.md "Wave-7 contract freeze (v7)" (the BODY/SOUL
+  SEPARATION LAW: a Body can be possessed by another Soul without
+  changing the Body contract); WORK_ORDERS.md W7A/W7B/W7C expanded to
+  full binding orders.
+- Wave-7 lanes: W7A Embodiment Authority (`you/w7a-core`), W7B Avatar
+  Studio (`you/w7b-studio`), W7C Soul/Realtime (`you/w7c-soultech`);
+  branches pre-cut at the freeze.
+- Verified at freeze: shared tsc exit 0; shared battery 310/310 unchanged.

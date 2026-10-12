@@ -475,7 +475,11 @@ export type SolutionEventType =
   | "learning-signal-captured"
   | "learning-record-validated"
   | "learning-record-rejected"
-  | "preference-updated";
+  | "preference-updated"
+  | "avatar-session-opened"
+  | "embodiment-state-changed"
+  | "soul-reassigned"
+  | "avatar-session-closed";
 
 export interface SolutionEvent {
   readonly id: OpaqueId;
@@ -516,7 +520,11 @@ export type YouErrorCode =
   | "YOU_LEARNING_SIGNAL_INVALID"
   | "YOU_LEARNING_RECORD_NOT_FOUND"
   | "YOU_LEARNING_RIGHTS_REQUIRED"
-  | "YOU_PREFERENCE_SCOPE_INVALID";
+  | "YOU_PREFERENCE_SCOPE_INVALID"
+  | "YOU_BODY_NOT_FOUND"
+  | "YOU_SOUL_BINDING_INVALID"
+  | "YOU_AVATAR_SESSION_NOT_FOUND"
+  | "YOU_EMBODIMENT_STATE_INVALID";
 
 // ---------------------------------------------------------------------------
 // Evidence / Capture / Consent — frozen v2 (wave 2, TL freeze at T1->W2)
@@ -1211,4 +1219,107 @@ export interface TrajectoryReference {
   readonly stepRefs: readonly string[];
   readonly createdAt: string;
   readonly simulated: boolean;
+}
+
+
+// ---------------------------------------------------------------------------
+// Agent Embodiment — frozen v7 (wave 7, TL freeze at T6->W7)
+//
+// Authority: docs/you/CONTRACTS.md "Wave-7 contract freeze (v7)".
+// Dispatched by: docs/you/WORK_ORDERS.md (W7A / W7B / W7C).
+// Same laws as v1-v6: workers MUST NOT modify this file; the freeze is
+// ADDITIVE — no earlier shape is altered. Body and Soul are separate: a
+// Body can be possessed by another Soul without changing the Body contract
+// (docs/you/ARCHITECTURE.md section 13). All ids opaque; appearance and
+// heavy spec content are never inlined in records — contentRef + contentHash
+// on the same content-store abstraction; timestamps from the injected clock
+// in fixture mode; truth law (fixture sessions stay `simulated: true`).
+// ---------------------------------------------------------------------------
+
+/**
+ * Agent embodiment state taxonomy (the observable activity states of a
+ * possessed Body). The state ladder is a projection, never an authority.
+ */
+export type EmbodimentState =
+  | "listening"
+  | "reading"
+  | "typing"
+  | "thinking"
+  | "tool_use"
+  | "speaking"
+  | "interrupted"
+  | "idle"
+  | "unavailable";
+
+/**
+ * Soul routing profile: system-one (fast/reactive) and system-two
+// (deep/deliberate) are ROUTING PROFILES, not fixed model identities.
+ */
+export type SoulRoutingProfile =
+  | "system-one"
+  | "system-two";
+
+/**
+ * A Soul binding: the LLM/VLM/runtime binding that possesses a Body.
+ * Provider-neutral; model references are opaque strings (registry
+// authority = the W7C lane). A Body can be re-possessed by another Soul
+ * without changing the Body contract (soul-reassigned event).
+ */
+export interface SoulBinding {
+  readonly id: OpaqueId;
+  readonly providerKind: string;
+  readonly modelRef: string;
+  readonly routingProfile: SoulRoutingProfile;
+  readonly capabilities: readonly string[];
+}
+
+/**
+ * An Agent Body specification (appearance, role, capabilities, tools,
+ * policies, memory contract, evaluator contract). Heavy appearance/spec
+ * content is content-addressed — never inlined.
+ */
+export interface AgentBody {
+  readonly id: OpaqueId;
+  readonly role: string;
+  readonly appearanceRef: string | null;
+  readonly appearanceHash: string | null;
+  readonly capabilities: readonly string[];
+  readonly tools: readonly OpaqueId[];
+  readonly policyRefs: readonly string[];
+  readonly memoryContractRef: string;
+  readonly evaluatorContractRef: string;
+}
+
+export type AvatarSessionStatus =
+  | "active"
+  | "suspended"
+  | "closed";
+
+/**
+ * An avatar session: a Body possessed by a Soul for a span of embodied
+ * interaction. The session owns the embodiment-state ladder (projection);
+// state transitions are append-only events (embodiment-state-changed), the
+ * record itself is immutable with append-only linkage.
+ */
+export interface AvatarSession {
+  readonly id: OpaqueId;
+  readonly bodyId: OpaqueId;
+  readonly soulBindingId: OpaqueId;
+  readonly status: AvatarSessionStatus;
+  readonly state: EmbodimentState;
+  readonly openedAt: string;
+  readonly closedAt: string | null;
+  readonly simulated: boolean;
+}
+
+/**
+ * Realtime media channel descriptor (provider-neutral; research authority
+ * = the W7C lane). Content-addressed stream references — never inlined.
+ */
+export interface RealtimeChannelDescriptor {
+  readonly id: OpaqueId;
+  readonly kind: string;
+  readonly streamRef: string;
+  readonly streamHash: string;
+  readonly latencyClass: string;
 }

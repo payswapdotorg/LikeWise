@@ -846,18 +846,115 @@ Acceptance:
 
 ## W7A — Agent Embodiment Authority
 
+Branch: `you/w7a-core`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch (the W7 contract-freeze commit on main).
+
 Objective:
-Body/Soul/Avatar Session APIs and policy.
+Implement Body registry, Soul binding validation, AvatarSession lifecycle
+with append-only embodiment-state transitions, and embodiment policy
+enforcement on the frozen v7 contracts.
+
+Frozen write surface (wave 7):
+- `packages/shared/src/you/**` — EXCEPT `you/contract.ts` is TL-frozen;
+- `packages/services/src/you/**`.
+
+Zero edits to any other existing file; no new dependencies.
+
+Acceptance:
+- Body registry: AgentBody records (content-addressed appearance,
+  role/capabilities/tools/policy/memory/evaluator contract refs); typed
+  `YOU_BODY_NOT_FOUND`;
+- Soul binding validation: SoulBinding records with provider-neutral
+  providerKind/modelRef, routing profiles (system-one/system-two), typed
+  `YOU_SOUL_BINDING_INVALID` refusals (stateless validators);
+- AvatarSession lifecycle: open -> active -> suspended | closed (terminals
+  locked; append-only embodiment-state transitions via the
+  embodiment-state-changed event — the record's state field is the
+  projection head); typed `YOU_AVATAR_SESSION_NOT_FOUND` and
+  `YOU_EMBODIMENT_STATE_INVALID` (the nine-state ladder enforced);
+- BODY/SOUL SEPARATION LAW: soul-reassigned transitions re-possess a Body
+  without mutating the Body record;
+- deterministic fixtures: seeded scenarios (body registration, soul
+  binding, session open, full state-ladder walk, suspend/resume, close,
+  re-possession via soul-reassigned; refusal paths) — injected clock/rng,
+  byte-identical replay, `simulated: true`;
+- event ledger integration: avatar-session-opened /
+  embodiment-state-changed / soul-reassigned / avatar-session-closed;
+- tests (node:test) covering the lifecycle transition table, the state
+  ladder, immutability, re-possession, error taxonomy.
 
 ## W7B — Agent Avatar Studio
 
+Branch: `you/w7b-studio`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch.
+
 Objective:
-Avatar configuration and embodied-state UX.
+Avatar configuration and embodied-state UX on the W7A service seams.
+
+Frozen write surface (wave 7):
+- `packages/ui/src/you/**` + the disclosed registration-only seams (the
+  same pre-expanded seam list as W2B-W6B).
+
+Zero edits to any other existing file; no new dependencies.
+
+Acceptance:
+- avatar configuration surface: Body picker (role/capabilities/tools),
+  Soul binding picker (providerKind/modelRef/routing profile) from
+  controller projections — zero business logic in the UI (W1B-W6B
+  controller pattern; simulated controller until T7 binding);
+- embodied-state surface: the nine-state ladder rendered from projections
+  (state changes are projected events, never UI-local state);
+- session control: open/suspend/resume/close projected intents;
+  re-possession (soul-reassign) flow preserving the Body contract display;
+- realtime channel display: RealtimeChannelDescriptor panels
+  (content-addressed stream labels, latency class);
+- loading/error/empty states for every region; the v7 typed error codes
+  as typed error panels;
+- i18n: en-US + zh-CN strings for every visible label;
+- dedicated UX tests under the you subtree (node:test).
 
 ## W7C — Soul/Realtime
 
+Branch: `you/w7c-soultech`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch.
+
 Objective:
-LLM/VLM adapters, state routing and realtime media research.
+Research, register and benchmark provider-neutral LLM/VLM providers,
+state-routing approaches and realtime media stacks; implement the
+soul/realtime adapter seam plus mock and fixture adapters.
+
+Frozen write surface (wave 7):
+- `packages/you-lab/**` ONLY. Zero edits outside.
+
+Acceptance:
+- soul/realtime technology registry additions: researched REAL profiles
+  for the candidate set — LLM/VLM providers (open-weight serving stacks,
+  inference runtimes, multimodal VLM families), state-routing approaches
+  (system-one/system-two routing implementations, speculative-decode
+  class), realtime media stacks (WebRTC-class transports, SFU-class
+  servers, streaming protocols) — license (SPDX + source URL),
+  maintenance evidence, compatibility notes, provenance; `unverified:
+  true` where not verified (truth law — never invent);
+- capability profiles: provider/routing/realtime capability records
+  derived from the registry (modalities, latency classes, routing
+  profiles supported);
+- provider-neutral SoulAdapter seam: typed soul invocation (binding +
+  routed prompt context) -> typed response records (content-addressed);
+  deterministic `mockSoulAdapter` (seed-derived, no network);
+- realtime adapter seam: RealtimeChannelDescriptor construction from
+  channel params (content-addressed stream refs);
+- production-eligible adapter: the best-license/maintenance candidate
+  behind the seam as a profile-backed evaluation adapter (real runtime
+  integration is W8+ compute-plane territory; honest markers —
+  `not-measured (simulated)`);
+- benchmark harness: deterministic fixtures, runner scoring candidates on
+  response validity and determinism, structured effort fields with honest
+  markers;
+- seam mapping onto frozen v7 contracts (SoulBinding/AvatarSession shapes;
+  only the seam module touches contract types);
+- tests (node:test) covering registry integrity, adapter determinism
+  (byte-identical replay from seed), golden benchmark scores, seam mapping
+  validity.
 
 ## W8A — Arena Authority
 
