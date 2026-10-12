@@ -1125,3 +1125,80 @@ Workers never mark their own work DONE; they submit evidence to TL.
   W7A/W7C merges themselves were verified against the worker reports
   (byte-exact emission patches) at merge time by the prior session, per
   its registry done-records. Disclosed per the truth law.
+
+### W7B merge record (2026-10-12)
+
+- Status: MERGED. Owner: Worker B (GLM-5.3 agent session, Full-Stack),
+  station-verified by TL. Branch: `you/w7b-studio`. Base SHA: `972fa31`.
+  PR #32; merge commit `9d7c63e`; station-lane commit `af69245` (45
+  files, +6825/−18 — 34 under packages/ui/src/you incl. 27 new modules,
+  you/index.ts, 6 sibling registration tests; 11 disclosed
+  registration-only seam edits with per-file counts: App.tsx +2,
+  AnimatedSidePanePanel +32, SidePaneTabTrigger +11,
+  WorkspaceShellLayout +2, animatedSidePanePanelModel +9/−1,
+  sidePaneTabPresentation +7, app-shell/types +2, useAppPanels +16,
+  i18n en-US/zh-CN +1 each, workspaceSidePane +31).
+- Delivery-path note: EMISSION — patch staged at the pod project root,
+  harvested BYTE-EXACT (sha256
+  632b69922818b8d0ee71c625b391e8565190c2396d7342131dd637bbdd35e6f3,
+  7511 lines; station-side sha256 verified identical). Worker pod
+  commit 978de68.
+- Station battery: ui **334/334** (275 baseline + 59 new) — EXACT
+  PARITY with the report; shared 310/310, services 119/119, you-lab
+  316/316 at the branch base; root lint 0 errors / 70 warnings (exact
+  baseline). Typecheck: the station ui tsc batch OOM-SIGKILLs on the
+  4GB box (the documented W5A environmental condition); the worker's
+  memory-capped split run (`NODE_OPTIONS=--max-old-space-size=2800
+  tsc -b packages/ui`) exited 0 — split-run parity + the station ui
+  battery 334/334 = the accepted evidence class per the W5A station
+  law.
+- Operational note: the worker's turn ended after the final battery +
+  patch staging but BEFORE posting the final report (body static ~40
+  min); the TL continuation kick landed, hit the capacity wall
+  (peak-hours banner — the message rolled back into the composer
+  draft), then the mechanical Enter relay (the w4c wall-fighter
+  pattern) fired it through on the wall drop at 04:50Z; the report
+  landed 04:52Z. The lane watcher ran at marker threshold 3 (packet
+  echo + kick echo + real report) because the kick message itself
+  echoes the report template — the threshold-2 false-positive hazard
+  is banked as a lesson.
+- TL review: write surface exact (45/45 files in the frozen surface;
+  contract.ts untouched — the v7 freeze honored); the controller port
+  mirrors the W7A embodimentService seams 1:1 minus service-side
+  persistence/replay (the T7 rebinding point — flagged by the worker
+  as follow-up); the nine-state ladder rendered from projections with
+  visited rungs derived from the embodiment-state-changed event
+  stream (never UI-local state); re-possession via soul-reassign
+  preserves the Body contract display (body/soul separation law in
+  the UI); all four v7 error codes as typed panels; i18n en-US/zh-CN.
+- Disclosures (worker): simulated controller until T7 binding (T-wave
+  pre-binding, projection == replay shape preserved); vite
+  web/desktop builds not run (pre-existing OOM, out of scope).
+- Contract change requests: none.
+
+### T7 integration record (2026-10-12)
+
+- WAVE 7 COMPLETE: freeze (972fa31) → W7A (PR #30, dd01f0f, emission
+  8c19e93e) → W7C (PR #31, 3b52197, emission 185b078a) → W7B (PR #32,
+  af69245, emission 632b6992) → T7 integrated.
+- Integrated main battery (at 9d7c63e): shared **344/344** (310 + 34
+  W7A) + services **140/140** (119 + 21 W7A) + ui **334/334** (275 +
+  59 W7B) + you-lab **369/369** (316 + 53 W7C) = **1187/1187 GREEN**;
+  root lint 0 errors / 70 warnings (exact baseline); zero dependency
+  drift (manifests + lockfiles untouched vs freeze across all three
+  lanes); contract.ts untouched by every lane (the v7 freeze honored
+  throughout).
+- T7 rebinding point (disclosed): the Avatar Studio runs on a
+  simulated controller whose port mirrors the W7A EmbodimentService
+  seams 1:1 minus persistence/replay observability — the binding (or
+  a later wave) can swap the simulated controller for the real
+  service with zero UI changes.
+- Operational note: wave 7 closed through one prior-session context
+  loss mid-cycle (the W7A/W7C merges completed before the records
+  were authored — recovered and disclosed per the truth law), one
+  capacity-wall fight-through on the W7B report kick, and one
+  turn-ended-pre-report continuation. The chat ROLL mechanism (895e4b04
+  → 4e4a0bef) was recorded and followed by the lane watcher
+  ("latest create wins").
+- Phase-0 gate: unchanged. W7 surfaces (embodiment services, Avatar
+  Studio, soul/realtime lab) join the station battery evidence set.
