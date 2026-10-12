@@ -46,3 +46,7 @@ import "./learningRecord.test.js";
 import "./learningPreference.test.js";
 import "./learningTrajectory.test.js";
 import "./learningLedger.test.js";
+import "./embodimentLadder.test.js";
+import "./soulBinding.test.js";
+import "./bodyRegistry.test.js";
+import "./embodimentLedger.test.js";
