@@ -9,8 +9,6 @@
 // 导入（frozen v8）。
 import type {
   ArenaEscalationStatus,
-  ArenaLearningPermission,
-  ArenaRetryPolicy,
   CapabilityGap,
   CapabilityGapCategory,
 } from "@zcode/shared";

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- en-US + zh-CN 全量文案表（验收：每个可见 label 双语）按 panel/region 分节的数据模块：纯数据、无逻辑，分文件只会按 locale 撕裂同一表面的成对文案；T8 换绑后随 UI 退役。 */
 // YOU Escalation Studio — Escalation 表面本地文案表（W8B）。
 //
 // 纯数据模块（无 `@/` 别名、无 React 依赖），保持 you/ 子树可被仓库根目录的

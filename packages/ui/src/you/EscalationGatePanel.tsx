@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- 授权门面板（W8B）：scope/expiry/learning-permission 三段选择器 + 错误面板 + 加载/空态在同一表面内聚渲染（W2B-W7B 面板惯例：一个表面一个文件）；T8 换绑后随 UI 退役。 */
 // YOU Escalation Studio — 升级授权门面板（W8B）。
 //
 // 验收要求：authorization surface——escalation gate（scope、expiry、learning

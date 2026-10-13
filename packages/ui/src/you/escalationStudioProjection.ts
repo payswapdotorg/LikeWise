@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- 升级工作室视图纯投影（W8B）：v1 状态阶梯 + 授权门 + gap/run 派生视图的确定性数学集中一处（同一投影不变式跨表面复用）；拆分会复制派生规则并破坏投影单一来源。 */
 // YOU Escalation Studio — 视图纯投影（W8B）。
 //
 // 只做确定性视图数学：v1 升级状态阶梯（requested → authorized → in-progress →

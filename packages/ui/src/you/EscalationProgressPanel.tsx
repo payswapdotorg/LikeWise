@@ -19,7 +19,6 @@ import {
   runsOfGap,
 } from "@/you/escalationController.js";
 import {
-  clampEscalationIndex,
   projectArenaRunRows,
   projectEscalationLadder,
   projectListRegionView,
