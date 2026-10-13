@@ -1,27 +1,28 @@
 // YOU lab application service — the single authority over lab-plane
-// truth (docs/you/CONTRACTS.md "Wave-9 contract freeze (v9)";
+// truth (W9A — docs/you/CONTRACTS.md "Wave-9 contract freeze (v9)";
 // WORK_ORDERS.md W9A).
 //
 // UI/HTTP/SDK/MCP all call this same authority; there is no UI-only
 // mutation path. The service owns one lab plane per solution: the
 // append-only SolutionEventLedger, the immutable LabExperiment records
-// (service state — the W8A retry-policy/provider precedent: the frozen
-// v9 event set has no experiment event), the append-only LabRun ladder
+// (the LAB.md three-arm law at intake), the append-only LabRun ladder
 // (submitted -> running -> succeeded | failed | retired, terminals
-// locked), the content-addressed LabEvidenceManifest bundles and the
-// LabPromotionRecord decision ledger behind the promotion gate. The op
-// bodies live in the flow modules (labExperimentFlow / labRunFlow /
-// labEvidenceFlow / labPromotionFlow — the W1A/W8A flow precedent);
-// this class is the dispatch authority.
+// locked), the content-addressed LabEvidenceManifest bundles
+// (hash-verified fail-closed) and the promotion gate (the LAB
+// PROMOTION LAW — a searched arm promotes ONLY when it beats the
+// generalist baseline under the recorded objective and constraints;
+// reversals are new records). The op bodies live in the flow modules
+// (labExperimentFlow / labRunFlow / labEvidenceFlow /
+// labPromotionFlow — the W1A/W6A/W8A flow precedent); this class is
+// the dispatch authority.
 //
-// LAB PERSISTENCE LAW (enforced here): no record is mutated in place;
-// the run ladder is append-only; evidence manifests are
-// content-addressed. LAB PROMOTION LAW: a searched arm promotes ONLY
-// when it beats the generalist baseline under the recorded objective
-// and constraints; reversals are new records. Phase 0 is fully
-// deterministic: injected clock + seeded RNG ids; everything simulated
-// stays labeled `simulated: true` (truth law). The error-code mapping
-// is documented in labServiceTypes.ts.
+// LAB PERSISTENCE LAW enforced by construction: no record is ever
+// mutated in place (deep-frozen immutable records; heads advance only
+// through immutable replacement); the run ladder and the promotion
+// chains are append-only. Phase 0 is fully deterministic: injected
+// clock + seeded RNG; everything simulated stays labeled
+// `simulated: true` (truth law). Real compute-plane integration stays
+// W10+ behind adapter seams (provider neutrality).
 
 import type {
   LabArmKind,
@@ -39,25 +40,26 @@ import { SolutionEventLedger } from "../../../shared/src/you/events.js";
 import { createRngIdFactory, type YouIdFactory } from "../../../shared/src/you/ids.js";
 import { createDeterministicRng, seedFromString } from "../../../shared/src/you/rng.js";
 import { stableContentHash } from "../../../shared/src/you/serialize.js";
+import type { LabArtifactBinding } from "../../../shared/src/you/labEvidence.js";
 import { replayLabLedger, type LabPlaneProjection } from "../../../shared/src/you/labLedger.js";
+import type { LabExperimentInput } from "../../../shared/src/you/labExperiment.js";
 import { buildLabPlaneProjection } from "./labProjection.js";
 import {
   labFailure,
+  requireLabExperiment,
+  requireLabManifest,
+  requireLabRun,
   sortedLabMapKeys,
   type LabFlowDeps,
   type LabPlaneRecord,
   type LabServiceResult,
 } from "./labServiceTypes.js";
-import { declareLabExperimentOp, type LabExperimentIntakeInput } from "./labExperimentFlow.js";
-import { submitLabRunOp, transitionLabRunOp } from "./labRunFlow.js";
-import { publishLabEvidenceOp, verifyLabEvidenceOp } from "./labEvidenceFlow.js";
-import {
-  decideLabPromotionOp,
-  reverseLabPromotionOp,
-  type LabPromotionDecisionInput,
-} from "./labPromotionFlow.js";
+import { declareLabExperimentOp } from "./labExperimentFlow.js";
+import { advanceLabRunOp, submitLabRunOp } from "./labRunFlow.js";
+import { publishLabEvidenceOp, verifyLabEvidenceManifestOp } from "./labEvidenceFlow.js";
+import { decideLabPromotionOp, type LabPromotionDecisionInput } from "./labPromotionFlow.js";
 
-export type { LabExperimentIntakeInput, LabPromotionDecisionInput };
+export type { LabExperimentInput, LabPromotionDecisionInput };
 
 export interface LabServiceConfig {
   readonly workspaceIdentity: string;
@@ -93,19 +95,17 @@ export class LabService {
     );
   }
 
-  // -- LabExperiment persistence (service state; immutable records) ------------
+  // -- LabExperiment persistence (the three-arm law) ---------------------------
 
-  /** Declares an immutable three-arm LabExperiment. Emits nothing (the W8A policy/provider precedent). */
-  declareExperiment(solutionId: OpaqueId, input: LabExperimentIntakeInput): LabServiceResult<{ readonly experiment: LabExperiment }> {
+  /** Declares an immutable LabExperiment (typed YOU_INVALID_STATE on intake refusals). */
+  declareLabExperiment(solutionId: OpaqueId, input: LabExperimentInput): LabServiceResult<{ readonly experiment: LabExperiment }> {
     return declareLabExperimentOp(this.planeFor(solutionId), this.flowDeps, input);
   }
 
   /** The declared experiment, or typed YOU_LAB_EXPERIMENT_NOT_FOUND. */
   experimentOf(solutionId: OpaqueId, experimentId: OpaqueId): LabServiceResult<{ readonly experiment: LabExperiment }> {
-    const experiment = this.planeFor(solutionId).experiments.get(experimentId);
-    return experiment === undefined
-      ? labFailure("YOU_LAB_EXPERIMENT_NOT_FOUND", "unknown lab experiment", { reason: "unknown-experiment", experimentId })
-      : { ok: true, value: { experiment } };
+    const found = requireLabExperiment(this.planeFor(solutionId), experimentId);
+    return "error" in found ? { ok: false, error: found.error } : { ok: true, value: { experiment: found.experiment } };
   }
 
   /** All declared experiments, sorted by id. */
@@ -119,7 +119,7 @@ export class LabService {
 
   // -- the LabRun ladder (append-only; terminals locked) ------------------------
 
-  /** Submits a new run of an experiment arm (born "submitted"). Emits lab-run-recorded. */
+  /** Submits a new run of an experiment arm (arm-gated; typed refusals). Emits lab-run-recorded. */
   submitLabRun(
     solutionId: OpaqueId,
     experimentId: OpaqueId,
@@ -128,32 +128,30 @@ export class LabService {
     return submitLabRunOp(this.planeFor(solutionId), this.flowDeps, experimentId, input);
   }
 
-  /** Starts a submitted run (submitted -> running). */
+  /** Advances a submitted run to "running" (immutable replacement). */
   startLabRun(solutionId: OpaqueId, runId: OpaqueId): LabServiceResult<{ readonly run: LabRun }> {
-    return transitionLabRunOp(this.planeFor(solutionId), this.flowDeps, runId, "running");
+    return advanceLabRunOp(this.planeFor(solutionId), this.flowDeps, runId, "running");
   }
 
-  /** Completes a running run (terminal). */
+  /** Completes a running run (terminal; immutable replacement). */
   succeedLabRun(solutionId: OpaqueId, runId: OpaqueId): LabServiceResult<{ readonly run: LabRun }> {
-    return transitionLabRunOp(this.planeFor(solutionId), this.flowDeps, runId, "succeeded");
+    return advanceLabRunOp(this.planeFor(solutionId), this.flowDeps, runId, "succeeded");
   }
 
   /** Fails a running run (terminal). */
   failLabRun(solutionId: OpaqueId, runId: OpaqueId): LabServiceResult<{ readonly run: LabRun }> {
-    return transitionLabRunOp(this.planeFor(solutionId), this.flowDeps, runId, "failed");
+    return advanceLabRunOp(this.planeFor(solutionId), this.flowDeps, runId, "failed");
   }
 
-  /** Retires a running run (terminal — the arm's attempt is discarded). */
+  /** Retires a running run (terminal). */
   retireLabRun(solutionId: OpaqueId, runId: OpaqueId): LabServiceResult<{ readonly run: LabRun }> {
-    return transitionLabRunOp(this.planeFor(solutionId), this.flowDeps, runId, "retired");
+    return advanceLabRunOp(this.planeFor(solutionId), this.flowDeps, runId, "retired");
   }
 
   /** The run head, or typed YOU_LAB_RUN_NOT_FOUND. */
   runOf(solutionId: OpaqueId, runId: OpaqueId): LabServiceResult<{ readonly run: LabRun }> {
-    const run = this.planeFor(solutionId).runs.get(runId);
-    return run === undefined
-      ? labFailure("YOU_LAB_RUN_NOT_FOUND", "unknown lab run", { reason: "unknown-run", runId })
-      : { ok: true, value: { run } };
+    const found = requireLabRun(this.planeFor(solutionId), runId);
+    return "error" in found ? { ok: false, error: found.error } : { ok: true, value: { run: found.run } };
   }
 
   /** All runs across experiments, sorted by id. */
@@ -168,32 +166,30 @@ export class LabService {
   /** The per-experiment run ladder, in append order. */
   runsOfExperiment(solutionId: OpaqueId, experimentId: OpaqueId): LabServiceResult<{ readonly runs: readonly LabRun[] }> {
     const plane = this.planeFor(solutionId);
-    const runs = (plane.runsByExperiment.get(experimentId) ?? [])
+    const runs = (plane.runIdsByExperiment.get(experimentId) ?? [])
       .map((runId) => plane.runs.get(runId))
       .filter((run): run is LabRun => run !== undefined);
     return { ok: true, value: { runs } };
   }
 
-  // -- LabEvidenceManifest (content-addressed; fail-closed verification) --------
+  // -- LabEvidenceManifest (content-addressed; fail-closed) ---------------------
 
-  /** Publishes the evidence manifest for a terminal run. Emits lab-evidence-published. */
+  /** Publishes a content-addressed manifest for a terminal run. Emits lab-evidence-published. */
   publishLabEvidence(
     solutionId: OpaqueId,
     runId: OpaqueId,
-    input: { readonly artifacts: readonly Uint8Array[] },
-  ): LabServiceResult<{ readonly manifest: LabEvidenceManifest }> {
-    return publishLabEvidenceOp(this.planeFor(solutionId), this.flowDeps, runId, input);
+    artifacts: readonly Uint8Array[],
+  ): LabServiceResult<{ readonly manifest: LabEvidenceManifest; readonly bindings: readonly LabArtifactBinding[]; readonly run: LabRun }> {
+    return publishLabEvidenceOp(this.planeFor(solutionId), this.flowDeps, runId, artifacts);
   }
 
-  /** The published manifest, or typed YOU_LAB_EVIDENCE_MANIFEST_INVALID (fail-closed reads). */
+  /** The manifest, or typed YOU_LAB_EVIDENCE_MANIFEST_INVALID (fail-closed reads). */
   manifestOf(solutionId: OpaqueId, manifestId: OpaqueId): LabServiceResult<{ readonly manifest: LabEvidenceManifest }> {
-    const manifest = this.planeFor(solutionId).manifests.get(manifestId);
-    return manifest === undefined
-      ? labFailure("YOU_LAB_EVIDENCE_MANIFEST_INVALID", "unknown lab evidence manifest", { reason: "manifest-unknown", manifestId })
-      : { ok: true, value: { manifest } };
+    const found = requireLabManifest(this.planeFor(solutionId), manifestId);
+    return "error" in found ? { ok: false, error: found.error } : { ok: true, value: { manifest: found.manifest } };
   }
 
-  /** All published manifests, sorted by id. */
+  /** All manifests, sorted by id. */
   manifestsOf(solutionId: OpaqueId): LabServiceResult<{ readonly manifests: readonly LabEvidenceManifest[] }> {
     const plane = this.planeFor(solutionId);
     const manifests = sortedLabMapKeys(plane.manifests)
@@ -202,53 +198,52 @@ export class LabService {
     return { ok: true, value: { manifests } };
   }
 
-  /** Verifies a published manifest (hash mismatch fails closed). */
-  verifyLabEvidence(
+  /** Deep verification (stored bytes + bindings + bundle address); fails closed. */
+  verifyLabEvidenceManifest(
     solutionId: OpaqueId,
     manifestId: OpaqueId,
-  ): LabServiceResult<{ readonly verified: true; readonly manifest: LabEvidenceManifest }> {
-    return verifyLabEvidenceOp(this.planeFor(solutionId), this.flowDeps, manifestId);
+  ): LabServiceResult<{ readonly verified: true; readonly contentHash: string }> {
+    return verifyLabEvidenceManifestOp(this.planeFor(solutionId), this.flowDeps, manifestId);
   }
 
-  // -- the promotion gate (the LAB PROMOTION LAW) --------------------------------
+  // -- the promotion gate (the LAB PROMOTION LAW) -------------------------------
 
-  /** Decides a promotion: the searched arm promotes ONLY when it beats the baseline. Emits lab-promotion-decided. */
-  decidePromotion(
+  /** Decides a promotion (searched arm beats the baseline; typed gate refusals). Emits lab-promotion-decided. */
+  promoteLabExperiment(
     solutionId: OpaqueId,
     experimentId: OpaqueId,
     input: LabPromotionDecisionInput,
-  ): LabServiceResult<{ readonly promotion: LabPromotionRecord }> {
-    return decideLabPromotionOp(this.planeFor(solutionId), this.flowDeps, experimentId, input);
+  ): LabServiceResult<{ readonly promotion: LabPromotionRecord; readonly experiment: LabExperiment }> {
+    return decideLabPromotionOp(this.planeFor(solutionId), this.flowDeps, experimentId, "promote", input);
   }
 
-  /** Reverses the head promotion with a NEW record (never a mutation). Emits lab-promotion-decided. */
-  reversePromotion(
+  /** Records a reversal (the baseline stands; a NEW record — never a mutation). Emits lab-promotion-decided. */
+  reverseLabPromotion(
     solutionId: OpaqueId,
     experimentId: OpaqueId,
     input: LabPromotionDecisionInput,
-  ): LabServiceResult<{ readonly promotion: LabPromotionRecord }> {
-    return reverseLabPromotionOp(this.planeFor(solutionId), this.flowDeps, experimentId, input);
+  ): LabServiceResult<{ readonly promotion: LabPromotionRecord; readonly experiment: LabExperiment }> {
+    return decideLabPromotionOp(this.planeFor(solutionId), this.flowDeps, experimentId, "reverse", input);
   }
 
-  /** The promotion/reversal record, or typed YOU_LAB_PROMOTION_INVALID (reason "promotion-unknown"). */
+  /** The promotion record, or typed YOU_LAB_PROMOTION_INVALID (fail-closed reads). */
   promotionOf(solutionId: OpaqueId, promotionId: OpaqueId): LabServiceResult<{ readonly promotion: LabPromotionRecord }> {
     const promotion = this.planeFor(solutionId).promotions.get(promotionId);
     return promotion === undefined
-      ? labFailure("YOU_LAB_PROMOTION_INVALID", "unknown lab promotion record", { reason: "promotion-unknown", promotionId })
+      ? labFailure("YOU_LAB_PROMOTION_INVALID", "unknown lab promotion record", {
+          reason: "unknown-promotion",
+          promotionId,
+        })
       : { ok: true, value: { promotion } };
   }
 
-  /** The append-only promotion decision ledger of an experiment, in order. */
-  promotionLedgerOf(
-    solutionId: OpaqueId,
-    experimentId: OpaqueId,
-  ): LabServiceResult<{ readonly ledger: readonly LabPromotionRecord[] }> {
+  /** The per-experiment decision chain, in append order (promotions and reversals). */
+  promotionsOfExperiment(solutionId: OpaqueId, experimentId: OpaqueId): LabServiceResult<{ readonly promotions: readonly LabPromotionRecord[] }> {
     const plane = this.planeFor(solutionId);
-    const found = plane.experiments.get(experimentId);
-    if (found === undefined) {
-      return labFailure("YOU_LAB_EXPERIMENT_NOT_FOUND", "unknown lab experiment", { reason: "unknown-experiment", experimentId });
-    }
-    return { ok: true, value: { ledger: plane.promotionLedgers.get(experimentId) ?? [] } };
+    const promotions = (plane.promotionChains.get(experimentId) ?? [])
+      .map((promotionId) => plane.promotions.get(promotionId))
+      .filter((promotion): promotion is LabPromotionRecord => promotion !== undefined);
+    return { ok: true, value: { promotions } };
   }
 
   // -- reads / projection / persistence ------------------------------------------
@@ -294,12 +289,13 @@ export class LabService {
       ledger: new SolutionEventLedger(solutionId, this.flowDeps),
       experiments: new Map(),
       runs: new Map(),
-      runsByExperiment: new Map(),
+      runIdsByExperiment: new Map(),
       manifests: new Map(),
-      manifestsByRun: new Map(),
-      promotionLedgers: new Map(),
+      manifestArtifacts: new Map(),
+      manifestIdsByRun: new Map(),
       promotions: new Map(),
-      promotionReversals: new Map(),
+      promotionChains: new Map(),
+      promotionKinds: new Map(),
     };
     this.planes.set(solutionId, plane);
     return plane;

@@ -1,119 +1,130 @@
-// YOU lab promotion gate (W9A — docs/you/CONTRACTS.md "Wave-9 contract
-// freeze (v9)": the LAB PROMOTION LAW: "a searched organization promotes
-// ONLY when it beats the generalist baseline under the experiment's
-// recorded objective and constraints (the LAB.md three-arm comparison
-// law). Promotion records are immutable; a reversal is a new record,
-// never a mutation.").
+// YOU LabPromotionRecord machinery — the promotion gate (W9A —
+// docs/you/CONTRACTS.md "Wave-9 contract freeze (v9)": LAB PROMOTION
+// LAW: "a searched organization promotes ONLY when it beats the
+// generalist baseline under the experiment's recorded objective and
+// constraints (the LAB.md three-arm comparison law). Promotion records
+// are immutable; a reversal is a new record, never a mutation. The
+// service refuses invalid promotions with YOU_LAB_PROMOTION_INVALID";
+// docs/you/LAB.md "Organization comparison").
 //
-// This module owns the STATELESS gate and record construction (the W8A
-// arenaRetryPolicy precedent): the service maps gate refusals to typed
-// YOU_LAB_PROMOTION_INVALID at its seam. Score semantics: the objective
-// score is the searched arm's measured value under the experiment's
-// recorded objective (higher is better); the baseline score is the
-// generalist baseline's value under the same objective and constraints.
-// "Beats" is strict: objectiveScore > baselineScore.
-//
-// Reversals: a reversal is a NEW LabPromotionRecord appended to the
-// experiment's promotion ledger — never a mutation of the promoted
-// record. Truthfully encoded with the frozen shape, a reversal records
-// the comparison flipping back: winnerArm "generalist-baseline" (only a
-// searched winner is a promotion; a baseline winner is the reversal).
-// The event payload carries reversalOfPromotionId so the ledger stays
-// self-describing (which promotion the new record undoes).
+// The gate is the single stateless law authority:
+//   - a PROMOTION requires winnerArm "searched" and the searched arm's
+//     objectiveScore STRICTLY greater than the baseline score (beats =
+//     strictly better under the recorded objective);
+//   - a REVERSAL (the searched arm no longer beats the baseline under
+//     new evidence) records the generalist baseline as the standing
+//     winner: winnerArm "generalist-baseline" with objectiveScore <=
+//     baselineScore. A reversal is a NEW LabPromotionRecord appended to
+//     the experiment's decision chain — the chain is append-only, the
+//     head linkage moves through immutable experiment replacement.
+// The scores ride the record (objectiveScore = the searched arm's
+// score, baselineScore = the generalist baseline's score) so the
+// decision is auditable against the recorded objective and constraints.
 
-import type { LabArmKind, LabPromotionRecord, OpaqueId } from "./contract.js";
+import type { LabPromotionRecord, OpaqueId } from "./contract.js";
 import { deepFreeze } from "./serialize.js";
 
-/** The promotion-gate intake (the comparison facts). */
+/** The two decision kinds on the append-only promotion chain. */
+export type LabPromotionDecisionKind = "promote" | "reverse";
+
+/** The gate input (the comparison facts the law consumes). */
 export interface LabPromotionGateInput {
-  readonly winnerArm: LabArmKind;
+  readonly kind: LabPromotionDecisionKind;
+  readonly winnerArm: LabPromotionRecord["winnerArm"];
   readonly objectiveScore: number;
   readonly baselineScore: number;
 }
 
 /** The typed gate decision with a machine-readable reason. */
 export type LabPromotionGateDecision =
-  | { readonly allowed: true; readonly reason: "searched-beats-baseline" }
+  | { readonly allowed: true; readonly reason: "searched-beats-baseline" | "baseline-stands" }
   | { readonly allowed: false; readonly reason: string };
 
 /**
- * The stateless promotion gate — the LAB PROMOTION LAW as a predicate:
- * scores must be finite; the winner must be the searched arm (only a
- * searched organization promotes); the searched arm must strictly beat
- * the generalist baseline under the recorded objective.
+ * The stateless promotion gate (the LAB PROMOTION LAW). Check order is
+ * fixed so the refusal reason is deterministic: score shape first,
+ * then the winner-arm law, then the beats-baseline law.
  */
 export function evaluateLabPromotionGate(input: LabPromotionGateInput): LabPromotionGateDecision {
-  if (!Number.isFinite(input.objectiveScore) || !Number.isFinite(input.baselineScore)) {
-    return { allowed: false, reason: "scores-invalid" };
+  if (typeof input.objectiveScore !== "number" || !Number.isFinite(input.objectiveScore)) {
+    return { allowed: false, reason: "objective-score-not-finite" };
   }
-  if (input.winnerArm !== "searched") {
-    return { allowed: false, reason: "winner-not-searched" };
+  if (typeof input.baselineScore !== "number" || !Number.isFinite(input.baselineScore)) {
+    return { allowed: false, reason: "baseline-score-not-finite" };
   }
-  if (!(input.objectiveScore > input.baselineScore)) {
-    return { allowed: false, reason: "searched-does-not-beat-baseline" };
+  if (input.kind === "promote") {
+    if (input.winnerArm !== "searched") {
+      return { allowed: false, reason: "winner-not-searched" };
+    }
+    if (!(input.objectiveScore > input.baselineScore)) {
+      return { allowed: false, reason: "searched-does-not-beat-baseline" };
+    }
+    return { allowed: true, reason: "searched-beats-baseline" };
   }
-  return { allowed: true, reason: "searched-beats-baseline" };
-}
-
-/**
- * Who wins the comparison under the recorded objective: the searched arm
- * when it strictly beats the baseline, the generalist baseline otherwise
- * (a tie means the searched arm does NOT beat the baseline). Null when
- * the scores are not finite numbers.
- */
-export function labComparisonWinner(objectiveScore: number, baselineScore: number): LabArmKind | null {
-  if (!Number.isFinite(objectiveScore) || !Number.isFinite(baselineScore)) {
-    return null;
+  // kind === "reverse": the baseline stands.
+  if (input.winnerArm !== "generalist-baseline") {
+    return { allowed: false, reason: "reversal-winner-not-baseline" };
   }
-  return objectiveScore > baselineScore ? "searched" : "generalist-baseline";
+  if (!(input.objectiveScore <= input.baselineScore)) {
+    return { allowed: false, reason: "searched-still-beats-baseline" };
+  }
+  return { allowed: true, reason: "baseline-stands" };
 }
 
 /** Promotion-record intake (the decision facts). */
 export interface LabPromotionRecordInput {
   readonly experimentId: OpaqueId;
-  readonly winnerArm: LabArmKind;
+  readonly kind: LabPromotionDecisionKind;
+  readonly winnerArm: LabPromotionRecord["winnerArm"];
   readonly objectiveScore: number;
   readonly baselineScore: number;
   readonly evidenceManifestRef: OpaqueId;
 }
 
-/** A refusal returned by the stateless record validator. */
-export interface LabPromotionRecordRefusal {
-  /** Stable reason string (rides along in typed error details). */
+/** A refusal returned by the stateless record validator (never an exception). */
+export interface LabPromotionRefusal {
+  /** Stable reason string (rides along in typed YOU_LAB_PROMOTION_INVALID details). */
   readonly reason: string;
   /** Human-readable detail for diagnostics. */
   readonly detail: string;
 }
 
 /**
- * The stateless record-intake validator: the experiment id and evidence
- * manifest ref must be non-empty; the winner arm must be a frozen arm
- * kind; the scores must be finite numbers.
+ * The stateless record-intake validator: linkage shape first (non-empty
+ * experimentId + evidenceManifestRef), then the promotion gate itself.
  */
-export function validateLabPromotionRecordInput(input: LabPromotionRecordInput): LabPromotionRecordRefusal | null {
+export function validateLabPromotionRecordInput(input: LabPromotionRecordInput): LabPromotionRefusal | null {
   if (typeof input.experimentId !== "string" || input.experimentId.length === 0) {
     return { reason: "experiment-id-empty", detail: "promotion experimentId must be a non-empty opaque id" };
   }
-  if (input.winnerArm !== "searched" && input.winnerArm !== "hand-designed" && input.winnerArm !== "generalist-baseline") {
-    return { reason: "winner-arm-invalid", detail: "promotion winnerArm must be one of the three frozen arm kinds" };
-  }
-  if (!Number.isFinite(input.objectiveScore) || !Number.isFinite(input.baselineScore)) {
-    return { reason: "scores-invalid", detail: "promotion scores must be finite numbers" };
-  }
   if (typeof input.evidenceManifestRef !== "string" || input.evidenceManifestRef.length === 0) {
-    return { reason: "evidence-manifest-ref-empty", detail: "promotion evidenceManifestRef must be a non-empty opaque id" };
+    return { reason: "evidence-ref-empty", detail: "promotion evidenceManifestRef must be a non-empty opaque id" };
+  }
+  const gate = evaluateLabPromotionGate({
+    kind: input.kind,
+    winnerArm: input.winnerArm,
+    objectiveScore: input.objectiveScore,
+    baselineScore: input.baselineScore,
+  });
+  if (!gate.allowed) {
+    return { reason: gate.reason, detail: `the promotion gate refused the ${input.kind} decision` };
   }
   return null;
 }
 
 /** Deps for record construction (injected clock + id factory only). */
-export interface LabPromotionDeps {
+export interface LabPromotionRecordDeps {
   readonly now: () => string;
   readonly nextId: (kind: string) => OpaqueId;
 }
 
-/** Constructs the immutable, deep-frozen promotion record. */
-export function constructLabPromotionRecord(input: LabPromotionRecordInput, deps: LabPromotionDeps): LabPromotionRecord {
+/**
+ * Constructs the immutable, deep-frozen promotion record (gate-checked:
+ * an illegal promotion can never materialize as a record). The decision
+ * kind rides the event payloads (decisionKind / supersedesPromotionId)
+ * — the frozen record shape carries the comparison facts.
+ */
+export function constructLabPromotionRecord(input: LabPromotionRecordInput, deps: LabPromotionRecordDeps): LabPromotionRecord {
   const refusal = validateLabPromotionRecordInput(input);
   if (refusal !== null) {
     throw new Error(`constructLabPromotionRecord refused intake: ${refusal.reason} (${refusal.detail})`);

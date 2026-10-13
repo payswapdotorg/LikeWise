@@ -1,30 +1,24 @@
-// YOU lab service — the LabEvidenceManifest flow (W9A): content-addressed
-// evidence publication for terminal runs and fail-closed verification.
-// The manifest is the durability unit (LAB PERSISTENCE LAW): artifact
-// bytes are stored through the wave-2 content-store abstraction (opaque
-// ref + sha-256 binding, bytes never inlined), the bundle contentHash
-// binds the ORDERED artifact digests, and the run head's
-// evidenceManifestRef walks through an immutable replacement (never a
-// mutation — the W7A/W8A replacement precedent). One manifest per run:
-// a second publication for the same run refuses.
-//
-// Publication gate (frozen W9A): evidence publishes ONLY onto a
-// terminal run (succeeded | failed | retired) — a run that has not
-// finished has no evidence bundle to publish. Verification recomputes
-// the bundle hash from the RESOLVED bytes and fails closed on any
-// mismatch (typed YOU_LAB_EVIDENCE_MANIFEST_INVALID).
+// YOU lab service — the LabEvidenceManifest flow (W9A):
+// content-addressed evidence bundles. Publishing stores the artifact
+// bytes through the content store (opaque refs + sha-256 bindings),
+// derives the manifest's own content address (runId + ordered
+// bindings), appends the manifest and re-points the run head's
+// evidenceManifestRef through immutable replacement; verification
+// recomputes EVERYTHING from the stored bytes and fails closed (a
+// mismatch is a typed YOU_LAB_EVIDENCE_MANIFEST_INVALID refusal,
+// never a silent pass).
 
-import type { LabEvidenceManifest, OpaqueId } from "@zcode/shared";
-import { sha256Hex } from "../../../shared/src/you/evidenceStore.js";
+import type { LabEvidenceManifest, LabRun, OpaqueId } from "@zcode/shared";
+import type { LabArtifactBinding } from "../../../shared/src/you/labEvidence.js";
 import {
   constructLabEvidenceManifest,
   verifyLabEvidenceManifest,
-} from "../../../shared/src/you/labEvidenceManifest.js";
-import { bindLabRunEvidenceManifest, isLabRunTerminal } from "../../../shared/src/you/labRunLadder.js";
+} from "../../../shared/src/you/labEvidence.js";
+import { isLabRunTerminal, attachLabRunEvidence } from "../../../shared/src/you/labRunLadder.js";
+import { sha256Hex } from "../../../shared/src/you/evidenceStore.js";
 import { appendLabEvidencePublished } from "./labLedgerOps.js";
 import {
   labFailure,
-  requireLabManifest,
   requireLabRun,
   type LabFlowDeps,
   type LabPlaneRecord,
@@ -32,94 +26,105 @@ import {
 } from "./labServiceTypes.js";
 
 /**
- * Publishes the content-addressed evidence manifest for a terminal run.
- * Emits lab-evidence-published. Refusals: typed YOU_LAB_RUN_NOT_FOUND
- * for unknown runs; typed YOU_LAB_EVIDENCE_MANIFEST_INVALID for the
- * publication gates (run not terminal, run already carries a manifest)
- * and malformed artifact intake.
+ * Publishes a content-addressed evidence manifest for a TERMINAL run.
+ * The artifact bytes go through the content store (refs + sha-256
+ * bindings); the manifest address is DERIVED, never accepted. Emits
+ * lab-evidence-published; the run head's evidenceManifestRef moves
+ * through immutable replacement (re-publishing appends a new manifest).
+ * Refusals: typed YOU_LAB_RUN_NOT_FOUND for unknown runs; typed
+ * YOU_LAB_EVIDENCE_MANIFEST_INVALID for non-terminal runs and empty
+ * artifact bundles.
  */
 export function publishLabEvidenceOp(
   plane: LabPlaneRecord,
   deps: LabFlowDeps,
   runId: OpaqueId,
-  input: { readonly artifacts: readonly Uint8Array[] },
-): LabServiceResult<{ readonly manifest: LabEvidenceManifest }> {
+  artifacts: readonly Uint8Array[],
+): LabServiceResult<{ readonly manifest: LabEvidenceManifest; readonly bindings: readonly LabArtifactBinding[]; readonly run: LabRun }> {
   const found = requireLabRun(plane, runId);
   if ("error" in found) {
     return { ok: false, error: found.error };
   }
   const run = found.run;
   if (!isLabRunTerminal(run.status)) {
-    return labFailure("YOU_LAB_EVIDENCE_MANIFEST_INVALID", `evidence publishes only onto a terminal run (run is "${run.status}")`, {
+    return labFailure("YOU_LAB_EVIDENCE_MANIFEST_INVALID", `evidence may only be published for a terminal run (got "${run.status}")`, {
       reason: "run-not-terminal",
       runId,
       status: run.status,
     });
   }
-  if (run.evidenceManifestRef !== null) {
-    return labFailure("YOU_LAB_EVIDENCE_MANIFEST_INVALID", "run already carries an evidence manifest (one manifest per run)", {
-      reason: "run-already-carries-manifest",
-      runId,
-      evidenceManifestRef: run.evidenceManifestRef,
-    });
-  }
-  if (!Array.isArray(input.artifacts) || input.artifacts.length === 0) {
+  if (!Array.isArray(artifacts) || artifacts.length === 0) {
     return labFailure("YOU_LAB_EVIDENCE_MANIFEST_INVALID", "an evidence manifest requires at least one artifact", {
       reason: "artifacts-empty",
       runId,
     });
   }
-  for (const artifact of input.artifacts) {
-    if (!(artifact instanceof Uint8Array) || artifact.byteLength === 0) {
-      return labFailure("YOU_LAB_EVIDENCE_MANIFEST_INVALID", "every artifact must be non-empty bytes", {
-        reason: "artifact-empty",
-        runId,
-      });
-    }
-  }
-  // Content addressing: the artifact digests are computed independently
-  // of the store's reported bindings, so construction and verification
-  // share one hash authority (sha-256 over the artifact bytes).
-  const artifacts = input.artifacts.map((artifact) => ({
-    contentRef: deps.store.put(artifact).contentRef,
-    contentHash: sha256Hex(artifact),
-  }));
+  const bindings: LabArtifactBinding[] = artifacts.map((bytes) => {
+    const stored = deps.store.put(bytes);
+    return { contentRef: stored.contentRef, contentHash: stored.contentHash };
+  });
   const manifest = constructLabEvidenceManifest(
-    { runId, artifacts },
+    { runId, artifacts: bindings },
     { now: () => deps.clock.now(), nextId: deps.ids.next },
   );
-  const boundRun = bindLabRunEvidenceManifest(run, manifest.id);
-  plane.runs.set(runId, boundRun);
   plane.manifests.set(manifest.id, manifest);
-  plane.manifestsByRun.set(runId, manifest.id);
-  // The evidence linkage rides lab-evidence-published (the W1A/W8A
-  // ride-along fold: the referenced run head's evidenceManifestRef walks
-  // in the fold — the run record itself is not re-emitted).
-  appendLabEvidencePublished(plane, manifest, run.experimentId);
-  return { ok: true, value: { manifest } };
+  plane.manifestArtifacts.set(manifest.id, bindings);
+  const manifestLadder = plane.manifestIdsByRun.get(runId) ?? [];
+  manifestLadder.push(manifest.id);
+  plane.manifestIdsByRun.set(runId, manifestLadder);
+  // The run head's evidence linkage moves (immutable replacement).
+  const rebind = attachLabRunEvidence(run, manifest.id);
+  plane.runs.set(runId, rebind);
+  appendLabEvidencePublished(plane, manifest, bindings);
+  return { ok: true, value: { manifest, bindings, run: rebind } };
 }
 
 /**
- * Verifies a published manifest: resolves every artifact ref through the
- * content store, recomputes the bundle hash from the resolved bytes and
- * compares. Fails closed with typed YOU_LAB_EVIDENCE_MANIFEST_INVALID
- * (unknown manifest, unresolvable ref, hash mismatch).
+ * Verifies a manifest against its recorded bindings AND the stored
+ * bytes (deep verification): every artifact ref must resolve, the
+ * stored bytes must hash to the recorded sha-256, and the recomputed
+ * bundle address must equal the recorded contentHash EXACTLY. Fails
+ * closed with typed YOU_LAB_EVIDENCE_MANIFEST_INVALID on any
+ * mismatch. Unknown manifests refuse the same way.
  */
-export function verifyLabEvidenceOp(
+export function verifyLabEvidenceManifestOp(
   plane: LabPlaneRecord,
   deps: LabFlowDeps,
   manifestId: OpaqueId,
-): LabServiceResult<{ readonly verified: true; readonly manifest: LabEvidenceManifest }> {
-  const found = requireLabManifest(plane, manifestId);
-  if ("error" in found) {
-    return { ok: false, error: found.error };
-  }
-  const verification = verifyLabEvidenceManifest(found.manifest, (contentRef) => deps.store.get(contentRef));
-  if (!verification.ok) {
-    return labFailure("YOU_LAB_EVIDENCE_MANIFEST_INVALID", `evidence manifest verification failed: ${verification.refusal.detail}`, {
-      reason: verification.refusal.reason,
+): LabServiceResult<{ readonly verified: true; readonly contentHash: string }> {
+  const manifest = plane.manifests.get(manifestId);
+  if (manifest === undefined) {
+    return labFailure("YOU_LAB_EVIDENCE_MANIFEST_INVALID", "unknown lab evidence manifest", {
+      reason: "unknown-manifest",
       manifestId,
     });
   }
-  return { ok: true, value: { verified: true, manifest: found.manifest } };
+  const bindings = plane.manifestArtifacts.get(manifestId) ?? [];
+  // Level 1: the stored bytes must hash to the recorded bindings.
+  for (const binding of bindings) {
+    const bytes = deps.store.get(binding.contentRef);
+    if (bytes === null) {
+      return labFailure("YOU_LAB_EVIDENCE_MANIFEST_INVALID", `artifact content is missing for ref ${binding.contentRef}`, {
+        reason: "artifact-content-missing",
+        manifestId,
+        contentRef: binding.contentRef,
+      });
+    }
+    if (sha256Hex(bytes) !== binding.contentHash) {
+      return labFailure("YOU_LAB_EVIDENCE_MANIFEST_INVALID", `artifact content hash mismatch for ref ${binding.contentRef}`, {
+        reason: "artifact-hash-mismatch",
+        manifestId,
+        contentRef: binding.contentRef,
+      });
+    }
+  }
+  // Level 2: the recomputed bundle address must match the record.
+  const verification = verifyLabEvidenceManifest(manifest, bindings);
+  if (!verification.verified) {
+    return labFailure("YOU_LAB_EVIDENCE_MANIFEST_INVALID", `evidence manifest verification failed: ${verification.reason}`, {
+      reason: verification.reason,
+      manifestId,
+    });
+  }
+  return { ok: true, value: { verified: true, contentHash: verification.contentHash } };
 }

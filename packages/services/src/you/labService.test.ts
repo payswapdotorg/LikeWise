@@ -1,581 +1,452 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { LabExperiment, LabPromotionRecord, LabRun, OpaqueId } from "@zcode/shared";
-import { sha256Hex } from "../../../shared/src/you/evidenceStore.js";
-import { labEvidenceBundleHash } from "../../../shared/src/you/labEvidenceManifest.js";
+import type { LabExperiment, LabRun, OpaqueId } from "@zcode/shared";
+import { createDeterministicRng, seedFromString } from "../../../shared/src/you/rng.js";
 import { stableStringify } from "../../../shared/src/you/serialize.js";
-import { createLabService, LabService } from "./labService.js";
+import { createLabService, LabService, type LabExperimentInput } from "./labService.js";
 
 const SOLUTION = "you_w9a_service_test";
 
-const EXPERIMENT_INPUT = {
-  intentRef: "you_intent_0000000000000009",
-  constraintsHash: "e7a1c3f9d2b40668",
-  objective: "minimize-compute-cost-at-quality-threshold",
+const EXPERIMENT_INPUT: LabExperimentInput = {
+  intentRef: "you_intent_0000000000000001",
+  constraintsHash: "constraints-hash-w9a-01",
+  objective: "minimize-total-cost-under-quality-threshold",
   arms: ["generalist-baseline", "hand-designed", "searched"],
-} as const;
+};
 
-const PLAN_HASHES = {
-  "generalist-baseline": "planhash-9a-baseline-0001",
-  "hand-designed": "planhash-9a-handdesigned-02",
-  searched: "planhash-9a-searched-000003",
-} as const;
+function artifactBytes(seed: string, count: number): Uint8Array {
+  const rng = createDeterministicRng(seedFromString(seed));
+  const bytes = new Uint8Array(count);
+  for (let offset = 0; offset + 4 <= count; offset += 4) {
+    const word = rng.nextUint32();
+    bytes[offset] = word & 0xff;
+    bytes[offset + 1] = (word >>> 8) & 0xff;
+    bytes[offset + 2] = (word >>> 16) & 0xff;
+    bytes[offset + 3] = (word >>> 24) & 0xff;
+  }
+  return bytes;
+}
 
 interface Fixture {
   readonly service: LabService;
   readonly experiment: LabExperiment;
 }
 
-function createFixture(seed: string): Fixture {
+function createFixture(seed: string, experimentInput: LabExperimentInput = EXPERIMENT_INPUT): Fixture {
   const service = createLabService({ workspaceIdentity: "ws-w9a-service-test", seed });
-  const experiment = service.declareExperiment(SOLUTION, EXPERIMENT_INPUT);
+  const experiment = service.declareLabExperiment(SOLUTION, experimentInput);
   assert.ok(experiment.ok);
   return { service, experiment: experiment.value.experiment };
 }
 
-function runArmToStatus(
-  service: LabService,
-  experimentId: OpaqueId,
-  arm: "generalist-baseline" | "hand-designed" | "searched",
-  planHash: string,
-): { readonly submitted: LabRun; readonly running: LabRun; readonly terminal: LabRun } {
+/** Submits and walks one arm run to "succeeded" (the standard happy-path run). */
+function succeededRun(service: LabService, experimentId: OpaqueId, arm: "generalist-baseline" | "hand-designed" | "searched", planHash: string): LabRun {
   const submitted = service.submitLabRun(SOLUTION, experimentId, { arm, planHash });
   assert.ok(submitted.ok);
-  const running = service.startLabRun(SOLUTION, submitted.value.run.id);
-  assert.ok(running.ok);
-  return { submitted: submitted.value.run, running: running.value.run, terminal: running.value.run };
-}
-
-function succeedArm(
-  service: LabService,
-  experimentId: OpaqueId,
-  arm: "generalist-baseline" | "hand-designed" | "searched",
-  planHash: string,
-): { readonly submitted: LabRun; readonly running: LabRun; readonly terminal: LabRun; readonly succeeded: LabRun } {
-  const walk = runArmToStatus(service, experimentId, arm, planHash);
-  const succeeded = service.succeedLabRun(SOLUTION, walk.submitted.id);
+  const started = service.startLabRun(SOLUTION, submitted.value.run.id);
+  assert.ok(started.ok);
+  const succeeded = service.succeedLabRun(SOLUTION, submitted.value.run.id);
   assert.ok(succeeded.ok);
-  return { ...walk, succeeded: succeeded.value.run };
+  return succeeded.value.run;
 }
 
-function artifactBytes(label: string, index: number): Uint8Array {
-  return new TextEncoder().encode(`lab-artifact-${label}-${index}`);
-}
-
-function publishArtifacts(service: LabService, runId: OpaqueId, labels: readonly string[]) {
-  const published = service.publishLabEvidence(SOLUTION, runId, {
-    artifacts: labels.map((label, index) => artifactBytes(label, index)),
-  });
-  assert.ok(published.ok);
-  return published.value.manifest;
-}
-
-function decidedFixture(seed: string): {
-  readonly service: LabService;
-  readonly experiment: LabExperiment;
-  readonly baselineRunId: OpaqueId;
-  readonly searchedRunId: OpaqueId;
-  readonly searchedManifestId: OpaqueId;
-  readonly promotion: LabPromotionRecord;
-} {
-  const fixture = createFixture(seed);
-  const baseline = succeedArm(fixture.service, fixture.experiment.id, "generalist-baseline", PLAN_HASHES["generalist-baseline"]);
-  const searched = succeedArm(fixture.service, fixture.experiment.id, "searched", PLAN_HASHES.searched);
-  const manifest = publishArtifacts(fixture.service, searched.succeeded.id, ["searched-a", "searched-b"]);
-  const promotion = fixture.service.decidePromotion(SOLUTION, fixture.experiment.id, {
-    searchedRunId: searched.succeeded.id,
-    baselineRunId: baseline.succeeded.id,
-    objectiveScore: 0.87,
-    baselineScore: 0.71,
-    evidenceManifestRef: manifest.id,
-  });
-  assert.ok(promotion.ok);
-  return {
-    service: fixture.service,
-    experiment: fixture.experiment,
-    baselineRunId: baseline.succeeded.id,
-    searchedRunId: searched.succeeded.id,
-    searchedManifestId: manifest.id,
-    promotion: promotion.value.promotion,
-  };
-}
-
-test("experiment persistence: immutable three-arm records; typed YOU_LAB_EXPERIMENT_NOT_FOUND", () => {
+test("experiment persistence: the three-arm declaration is recorded, immutable and readable", () => {
   const fixture = createFixture("experiment-persistence");
-  assert.equal(fixture.experiment.intentRef, "you_intent_0000000000000009");
-  assert.equal(fixture.experiment.constraintsHash, "e7a1c3f9d2b40668");
-  assert.equal(fixture.experiment.objective, "minimize-compute-cost-at-quality-threshold");
-  assert.deepEqual(fixture.experiment.arms, ["generalist-baseline", "hand-designed", "searched"]);
-  assert.equal(fixture.experiment.promotionRef, null);
-  assert.equal(fixture.experiment.simulated, true);
-  assert.ok(Object.isFrozen(fixture.experiment));
-  // Declared arms canonicalize into the frozen order.
-  const shuffled = fixture.service.declareExperiment(SOLUTION, {
-    ...EXPERIMENT_INPUT,
-    arms: ["searched", "generalist-baseline", "hand-designed"],
-  });
-  assert.ok(shuffled.ok);
-  assert.deepEqual(shuffled.value.experiment.arms, ["generalist-baseline", "hand-designed", "searched"]);
   const found = fixture.service.experimentOf(SOLUTION, fixture.experiment.id);
   assert.ok(found.ok);
   assert.equal(found.value.experiment, fixture.experiment);
+  assert.deepEqual(found.value.experiment.arms, ["generalist-baseline", "hand-designed", "searched"]);
+  assert.equal(found.value.experiment.promotionRef, null);
+  assert.equal(found.value.experiment.simulated, true);
+  assert.ok(Object.isFrozen(fixture.experiment));
   const listed = fixture.service.experimentsOf(SOLUTION);
   assert.ok(listed.ok);
-  assert.equal(listed.value.experiments.length, 2);
-  // Unknown experiments are typed across every experiment-scoped op.
-  for (const result of [
-    fixture.service.experimentOf(SOLUTION, "you_lab-experiment_missing"),
-    fixture.service.submitLabRun(SOLUTION, "you_lab-experiment_missing", { arm: "searched", planHash: "h" }),
-    fixture.service.decidePromotion(SOLUTION, "you_lab-experiment_missing", {
-      searchedRunId: "you_lab-run_1",
-      baselineRunId: "you_lab-run_2",
-      objectiveScore: 1,
-      baselineScore: 0,
-      evidenceManifestRef: "you_lab-evidence-manifest_1",
-    }),
-    fixture.service.promotionLedgerOf(SOLUTION, "you_lab-experiment_missing"),
-  ]) {
-    assert.ok(!result.ok);
-    assert.equal(result.error.code, "YOU_LAB_EXPERIMENT_NOT_FOUND");
-    assert.equal(result.error.details["reason"], "unknown-experiment");
-    assert.equal(result.error.simulated, true);
-  }
-  // A declared-but-undecided experiment has an empty promotion ledger.
-  const empty = fixture.service.promotionLedgerOf(SOLUTION, fixture.experiment.id);
-  assert.ok(empty.ok);
-  assert.deepEqual(empty.value.ledger, []);
+  assert.equal(listed.value.experiments.length, 1);
 });
 
-test("experiment intake refusals are typed YOU_INVALID_STATE with the validator's reasons", () => {
+test("experiment intake refusals are typed (the three-arm law)", () => {
   const service = createLabService({ workspaceIdentity: "ws-w9a-service-test", seed: "experiment-refusals" });
-  const cases: readonly [Record<string, unknown>, string][] = [
-    [{ ...EXPERIMENT_INPUT, arms: ["generalist-baseline", "searched"] }, "arms-not-three-arm-law"],
-    [{ ...EXPERIMENT_INPUT, arms: ["searched", "searched", "hand-designed"] }, "arms-duplicate"],
-    [{ ...EXPERIMENT_INPUT, arms: ["generalist-baseline", "hand-designed", "tuned"] }, "arm-invalid"],
-    [{ ...EXPERIMENT_INPUT, arms: [] }, "arms-empty"],
-    [{ ...EXPERIMENT_INPUT, intentRef: "" }, "intent-ref-empty"],
-    [{ ...EXPERIMENT_INPUT, constraintsHash: "" }, "constraints-hash-empty"],
+  const cases: readonly (readonly [unknown, string])[] = [
+    [{ ...EXPERIMENT_INPUT, arms: ["generalist-baseline", "hand-designed"] }, "arms-count"],
+    [{ ...EXPERIMENT_INPUT, arms: ["generalist-baseline", "hand-designed", "hand-designed"] }, "arms-duplicate"],
+    [{ ...EXPERIMENT_INPUT, arms: ["generalist-baseline", "hand-designed", "ensharded"] }, "arms-missing"],
     [{ ...EXPERIMENT_INPUT, objective: "" }, "objective-empty"],
+    [{ ...EXPERIMENT_INPUT, constraintsHash: "  " }, "constraints-hash-empty"],
+    [{ ...EXPERIMENT_INPUT, intentRef: "" }, "intent-ref-empty"],
   ];
-  for (const [input, reason] of cases) {
-    const refused = service.declareExperiment(SOLUTION, input as typeof EXPERIMENT_INPUT);
-    assert.ok(!refused.ok, reason);
-    assert.equal(refused.error.code, "YOU_INVALID_STATE");
-    assert.equal(refused.error.details["reason"], "invalid-experiment-intake");
-    assert.equal(refused.error.details["refusal"], reason);
-    assert.equal(refused.error.simulated, true);
+  for (const [input, refusal] of cases) {
+    const result = service.declareLabExperiment(SOLUTION, input as LabExperimentInput);
+    assert.ok(!result.ok, refusal);
+    assert.equal(result.error.code, "YOU_INVALID_STATE");
+    assert.equal(result.error.details["reason"], "invalid-experiment-intake");
+    assert.equal(result.error.details["refusal"], refusal);
   }
+  const unknown = service.experimentOf(SOLUTION, "you_lab-experiment_missing000000");
+  assert.ok(!unknown.ok);
+  assert.equal(unknown.error.code, "YOU_LAB_EXPERIMENT_NOT_FOUND");
+  assert.equal(unknown.error.details["reason"], "unknown-experiment");
 });
 
-test("the run ladder: experiment-gated submissions, immutable transitions, append-only lists", () => {
+test("the run ladder: arm-gated submission, immutable advancement, locked terminals", () => {
   const fixture = createFixture("run-ladder");
-  const walk = runArmToStatus(fixture.service, fixture.experiment.id, "searched", PLAN_HASHES.searched);
-  assert.equal(walk.submitted.status, "submitted");
-  assert.equal(walk.submitted.experimentId, fixture.experiment.id);
-  assert.equal(walk.submitted.arm, "searched");
-  assert.equal(walk.submitted.planHash, PLAN_HASHES.searched);
-  assert.equal(walk.submitted.completedAt, null);
-  assert.equal(walk.submitted.simulated, true);
-  assert.ok(Object.isFrozen(walk.submitted));
-  const succeeded = fixture.service.succeedLabRun(SOLUTION, walk.submitted.id);
+  const experimentId = fixture.experiment.id;
+  const submitted = fixture.service.submitLabRun(SOLUTION, experimentId, { arm: "searched", planHash: "plan-searched-v1" });
+  assert.ok(submitted.ok);
+  assert.equal(submitted.value.run.status, "submitted");
+  assert.equal(submitted.value.run.arm, "searched");
+  assert.equal(submitted.value.run.simulated, true);
+  assert.ok(Object.isFrozen(submitted.value.run));
+  const started = fixture.service.startLabRun(SOLUTION, submitted.value.run.id);
+  assert.ok(started.ok);
+  assert.equal(started.value.run.status, "running");
+  assert.equal(started.value.run.completedAt, null);
+  // Immutable replacement: the earlier record objects are untouched.
+  assert.equal(submitted.value.run.status, "submitted");
+  const succeeded = fixture.service.succeedLabRun(SOLUTION, submitted.value.run.id);
   assert.ok(succeeded.ok);
   assert.equal(succeeded.value.run.status, "succeeded");
-  assert.notEqual(succeeded.value.run.completedAt, null);
-  // The earlier records are untouched (immutable replacement).
-  assert.equal(walk.submitted.status, "submitted");
-  assert.equal(walk.running.status, "running");
-  // The per-experiment list is append-only, in submit order.
-  const second = fixture.service.submitLabRun(SOLUTION, fixture.experiment.id, { arm: "searched", planHash: "planhash-9a-searched-000004" });
+  assert.ok(succeeded.value.run.completedAt !== null);
+  assert.equal(started.value.run.status, "running");
+  // Terminals lock (typed refusal with the ladder's stable reason).
+  const locked = fixture.service.retireLabRun(SOLUTION, succeeded.value.run.id);
+  assert.ok(!locked.ok);
+  assert.equal(locked.error.code, "YOU_INVALID_STATE");
+  assert.equal(locked.error.details["reason"], "run-terminal-locked");
+  // No-ops and off-ladder moves refuse.
+  const noOp = fixture.service.succeedLabRun(SOLUTION, succeeded.value.run.id);
+  assert.ok(!noOp.ok);
+  assert.equal(noOp.error.details["reason"], "no-op-transition");
+  const second = fixture.service.submitLabRun(SOLUTION, experimentId, { arm: "searched", planHash: "plan-searched-v2" });
   assert.ok(second.ok);
-  const ladder = fixture.service.runsOfExperiment(SOLUTION, fixture.experiment.id);
+  const offLadder = fixture.service.failLabRun(SOLUTION, second.value.run.id);
+  assert.ok(!offLadder.ok);
+  assert.equal(offLadder.error.details["reason"], "transition-not-on-ladder");
+  // Unknown runs refuse typed.
+  const unknown = fixture.service.startLabRun(SOLUTION, "you_lab-run_missing00000000000");
+  assert.ok(!unknown.ok);
+  assert.equal(unknown.error.code, "YOU_LAB_RUN_NOT_FOUND");
+  assert.equal(unknown.error.details["reason"], "unknown-run");
+  // The per-experiment ladder is append-only, in append order.
+  const ladder = fixture.service.runsOfExperiment(SOLUTION, experimentId);
   assert.ok(ladder.ok);
   assert.deepEqual(
     ladder.value.runs.map((run) => run.id),
-    [walk.submitted.id, second.value.run.id],
+    [submitted.value.run.id, second.value.run.id],
   );
-  const all = fixture.service.runsOf(SOLUTION);
-  assert.ok(all.ok);
-  assert.equal(all.value.runs.length, 2);
 });
 
-test("run submission gates: undeclared arm and malformed intake are typed YOU_INVALID_STATE", () => {
+test("run submission gates: unknown experiment, undeclared arm, empty plan hash", () => {
   const fixture = createFixture("run-gates");
-  const undeclared = fixture.service.submitLabRun(SOLUTION, fixture.experiment.id, {
-    arm: "tuned" as "searched",
-    planHash: "h",
-  });
+  const experimentId = fixture.experiment.id;
+  const unknownExperiment = fixture.service.submitLabRun(SOLUTION, "you_lab-experiment_missing000000", { arm: "searched", planHash: "p" });
+  assert.ok(!unknownExperiment.ok);
+  assert.equal(unknownExperiment.error.code, "YOU_LAB_EXPERIMENT_NOT_FOUND");
+  const undeclaredArmInput = { arm: "generalist-baseline-elite", planHash: "p" };
+  const undeclared = fixture.service.submitLabRun(SOLUTION, experimentId, undeclaredArmInput as { arm: "searched"; planHash: string });
   assert.ok(!undeclared.ok);
   assert.equal(undeclared.error.code, "YOU_INVALID_STATE");
   assert.equal(undeclared.error.details["reason"], "arm-not-declared");
-  const emptyPlan = fixture.service.submitLabRun(SOLUTION, fixture.experiment.id, { arm: "searched", planHash: "" });
+  const emptyPlan = fixture.service.submitLabRun(SOLUTION, experimentId, { arm: "searched", planHash: "" });
   assert.ok(!emptyPlan.ok);
-  assert.equal(emptyPlan.error.code, "YOU_INVALID_STATE");
-  assert.equal(emptyPlan.error.details["reason"], "invalid-run-intake");
   assert.equal(emptyPlan.error.details["refusal"], "plan-hash-empty");
 });
 
-test("the run-ladder transition table at the service seam: locked terminals, no-ops, off-ladder", () => {
-  const fixture = createFixture("ladder-refusals");
-  const walk = runArmToStatus(fixture.service, fixture.experiment.id, "hand-designed", PLAN_HASHES["hand-designed"]);
-  // Off-ladder: submitted -> succeeded refuses (a run must run first).
-  const freshSubmit = fixture.service.submitLabRun(SOLUTION, fixture.experiment.id, { arm: "searched", planHash: PLAN_HASHES.searched });
-  assert.ok(freshSubmit.ok);
-  const offLadder = fixture.service.succeedLabRun(SOLUTION, freshSubmit.value.run.id);
-  assert.ok(!offLadder.ok);
-  assert.equal(offLadder.error.code, "YOU_INVALID_STATE");
-  assert.equal(offLadder.error.details["reason"], "transition-not-on-ladder");
-  // No-op: running -> running refuses.
-  const noOp = fixture.service.startLabRun(SOLUTION, walk.running.id);
-  assert.ok(!noOp.ok);
-  assert.equal(noOp.error.code, "YOU_INVALID_STATE");
-  assert.equal(noOp.error.details["reason"], "no-op-transition");
-  // Backwards: running -> submitted is off-ladder (already covered by no-op path shape).
-  const terminal = fixture.service.retireLabRun(SOLUTION, walk.running.id);
-  assert.ok(terminal.ok);
-  assert.equal(terminal.value.run.status, "retired");
-  // Terminals lock: every further move refuses (a self-transition on a
-  // terminal is the no-op refusal — the W8A arena semantics).
-  for (const result of [
-    fixture.service.startLabRun(SOLUTION, walk.running.id),
-    fixture.service.succeedLabRun(SOLUTION, walk.running.id),
-    fixture.service.failLabRun(SOLUTION, walk.running.id),
-  ]) {
-    assert.ok(!result.ok);
-    assert.equal(result.error.code, "YOU_INVALID_STATE");
-    assert.equal(result.error.details["reason"], "run-terminal-locked");
-    assert.equal(result.error.details["status"], "retired");
-  }
-  const retiredNoOp = fixture.service.retireLabRun(SOLUTION, walk.running.id);
-  assert.ok(!retiredNoOp.ok);
-  assert.equal(retiredNoOp.error.code, "YOU_INVALID_STATE");
-  assert.equal(retiredNoOp.error.details["reason"], "no-op-transition");
-  // The failed terminal walks the same ladder.
-  const failWalk = runArmToStatus(fixture.service, fixture.experiment.id, "searched", PLAN_HASHES.searched);
-  const failed = fixture.service.failLabRun(SOLUTION, failWalk.submitted.id);
-  assert.ok(failed.ok);
-  assert.equal(failed.value.run.status, "failed");
-  // Unknown runs are typed YOU_LAB_RUN_NOT_FOUND across every run op.
-  for (const result of [
-    fixture.service.runOf(SOLUTION, "you_lab-run_missing"),
-    fixture.service.startLabRun(SOLUTION, "you_lab-run_missing"),
-    fixture.service.succeedLabRun(SOLUTION, "you_lab-run_missing"),
-    fixture.service.failLabRun(SOLUTION, "you_lab-run_missing"),
-    fixture.service.retireLabRun(SOLUTION, "you_lab-run_missing"),
-    fixture.service.publishLabEvidence(SOLUTION, "you_lab-run_missing", { artifacts: [artifactBytes("x", 0)] }),
-  ]) {
-    assert.ok(!result.ok);
-    assert.equal(result.error.code, "YOU_LAB_RUN_NOT_FOUND");
-    assert.equal(result.error.details["reason"], "unknown-run");
-    assert.equal(result.error.simulated, true);
-  }
-});
-
-test("evidence manifests: content-addressed publication, run-head linkage, verification", () => {
+test("evidence manifests: content-addressed publication, run-head rebinding, append-only re-publish", () => {
   const fixture = createFixture("evidence");
-  const baseline = succeedArm(fixture.service, fixture.experiment.id, "generalist-baseline", PLAN_HASHES["generalist-baseline"]);
-  const manifest = publishArtifacts(fixture.service, baseline.succeeded.id, ["baseline-a", "baseline-b"]);
-  assert.match(manifest.contentHash, /^[0-9a-f]{64}$/);
-  assert.equal(
-    manifest.contentHash,
-    labEvidenceBundleHash([sha256Hex(artifactBytes("baseline-a", 0)), sha256Hex(artifactBytes("baseline-b", 1))]),
-  );
-  assert.equal(manifest.runId, baseline.succeeded.id);
+  const run = succeededRun(fixture.service, fixture.experiment.id, "searched", "plan-searched-v1");
+  const artifacts = [artifactBytes("evidence-a1", 128), artifactBytes("evidence-a2", 128)];
+  const published = fixture.service.publishLabEvidence(SOLUTION, run.id, artifacts);
+  assert.ok(published.ok);
+  const manifest = published.value.manifest;
+  assert.equal(manifest.runId, run.id);
   assert.equal(manifest.artifactRefs.length, 2);
   assert.equal(manifest.simulated, true);
   assert.ok(Object.isFrozen(manifest));
-  // Content addressing: the same artifacts hash identically on another run.
-  const searched = succeedArm(fixture.service, fixture.experiment.id, "searched", PLAN_HASHES.searched);
-  const handDesigned = succeedArm(fixture.service, fixture.experiment.id, "hand-designed", PLAN_HASHES["hand-designed"]);
-  const sameBytes = publishArtifacts(fixture.service, searched.succeeded.id, ["baseline-a", "baseline-b"]);
-  assert.equal(sameBytes.contentHash, manifest.contentHash);
-  const otherBytes = publishArtifacts(fixture.service, handDesigned.succeeded.id, ["searched-a"]);
-  assert.notEqual(otherBytes.contentHash, manifest.contentHash);
-  // The run head's evidence linkage walked immutably.
-  const runHead = fixture.service.runOf(SOLUTION, baseline.succeeded.id);
+  // The run head rebinds to the manifest (immutable replacement).
+  assert.equal(published.value.run.evidenceManifestRef, manifest.id);
+  const runHead = fixture.service.runOf(SOLUTION, run.id);
   assert.ok(runHead.ok);
   assert.equal(runHead.value.run.evidenceManifestRef, manifest.id);
-  assert.equal(runHead.value.run.status, "succeeded");
-  assert.equal(baseline.succeeded.evidenceManifestRef, null);
-  // Reads and verification.
-  const found = fixture.service.manifestOf(SOLUTION, manifest.id);
-  assert.ok(found.ok);
-  assert.equal(found.value.manifest, manifest);
-  const listed = fixture.service.manifestsOf(SOLUTION);
-  assert.ok(listed.ok);
-  assert.equal(listed.value.manifests.length, 3);
-  const verified = fixture.service.verifyLabEvidence(SOLUTION, manifest.id);
-  assert.ok(verified.ok);
-  assert.equal(verified.value.verified, true);
-  assert.equal(verified.value.manifest.id, manifest.id);
-  // Artifacts landed in the content store (content-addressed).
-  assert.ok(fixture.service.contentStoreSize() >= 3);
+  // Re-publishing appends a second manifest and moves the head ref.
+  const republished = fixture.service.publishLabEvidence(SOLUTION, run.id, [artifactBytes("evidence-a3", 64)]);
+  assert.ok(republished.ok);
+  const all = fixture.service.manifestsOf(SOLUTION);
+  assert.ok(all.ok);
+  assert.equal(all.value.manifests.length, 2);
+  const head = fixture.service.runOf(SOLUTION, run.id);
+  assert.ok(head.ok);
+  assert.equal(head.value.run.evidenceManifestRef, republished.value.manifest.id);
 });
 
-test("evidence publication gates and malformed intake are typed YOU_LAB_EVIDENCE_MANIFEST_INVALID", () => {
-  const fixture = createFixture("evidence-refusals");
-  const walk = runArmToStatus(fixture.service, fixture.experiment.id, "searched", PLAN_HASHES.searched);
-  const notTerminal = fixture.service.publishLabEvidence(SOLUTION, walk.submitted.id, { artifacts: [artifactBytes("x", 0)] });
+test("evidence publication gates: non-terminal run, empty bundle, unknown run", () => {
+  const fixture = createFixture("evidence-gates");
+  const experimentId = fixture.experiment.id;
+  const submitted = fixture.service.submitLabRun(SOLUTION, experimentId, { arm: "searched", planHash: "p" });
+  assert.ok(submitted.ok);
+  const notTerminal = fixture.service.publishLabEvidence(SOLUTION, submitted.value.run.id, [artifactBytes("gate-a", 32)]);
   assert.ok(!notTerminal.ok);
   assert.equal(notTerminal.error.code, "YOU_LAB_EVIDENCE_MANIFEST_INVALID");
   assert.equal(notTerminal.error.details["reason"], "run-not-terminal");
-  const succeeded = fixture.service.succeedLabRun(SOLUTION, walk.submitted.id);
-  assert.ok(succeeded.ok);
-  const empty = fixture.service.publishLabEvidence(SOLUTION, walk.submitted.id, { artifacts: [] });
+  const run = succeededRun(fixture.service, experimentId, "searched", "plan-searched-v1");
+  const empty = fixture.service.publishLabEvidence(SOLUTION, run.id, []);
   assert.ok(!empty.ok);
   assert.equal(empty.error.code, "YOU_LAB_EVIDENCE_MANIFEST_INVALID");
   assert.equal(empty.error.details["reason"], "artifacts-empty");
-  const emptyBytes = fixture.service.publishLabEvidence(SOLUTION, walk.submitted.id, { artifacts: [new Uint8Array()] });
-  assert.ok(!emptyBytes.ok);
-  assert.equal(emptyBytes.error.code, "YOU_LAB_EVIDENCE_MANIFEST_INVALID");
-  assert.equal(emptyBytes.error.details["reason"], "artifact-empty");
-  publishArtifacts(fixture.service, walk.submitted.id, ["searched-a"]);
-  const again = fixture.service.publishLabEvidence(SOLUTION, walk.submitted.id, { artifacts: [artifactBytes("more", 0)] });
-  assert.ok(!again.ok);
-  assert.equal(again.error.code, "YOU_LAB_EVIDENCE_MANIFEST_INVALID");
-  assert.equal(again.error.details["reason"], "run-already-carries-manifest");
-  // Unknown manifests fail closed on every read.
-  for (const result of [
-    fixture.service.manifestOf(SOLUTION, "you_lab-evidence-manifest_missing"),
-    fixture.service.verifyLabEvidence(SOLUTION, "you_lab-evidence-manifest_missing"),
-  ]) {
-    assert.ok(!result.ok);
-    assert.equal(result.error.code, "YOU_LAB_EVIDENCE_MANIFEST_INVALID");
-    assert.equal(result.error.details["reason"], "manifest-unknown");
-    assert.equal(result.error.simulated, true);
-  }
+  const unknownRun = fixture.service.publishLabEvidence(SOLUTION, "you_lab-run_missing00000000000", [artifactBytes("gate-b", 32)]);
+  assert.ok(!unknownRun.ok);
+  assert.equal(unknownRun.error.code, "YOU_LAB_RUN_NOT_FOUND");
 });
 
-test("THE PROMOTION LAW: the searched arm promotes only when it beats the baseline", () => {
-  const decided = decidedFixture("promotion-law");
-  assert.equal(decided.promotion.winnerArm, "searched");
-  assert.equal(decided.promotion.objectiveScore, 0.87);
-  assert.equal(decided.promotion.baselineScore, 0.71);
-  assert.equal(decided.promotion.evidenceManifestRef, decided.searchedManifestId);
-  assert.equal(decided.promotion.experimentId, decided.experiment.id);
-  assert.equal(decided.promotion.simulated, true);
-  assert.ok(Object.isFrozen(decided.promotion));
-  // The experiment head walked immutably to the promotion record.
-  const experiment = decided.service.experimentOf(SOLUTION, decided.experiment.id);
-  assert.ok(experiment.ok);
-  assert.equal(experiment.value.experiment.promotionRef, decided.promotion.id);
-  assert.equal(decided.experiment.promotionRef, null);
-  // The decision ledger holds the record.
-  const ledger = decided.service.promotionLedgerOf(SOLUTION, decided.experiment.id);
-  assert.ok(ledger.ok);
-  assert.equal(ledger.value.ledger.length, 1);
-  assert.equal(ledger.value.ledger[0]?.id, decided.promotion.id);
-  const found = decided.service.promotionOf(SOLUTION, decided.promotion.id);
-  assert.ok(found.ok);
-  assert.equal(found.value.promotion, decided.promotion);
+test("manifest verification: deep store-backed pass; unknown manifest fails closed", () => {
+  const fixture = createFixture("verification");
+  const run = succeededRun(fixture.service, fixture.experiment.id, "searched", "plan-searched-v1");
+  const published = fixture.service.publishLabEvidence(SOLUTION, run.id, [artifactBytes("verify-a", 256)]);
+  assert.ok(published.ok);
+  const verified = fixture.service.verifyLabEvidenceManifest(SOLUTION, published.value.manifest.id);
+  assert.ok(verified.ok);
+  assert.equal(verified.value.verified, true);
+  assert.equal(verified.value.contentHash, published.value.manifest.contentHash);
+  const unknown = fixture.service.verifyLabEvidenceManifest(SOLUTION, "you_lab-evidence-manifest_missing");
+  assert.ok(!unknown.ok);
+  assert.equal(unknown.error.code, "YOU_LAB_EVIDENCE_MANIFEST_INVALID");
+  assert.equal(unknown.error.details["reason"], "unknown-manifest");
 });
 
-test("the promotion gate refusal paths are typed YOU_LAB_PROMOTION_INVALID with stable reasons", () => {
-  const fixture = createFixture("promotion-refusals");
-  const baseline = succeedArm(fixture.service, fixture.experiment.id, "generalist-baseline", PLAN_HASHES["generalist-baseline"]);
-  const handDesigned = succeedArm(fixture.service, fixture.experiment.id, "hand-designed", PLAN_HASHES["hand-designed"]);
-  const retiredWalk = runArmToStatus(fixture.service, fixture.experiment.id, "searched", PLAN_HASHES.searched);
-  const retired = fixture.service.retireLabRun(SOLUTION, retiredWalk.submitted.id);
-  assert.ok(retired.ok);
-  // A retired generalist-baseline run (the not-succeeded baseline side of the gate).
-  const retiredBaselineWalk = runArmToStatus(fixture.service, fixture.experiment.id, "generalist-baseline", PLAN_HASHES["generalist-baseline"]);
-  const retiredBaseline = fixture.service.retireLabRun(SOLUTION, retiredBaselineWalk.submitted.id);
-  assert.ok(retiredBaseline.ok);
-  const searched = succeedArm(fixture.service, fixture.experiment.id, "searched", PLAN_HASHES.searched);
-  const baselineManifest = publishArtifacts(fixture.service, baseline.succeeded.id, ["baseline-a"]);
-  const searchedManifest = publishArtifacts(fixture.service, searched.succeeded.id, ["searched-a"]);
-  const input = {
-    searchedRunId: searched.succeeded.id,
-    baselineRunId: baseline.succeeded.id,
-    objectiveScore: 0.87,
-    baselineScore: 0.71,
-    evidenceManifestRef: searchedManifest.id,
-  };
-  const cases: readonly [Record<string, unknown>, string][] = [
-    [{ ...input, objectiveScore: 0.71 }, "searched-does-not-beat-baseline"],
-    [{ ...input, objectiveScore: 0.5 }, "searched-does-not-beat-baseline"],
-    [{ ...input, baselineRunId: handDesigned.succeeded.id }, "run-arm-mismatch-baseline"],
-    [{ ...input, searchedRunId: baseline.succeeded.id }, "run-arm-mismatch-searched"],
-    [{ ...input, searchedRunId: retired.value.run.id }, "run-not-succeeded"],
-    [{ ...input, baselineRunId: retiredBaseline.value.run.id }, "run-not-succeeded"],
-    [{ ...input, evidenceManifestRef: baselineManifest.id }, "manifest-not-bound-to-searched-run"],
-    [{ ...input, objectiveScore: Number.NaN }, "scores-invalid"],
-  ];
-  for (const [override, reason] of cases) {
-    const refused = fixture.service.decidePromotion(SOLUTION, fixture.experiment.id, override as typeof input);
-    assert.ok(!refused.ok, reason);
-    assert.equal(refused.error.code, "YOU_LAB_PROMOTION_INVALID");
-    assert.equal(refused.error.details["reason"], reason);
-    assert.equal(refused.error.simulated, true);
-  }
-  // A searched run of ANOTHER experiment does not compare (declared second experiment).
-  const other = fixture.service.declareExperiment(SOLUTION, { ...EXPERIMENT_INPUT, intentRef: "you_intent_0000000000000010" });
-  assert.ok(other.ok);
-  const otherSearched = succeedArm(fixture.service, other.value.experiment.id, "searched", PLAN_HASHES.searched);
-  const otherManifest = publishArtifacts(fixture.service, otherSearched.succeeded.id, ["other-a"]);
-  const crossExperiment = fixture.service.decidePromotion(SOLUTION, fixture.experiment.id, {
-    ...input,
-    searchedRunId: otherSearched.succeeded.id,
-    evidenceManifestRef: otherManifest.id,
+test("the promotion gate: a searched arm promotes only when it beats the baseline", () => {
+  const fixture = createFixture("promotion");
+  const experimentId = fixture.experiment.id;
+  const run = succeededRun(fixture.service, experimentId, "searched", "plan-searched-v1");
+  const published = fixture.service.publishLabEvidence(SOLUTION, run.id, [artifactBytes("promo-a", 128)]);
+  assert.ok(published.ok);
+  const manifestId = published.value.manifest.id;
+  // Not beating refuses with the law's stable reason.
+  const notBeating = fixture.service.promoteLabExperiment(SOLUTION, experimentId, {
+    objectiveScore: 0.62,
+    baselineScore: 0.62,
+    evidenceManifestRef: manifestId,
   });
-  assert.ok(!crossExperiment.ok);
-  assert.equal(crossExperiment.error.code, "YOU_LAB_PROMOTION_INVALID");
-  assert.equal(crossExperiment.error.details["reason"], "run-experiment-mismatch");
-  // An unknown manifest on the promotion path fails closed with the manifest code.
-  const unknownManifest = fixture.service.decidePromotion(SOLUTION, fixture.experiment.id, {
-    ...input,
+  assert.ok(!notBeating.ok);
+  assert.equal(notBeating.error.code, "YOU_LAB_PROMOTION_INVALID");
+  assert.equal(notBeating.error.details["reason"], "searched-does-not-beat-baseline");
+  // Unknown manifest / unknown experiment refuse typed.
+  const unknownManifest = fixture.service.promoteLabExperiment(SOLUTION, experimentId, {
+    objectiveScore: 0.9,
+    baselineScore: 0.6,
     evidenceManifestRef: "you_lab-evidence-manifest_missing",
   });
   assert.ok(!unknownManifest.ok);
   assert.equal(unknownManifest.error.code, "YOU_LAB_EVIDENCE_MANIFEST_INVALID");
-  // An unknown promotion record reads as YOU_LAB_PROMOTION_INVALID (the frozen taxonomy has no promotion-not-found code).
-  const unknownPromotion = fixture.service.promotionOf(SOLUTION, "you_lab-promotion_missing");
-  assert.ok(!unknownPromotion.ok);
-  assert.equal(unknownPromotion.error.code, "YOU_LAB_PROMOTION_INVALID");
-  assert.equal(unknownPromotion.error.details["reason"], "promotion-unknown");
-});
-
-test("reversals append new records; the promoted record stays byte-identical", () => {
-  const decided = decidedFixture("reversal");
-  const input = {
-    searchedRunId: decided.searchedRunId,
-    baselineRunId: decided.baselineRunId,
-    objectiveScore: 0.68,
-    baselineScore: 0.71,
-    evidenceManifestRef: decided.searchedManifestId,
-  };
-  // A reversal while the searched arm still beats the baseline refuses (the truth law).
-  const premature = decided.service.reversePromotion(SOLUTION, decided.experiment.id, { ...input, objectiveScore: 0.9 });
-  assert.ok(!premature.ok);
-  assert.equal(premature.error.code, "YOU_LAB_PROMOTION_INVALID");
-  assert.equal(premature.error.details["reason"], "reversal-requires-baseline-win");
-  const promotionJson = stableStringify(decided.promotion);
-  const reversed = decided.service.reversePromotion(SOLUTION, decided.experiment.id, input);
-  assert.ok(reversed.ok);
-  assert.equal(reversed.value.promotion.winnerArm, "generalist-baseline");
-  assert.equal(reversed.value.promotion.objectiveScore, 0.68);
-  assert.notEqual(reversed.value.promotion.id, decided.promotion.id);
-  // The ledger grew; the promoted record is byte-identical (immutable; new records on change).
-  const ledger = decided.service.promotionLedgerOf(SOLUTION, decided.experiment.id);
-  assert.ok(ledger.ok);
-  assert.equal(ledger.value.ledger.length, 2);
-  assert.equal(stableStringify(ledger.value.ledger[0]), promotionJson);
-  // The experiment head walked to the reversal.
-  const experiment = decided.service.experimentOf(SOLUTION, decided.experiment.id);
-  assert.ok(experiment.ok);
-  assert.equal(experiment.value.experiment.promotionRef, reversed.value.promotion.id);
-  // The reversal linkage rides the ledger (lab-promotion-decided payload).
-  const events = decided.service.ledgerEventsOf(SOLUTION);
-  assert.ok(events.ok);
-  const reversalEvent = events.value.find(
-    (event) => event.type === "lab-promotion-decided" && event.payload["promotionId"] === reversed.value.promotion.id,
-  );
-  assert.ok(reversalEvent !== undefined);
-  assert.equal(reversalEvent.payload["reversalOfPromotionId"], decided.promotion.id);
-  // Re-promotion after a reversal appends again (the ledger is the history).
-  const rePromoted = decided.service.decidePromotion(SOLUTION, decided.experiment.id, {
-    ...input,
-    objectiveScore: 0.95,
+  const unknownExperiment = fixture.service.promoteLabExperiment(SOLUTION, "you_lab-experiment_missing000000", {
+    objectiveScore: 0.9,
+    baselineScore: 0.6,
+    evidenceManifestRef: manifestId,
   });
-  assert.ok(rePromoted.ok);
-  const ledgerAfter = decided.service.promotionLedgerOf(SOLUTION, decided.experiment.id);
-  assert.ok(ledgerAfter.ok);
-  assert.equal(ledgerAfter.value.ledger.length, 3);
+  assert.ok(!unknownExperiment.ok);
+  assert.equal(unknownExperiment.error.code, "YOU_LAB_EXPERIMENT_NOT_FOUND");
+  // The winning promotion.
+  const promoted = fixture.service.promoteLabExperiment(SOLUTION, experimentId, {
+    objectiveScore: 0.87,
+    baselineScore: 0.62,
+    evidenceManifestRef: manifestId,
+  });
+  assert.ok(promoted.ok);
+  assert.equal(promoted.value.promotion.winnerArm, "searched");
+  assert.equal(promoted.value.promotion.objectiveScore, 0.87);
+  assert.equal(promoted.value.experiment.promotionRef, promoted.value.promotion.id);
+  assert.ok(Object.isFrozen(promoted.value.promotion));
+  const originalExperiment = fixture.experiment;
+  assert.equal(originalExperiment.promotionRef, null);
 });
 
-test("reversal without a head promotion refuses (no-promotion-to-reverse)", () => {
-  const fixture = createFixture("reversal-no-head");
-  const baseline = succeedArm(fixture.service, fixture.experiment.id, "generalist-baseline", PLAN_HASHES["generalist-baseline"]);
-  const searched = succeedArm(fixture.service, fixture.experiment.id, "searched", PLAN_HASHES.searched);
-  const manifest = publishArtifacts(fixture.service, searched.succeeded.id, ["searched-a"]);
-  const refused = fixture.service.reversePromotion(SOLUTION, fixture.experiment.id, {
-    searchedRunId: searched.succeeded.id,
-    baselineRunId: baseline.succeeded.id,
-    objectiveScore: 0.4,
-    baselineScore: 0.71,
-    evidenceManifestRef: manifest.id,
+test("the promotion gate refuses evidence that belongs to another experiment", () => {
+  const fixture = createFixture("promotion-mismatch");
+  const other = fixture.service.declareLabExperiment(SOLUTION, {
+    ...EXPERIMENT_INPUT,
+    intentRef: "you_intent_0000000000000002",
+    constraintsHash: "constraints-hash-w9a-02",
+  });
+  assert.ok(other.ok);
+  const otherRun = succeededRun(fixture.service, other.value.experiment.id, "searched", "plan-other-v1");
+  const otherEvidence = fixture.service.publishLabEvidence(SOLUTION, otherRun.id, [artifactBytes("mismatch-a", 128)]);
+  assert.ok(otherEvidence.ok);
+  const refused = fixture.service.promoteLabExperiment(SOLUTION, fixture.experiment.id, {
+    objectiveScore: 0.9,
+    baselineScore: 0.6,
+    evidenceManifestRef: otherEvidence.value.manifest.id,
   });
   assert.ok(!refused.ok);
-  assert.equal(refused.error.code, "YOU_LAB_PROMOTION_INVALID");
-  assert.equal(refused.error.details["reason"], "no-promotion-to-reverse");
+  assert.equal(refused.error.code, "YOU_LAB_EVIDENCE_MANIFEST_INVALID");
+  assert.equal(refused.error.details["reason"], "manifest-experiment-mismatch");
 });
 
-test("the lab events ride the ledger with the frozen payload conventions", () => {
-  const decided = decidedFixture("ledger-payloads");
-  const events = decided.service.ledgerEventsOf(SOLUTION);
-  assert.ok(events.ok);
-  const runEvent = events.value.find(
-    (event) =>
-      event.type === "lab-run-recorded" && event.payload["runId"] === decided.searchedRunId && event.payload["statusAfter"] === "submitted",
+test("reversals are new records on the append-only decision chain; the head linkage walks", () => {
+  const fixture = createFixture("reversal");
+  const experimentId = fixture.experiment.id;
+  const run = succeededRun(fixture.service, experimentId, "searched", "plan-searched-v1");
+  const published = fixture.service.publishLabEvidence(SOLUTION, run.id, [artifactBytes("reverse-a", 128)]);
+  assert.ok(published.ok);
+  // Nothing to reverse yet.
+  const tooEarly = fixture.service.reverseLabPromotion(SOLUTION, experimentId, {
+    objectiveScore: 0.55,
+    baselineScore: 0.62,
+    evidenceManifestRef: published.value.manifest.id,
+  });
+  assert.ok(!tooEarly.ok);
+  assert.equal(tooEarly.error.code, "YOU_LAB_PROMOTION_INVALID");
+  assert.equal(tooEarly.error.details["reason"], "no-promotion-to-reverse");
+  // Promote, then reverse, then re-promote.
+  const promoted = fixture.service.promoteLabExperiment(SOLUTION, experimentId, {
+    objectiveScore: 0.87,
+    baselineScore: 0.62,
+    evidenceManifestRef: published.value.manifest.id,
+  });
+  assert.ok(promoted.ok);
+  const stillBeats = fixture.service.reverseLabPromotion(SOLUTION, experimentId, {
+    objectiveScore: 0.9,
+    baselineScore: 0.62,
+    evidenceManifestRef: published.value.manifest.id,
+  });
+  assert.ok(!stillBeats.ok);
+  assert.equal(stillBeats.error.details["reason"], "searched-still-beats-baseline");
+  const reversed = fixture.service.reverseLabPromotion(SOLUTION, experimentId, {
+    objectiveScore: 0.55,
+    baselineScore: 0.62,
+    evidenceManifestRef: published.value.manifest.id,
+  });
+  assert.ok(reversed.ok);
+  assert.equal(reversed.value.promotion.winnerArm, "generalist-baseline");
+  assert.equal(reversed.value.experiment.promotionRef, reversed.value.promotion.id);
+  const repromoted = fixture.service.promoteLabExperiment(SOLUTION, experimentId, {
+    objectiveScore: 0.91,
+    baselineScore: 0.62,
+    evidenceManifestRef: published.value.manifest.id,
+  });
+  assert.ok(repromoted.ok);
+  // The chain preserves every immutable record in order.
+  const chain = fixture.service.promotionsOfExperiment(SOLUTION, experimentId);
+  assert.ok(chain.ok);
+  assert.deepEqual(
+    chain.value.promotions.map((promotion) => promotion.id),
+    [promoted.value.promotion.id, reversed.value.promotion.id, repromoted.value.promotion.id],
   );
-  assert.ok(runEvent !== undefined);
-  assert.equal(runEvent.payload["experimentId"], decided.experiment.id);
-  assert.equal(runEvent.payload["arm"], "searched");
-  assert.equal(runEvent.payload["planHash"], PLAN_HASHES.searched);
-  assert.equal(runEvent.payload["statusBefore"], "");
-  assert.equal(runEvent.payload["completedAt"], "");
-  assert.equal(runEvent.payload["evidenceManifestRef"], "");
-  assert.equal(runEvent.payload["simulated"], true);
-  const manifestEvent = events.value.find((event) => event.type === "lab-evidence-published");
-  assert.ok(manifestEvent !== undefined);
-  assert.equal(manifestEvent.payload["manifestId"], decided.searchedManifestId);
-  assert.equal(manifestEvent.payload["runId"], decided.searchedRunId);
-  assert.equal(manifestEvent.payload["experimentId"], decided.experiment.id);
-  assert.equal(manifestEvent.payload["artifactCount"], 2);
-  assert.equal(typeof manifestEvent.payload["artifactRef.0"], "string");
-  const promotionEvent = events.value.find((event) => event.type === "lab-promotion-decided");
-  assert.ok(promotionEvent !== undefined);
-  assert.equal(promotionEvent.payload["promotionId"], decided.promotion.id);
-  assert.equal(promotionEvent.payload["winnerArm"], "searched");
-  assert.equal(promotionEvent.payload["objectiveScore"], 0.87);
-  assert.equal(promotionEvent.payload["baselineScore"], 0.71);
-  assert.equal(promotionEvent.payload["reversalOfPromotionId"], "");
-  // Terminal run events carry the walked status.
-  const terminalEvent = events.value.find((event) => event.type === "lab-run-recorded" && event.payload["statusAfter"] === "succeeded");
-  assert.ok(terminalEvent !== undefined);
-  assert.equal(terminalEvent.payload["statusBefore"], "running");
-  assert.notEqual(terminalEvent.payload["completedAt"], "");
+  assert.deepEqual(
+    chain.value.promotions.map((promotion) => promotion.winnerArm),
+    ["searched", "generalist-baseline", "searched"],
+  );
+  // The earlier records are untouched (immutable chain law).
+  assert.equal(promoted.value.promotion.winnerArm, "searched");
+  const head = fixture.service.experimentOf(SOLUTION, experimentId);
+  assert.ok(head.ok);
+  assert.equal(head.value.experiment.promotionRef, repromoted.value.promotion.id);
+  // Unknown promotion reads refuse typed.
+  const unknown = fixture.service.promotionOf(SOLUTION, "you_lab-promotion_missing00000000");
+  assert.ok(!unknown.ok);
+  assert.equal(unknown.error.code, "YOU_LAB_PROMOTION_INVALID");
+  assert.equal(unknown.error.details["reason"], "unknown-promotion");
+});
+
+test("the three wave-9 events ride the ledger with the documented payload conventions", () => {
+  const fixture = createFixture("ledger");
+  const experimentId = fixture.experiment.id;
+  const run = succeededRun(fixture.service, experimentId, "searched", "plan-searched-v1");
+  const published = fixture.service.publishLabEvidence(SOLUTION, run.id, [artifactBytes("ledger-a", 128)]);
+  assert.ok(published.ok);
+  const promoted = fixture.service.promoteLabExperiment(SOLUTION, experimentId, {
+    objectiveScore: 0.87,
+    baselineScore: 0.62,
+    evidenceManifestRef: published.value.manifest.id,
+  });
+  assert.ok(promoted.ok);
+  const events = fixture.service.ledgerEventsOf(SOLUTION);
+  assert.ok(events.ok);
+  const runEvents = events.value.filter((event) => event.type === "lab-run-recorded");
+  assert.equal(runEvents.length, 3);
+  assert.equal(runEvents[0]?.payload["statusBefore"], "");
+  assert.equal(runEvents[0]?.payload["statusAfter"], "submitted");
+  assert.equal(runEvents[0]?.payload["arm"], "searched");
+  assert.equal(runEvents[0]?.payload["planHash"], "plan-searched-v1");
+  // The declaration facts ride along on every run event.
+  assert.equal(runEvents[0]?.payload["experimentIntentRef"], "you_intent_0000000000000001");
+  assert.equal(runEvents[0]?.payload["experimentConstraintsHash"], "constraints-hash-w9a-01");
+  assert.equal(runEvents[0]?.payload["experimentObjective"], "minimize-total-cost-under-quality-threshold");
+  assert.equal(runEvents[0]?.payload["experimentArmCount"], 3);
+  assert.equal(runEvents[0]?.payload["experimentArm.0"], "generalist-baseline");
+  assert.equal(runEvents[0]?.payload["experimentArm.2"], "searched");
+  assert.equal(runEvents[1]?.payload["statusBefore"], "submitted");
+  assert.equal(runEvents[1]?.payload["statusAfter"], "running");
+  assert.equal(runEvents[2]?.payload["statusAfter"], "succeeded");
+  const evidenceEvents = events.value.filter((event) => event.type === "lab-evidence-published");
+  assert.equal(evidenceEvents.length, 1);
+  assert.equal(evidenceEvents[0]?.payload["manifestId"], published.value.manifest.id);
+  assert.equal(evidenceEvents[0]?.payload["runId"], run.id);
+  assert.equal(evidenceEvents[0]?.payload["contentHash"], published.value.manifest.contentHash);
+  assert.equal(evidenceEvents[0]?.payload["artifactCount"], 1);
+  assert.equal(evidenceEvents[0]?.payload["artifactRef.0"], published.value.bindings[0]?.contentRef);
+  const promotionEvents = events.value.filter((event) => event.type === "lab-promotion-decided");
+  assert.equal(promotionEvents.length, 1);
+  assert.equal(promotionEvents[0]?.payload["decisionKind"], "promote");
+  assert.equal(promotionEvents[0]?.payload["winnerArm"], "searched");
+  assert.equal(promotionEvents[0]?.payload["objectiveScore"], 0.87);
+  assert.equal(promotionEvents[0]?.payload["experimentPromotionRefBefore"], "");
+  assert.equal(promotionEvents[0]?.payload["experimentPromotionRefAfter"], promoted.value.promotion.id);
+  // Truth law: every payload carries simulated: true.
+  for (const event of events.value) {
+    assert.equal(event.payload["simulated"], true, event.type);
+  }
 });
 
 test("the live projection equals the ledger replay exactly (append-only state reproduction)", () => {
-  const decided = decidedFixture("projection-equality");
-  const reversed = decided.service.reversePromotion(SOLUTION, decided.experiment.id, {
-    searchedRunId: decided.searchedRunId,
-    baselineRunId: decided.baselineRunId,
-    objectiveScore: 0.68,
-    baselineScore: 0.71,
-    evidenceManifestRef: decided.searchedManifestId,
+  const fixture = createFixture("projection");
+  const experimentId = fixture.experiment.id;
+  const baselineRun = succeededRun(fixture.service, experimentId, "generalist-baseline", "plan-baseline-v1");
+  const searchedRun = succeededRun(fixture.service, experimentId, "searched", "plan-searched-v1");
+  const published = fixture.service.publishLabEvidence(SOLUTION, searchedRun.id, [artifactBytes("proj-a", 128)]);
+  assert.ok(published.ok);
+  const promoted = fixture.service.promoteLabExperiment(SOLUTION, experimentId, {
+    objectiveScore: 0.87,
+    baselineScore: 0.62,
+    evidenceManifestRef: published.value.manifest.id,
+  });
+  assert.ok(promoted.ok);
+  const reversed = fixture.service.reverseLabPromotion(SOLUTION, experimentId, {
+    objectiveScore: 0.55,
+    baselineScore: 0.62,
+    evidenceManifestRef: published.value.manifest.id,
   });
   assert.ok(reversed.ok);
-  const events = decided.service.ledgerEventsOf(SOLUTION);
+  void baselineRun;
+  const events = fixture.service.ledgerEventsOf(SOLUTION);
   assert.ok(events.ok);
-  const live = decided.service.projectionOf(SOLUTION);
+  const live = fixture.service.projectionOf(SOLUTION);
   assert.ok(live.ok);
   const replay = LabService.replay(events.value);
   assert.equal(stableStringify(live.value), stableStringify(replay));
-  // The replayed run head carries the evidence linkage (the ride-along fold).
-  assert.equal(replay.runs[decided.searchedRunId]?.evidenceManifestRef, decided.searchedManifestId);
-  assert.equal(replay.runs[decided.searchedRunId]?.status, "succeeded");
-  // The replayed promotion head walked to the reversal.
-  assert.equal(replay.promotionHeads[decided.experiment.id], reversed.value.promotion.id);
-  assert.equal(replay.promotions[reversed.value.promotion.id]?.winnerArm, "generalist-baseline");
-  assert.equal(replay.promotions[reversed.value.promotion.id]?.reversalOfPromotionId, decided.promotion.id);
+  // Spot checks on the shared projection shape.
+  assert.equal(replay.experiments[experimentId]?.promotionRef, reversed.value.promotion.id);
+  assert.equal(replay.runs[searchedRun.id]?.status, "succeeded");
+  assert.equal(replay.runs[searchedRun.id]?.evidenceManifestRef, published.value.manifest.id);
+  assert.deepEqual(replay.promotionChains[experimentId], [promoted.value.promotion.id, reversed.value.promotion.id]);
 });
 
-test("determinism: the same seed produces a byte-identical ledger", () => {
-  const run = (seed: string): string => {
-    const decided = decidedFixture(seed);
-    const reversed = decided.service.reversePromotion(SOLUTION, decided.experiment.id, {
-      searchedRunId: decided.searchedRunId,
-      baselineRunId: decided.baselineRunId,
-      objectiveScore: 0.68,
-      baselineScore: 0.71,
-      evidenceManifestRef: decided.searchedManifestId,
+test("determinism: the same seed reproduces the identical ledger; a different seed diverges", () => {
+  const buildHash = (seed: string): string => {
+    const fixture = createFixture(`determinism-${seed}`);
+    const run = succeededRun(fixture.service, fixture.experiment.id, "searched", "plan-searched-v1");
+    const published = fixture.service.publishLabEvidence(SOLUTION, run.id, [artifactBytes(`determinism-${seed}`, 128)]);
+    assert.ok(published.ok);
+    const promoted = fixture.service.promoteLabExperiment(SOLUTION, fixture.experiment.id, {
+      objectiveScore: 0.87,
+      baselineScore: 0.62,
+      evidenceManifestRef: published.value.manifest.id,
     });
-    assert.ok(reversed.ok);
-    const hash = decided.service.ledgerHashOf(SOLUTION);
+    assert.ok(promoted.ok);
+    const hash = fixture.service.ledgerHashOf(SOLUTION);
     assert.ok(hash.ok);
     return hash.value;
   };
-  assert.equal(run("determinism-seed"), run("determinism-seed"));
-  assert.notEqual(run("determinism-seed"), run("determinism-other"));
+  const first = buildHash("alpha");
+  const second = buildHash("alpha");
+  assert.equal(first, second);
+  const other = buildHash("beta");
+  assert.notEqual(first, other);
 });

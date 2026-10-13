@@ -10,26 +10,29 @@ import type { OpaqueId } from "@zcode/shared";
 export const LAB_SCENARIO_SOLUTION_ID = "you_w9a_scenario_solution01";
 export const LAB_SCENARIO_SEED = "you-w9a-lab-scenario";
 
-/** The scenario experiment: one intent + one constraint set, three arms (the LAB.md law). */
+/** The scenario experiment declaration (the LAB.md three-arm law). */
 export const LAB_SCENARIO_EXPERIMENT_INPUT = {
-  intentRef: "you_intent_0000000000000009",
-  constraintsHash: "e7a1c3f9d2b40668",
-  objective: "minimize-compute-cost-at-quality-threshold",
+  intentRef: "you_intent_0000000000000001",
+  constraintsHash: "constraints-hash-w9a-01",
+  objective: "minimize-total-cost-under-quality-threshold",
   arms: ["generalist-baseline", "hand-designed", "searched"],
 } as const;
 
-/** The plan hashes the three arms run under (content-addressed compute plans). */
-export const LAB_SCENARIO_PLAN_HASHES = {
-  "generalist-baseline": "planhash-9a-baseline-0001",
-  "hand-designed": "planhash-9a-handdesigned-02",
-  searched: "planhash-9a-searched-000003",
-} as const;
+/** The per-arm run plan hashes (the compute plans the runs bind). */
+export const LAB_SCENARIO_PLAN_HASHES: Readonly<Record<string, string>> = {
+  "generalist-baseline": "plan-baseline-v1",
+  "hand-designed": "plan-hand-designed-v1",
+  searched: "plan-searched-v1",
+};
 
-/** The promotion-decision scores: the searched arm beats the baseline under the recorded objective. */
-export const LAB_SCENARIO_PROMOTION_SCORES = { objectiveScore: 0.87, baselineScore: 0.71 } as const;
+/** The promotion comparison scores (deterministic arithmetic, law 5). */
+export const LAB_SCENARIO_SEARCHED_SCORE = 0.87;
+export const LAB_SCENARIO_BASELINE_SCORE = 0.62;
+export const LAB_SCENARIO_REVERSED_SEARCHED_SCORE = 0.55;
+export const LAB_SCENARIO_REPROMOTED_SEARCHED_SCORE = 0.91;
 
-/** The reversal scores: new evidence shows the searched arm no longer beats the baseline. */
-export const LAB_SCENARIO_REVERSAL_SCORES = { objectiveScore: 0.68, baselineScore: 0.71 } as const;
+/** Deterministic artifact byte lengths per bundle (fixture definition). */
+export const LAB_SCENARIO_ARTIFACT_BYTES = 128;
 
 export interface LabScenarioStep {
   readonly step: number;
@@ -40,15 +43,16 @@ export interface LabScenarioStep {
 export interface LabScenarioTrace {
   readonly solutionId: OpaqueId;
   readonly experimentId: OpaqueId;
-  readonly baselineRunId: OpaqueId;
-  readonly handDesignedRunId: OpaqueId;
-  readonly searchedRetiredRunId: OpaqueId;
-  readonly searchedRunId: OpaqueId;
-  readonly baselineManifestId: OpaqueId;
-  readonly searchedManifestId: OpaqueId;
-  readonly promotionId: OpaqueId;
-  readonly reversalId: OpaqueId;
+  /** Every run id in ladder append order. */
+  readonly runIds: readonly OpaqueId[];
+  /** The status walk of every run, concatenated in ladder order. */
   readonly ladderWalk: readonly string[];
+  /** The manifest ids in publish order. */
+  readonly manifestIds: readonly OpaqueId[];
+  /** The promotion decision chain in append order. */
+  readonly promotionChain: readonly OpaqueId[];
+  /** The decision kinds of the chain, in order. */
+  readonly decisionKinds: readonly string[];
   readonly refusalOutcomes: Readonly<Record<string, string>>;
   readonly eventCounts: Readonly<Record<string, number>>;
   readonly eventCount: number;

@@ -1,28 +1,26 @@
 // YOU LabRun ladder machinery (W9A — docs/you/CONTRACTS.md "Wave-9
 // contract freeze (v9)": "LabRun (one durable run of an experiment arm;
-// append-only run ladder)").
+// append-only run ladder)"; WORK_ORDERS.md W9A).
 //
-// The run ladder is APPEND-ONLY: LabRun records are immutable; a ladder
-// transition (submitted -> running; running -> succeeded | failed |
-// retired) replaces the record immutably and appends a lab-run-recorded
-// event (the W7A/W8A replacement precedent); the per-experiment run list
-// is append-only (new attempts append new run records). Terminals are
-// LOCKED: every further transition is refused (the ladder's terminal
-// law). The run record's evidenceManifestRef is set by the evidence
-// publication flow through the same immutable-replacement rule (never a
-// mutation) — see labEvidenceManifest.ts.
+// The LAB PERSISTENCE LAW: LabRun records are immutable; the run ladder
+// is append-only (new attempts append new run records); within one run
+// the status walks the ladder through IMMUTABLE RECORD REPLACEMENT (the
+// W7A AvatarSession replacement precedent — the original record object
+// is never touched), each step appending a lab-run-recorded event. A
+// terminal transition sets completedAt; the submitted -> running step
+// changes only the status rung.
 //
 // Transition table (frozen W9A):
-//   submitted -> running                       (the only pre-terminal move)
-//   running   -> succeeded | failed | retired  (the three terminals)
+//   submitted -> running                      (the only non-terminal step)
+//   running   -> succeeded | failed | retired (the three terminals)
 //   succeeded | failed | retired -> terminal locked (every move refused)
 //   self-transitions refused (a status change must change the status);
-//   every other move is off-ladder (a run must run before it can finish:
-//   submitted -> succeeded | failed | retired refuses).
+//   every other cell (submitted -> terminal, running -> submitted) is
+//   off-ladder.
 
-import type { LabArmKind, LabRun, LabRunStatus, OpaqueId } from "./contract.js";
+import type { LabRun, LabRunStatus, OpaqueId } from "./contract.js";
+import { isLabArmKind } from "./labArms.js";
 import { deepFreeze } from "./serialize.js";
-import { isLabArmKind } from "./labExperiment.js";
 
 /** The five ladder rungs in frozen canonical order. */
 export const LAB_RUN_STATUSES = ["submitted", "running", "succeeded", "failed", "retired"] as const;
@@ -62,7 +60,7 @@ export function labRunTransitionRefusal(from: LabRunStatus, to: LabRunStatus): s
   if (from === "submitted") {
     return to === "running" ? null : "transition-not-on-ladder";
   }
-  // from === "running": only the three terminals are legal next rungs.
+  // from === "running": only the three terminals are reachable.
   return isLabRunTerminal(to) ? null : "transition-not-on-ladder";
 }
 
@@ -79,7 +77,7 @@ export function sortLabRuns(runs: readonly LabRun[]): LabRun[] {
 /** Run-ladder intake (the durable attempt facts). */
 export interface LabRunInput {
   readonly experimentId: OpaqueId;
-  readonly arm: LabArmKind;
+  readonly arm: LabRun["arm"];
   readonly planHash: string;
 }
 
@@ -92,17 +90,17 @@ export interface LabRunIntakeRefusal {
 }
 
 /**
- * The stateless run-intake validator (never an exception): the
- * experiment id and plan hash must be non-empty strings; the arm must be
- * one of the three frozen LabArmKind values (the experiment-level
- * membership gate lives at the service seam — see labRunFlow.ts).
+ * The stateless run-intake validator (never an exception): the arm must
+ * be one of the three LAB.md comparison arms and the planHash a
+ * non-empty string (the run binds its compute plan by hash — the
+ * content-addressing lives with the plan authority).
  */
 export function validateLabRunInput(input: LabRunInput): LabRunIntakeRefusal | null {
   if (typeof input.experimentId !== "string" || input.experimentId.length === 0) {
     return { reason: "experiment-id-empty", detail: "run experimentId must be a non-empty opaque id" };
   }
-  if (!isLabArmKind(input.arm)) {
-    return { reason: "arm-invalid", detail: "run arm must be one of the three frozen lab arm kinds" };
+  if (typeof input.arm !== "string" || !isLabArmKind(input.arm)) {
+    return { reason: "arm-invalid", detail: `run arm must be one of the three LAB.md arms (got ${String(input.arm)})` };
   }
   if (typeof input.planHash !== "string" || input.planHash.trim().length === 0) {
     return { reason: "plan-hash-empty", detail: "run planHash must be a non-empty string" };
@@ -136,29 +134,32 @@ export function constructLabRun(input: LabRunInput, deps: LabRunDeps): LabRun {
 }
 
 /**
- * Applies a ladder transition to a run record (immutable replacement —
- * the original record is NEVER mutated). Throws on an illegal transition
- * (the service maps ladder refusals to typed errors before calling).
- * Only terminal targets carry a completedAt (the "running" rung keeps
- * null — a run that has not finished has no completion timestamp).
+ * Applies a legal ladder step to a run record (immutable replacement —
+ * the original record is NEVER mutated). Terminals stamp completedAt;
+ * the submitted -> running step leaves completedAt null. Throws on an
+ * illegal transition (the service maps ladder refusals to typed errors
+ * before calling).
  */
-export function applyLabRunTransition(run: LabRun, to: LabRunStatus, completedAt: string): LabRun {
+export function advanceLabRun(run: LabRun, to: LabRunStatus, now: string): LabRun {
   const refusal = labRunTransitionRefusal(run.status, to);
   if (refusal !== null) {
-    throw new Error(`applyLabRunTransition refused transition ${run.status} -> ${to}: ${refusal}`);
+    throw new Error(`advanceLabRun refused transition ${run.status} -> ${to}: ${refusal}`);
   }
   return deepFreeze({
     ...run,
     status: to,
-    ...(isLabRunTerminal(to) ? { completedAt } : {}),
+    completedAt: isLabRunTerminal(to) ? now : null,
   });
 }
 
 /**
- * Binds an evidence manifest ref onto a terminal run head (immutable
- * replacement — the evidence-publication walk; never a mutation). The
- * ladder status is untouched: evidence publication is not a ladder move.
+ * Binds a published evidence manifest onto the run head (immutable
+ * replacement; the manifest itself records runId). Re-publishing moves
+ * the head ref — the manifest list per run stays append-only.
  */
-export function bindLabRunEvidenceManifest(run: LabRun, evidenceManifestRef: OpaqueId): LabRun {
+export function attachLabRunEvidence(run: LabRun, evidenceManifestRef: OpaqueId): LabRun {
+  if (typeof evidenceManifestRef !== "string" || evidenceManifestRef.length === 0) {
+    throw new Error("attachLabRunEvidence requires a non-empty evidence manifest ref");
+  }
   return deepFreeze({ ...run, evidenceManifestRef });
 }

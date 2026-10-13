@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { LabRun, LabRunStatus } from "./contract.js";
+import type { LabRun } from "./contract.js";
 import {
-  applyLabRunTransition,
-  bindLabRunEvidenceManifest,
+  advanceLabRun,
+  attachLabRunEvidence,
   constructLabRun,
   isLabRunStatus,
   isLabRunTerminal,
@@ -14,8 +14,8 @@ import {
   labRunTransitionRefusal,
   sortLabRuns,
   validateLabRunInput,
+  type LabRunInput,
 } from "./labRunLadder.js";
-import { deepFreeze } from "./serialize.js";
 
 const DEPS = {
   now: (): string => "2026-01-01T00:00:01.000Z",
@@ -24,7 +24,7 @@ const DEPS = {
 
 function submittedRun(): LabRun {
   return constructLabRun(
-    { experimentId: "you_lab-experiment_0000000000000001", arm: "searched", planHash: "planhash-9a-0001" },
+    { experimentId: "you_lab-experiment_0000000000000001", arm: "searched", planHash: "plan-hash-abc" },
     DEPS,
   );
 }
@@ -41,7 +41,7 @@ test("membership and terminal predicates", () => {
   for (const status of LAB_RUN_STATUSES) {
     assert.ok(isLabRunStatus(status), status);
   }
-  assert.ok(!isLabRunStatus("paused"));
+  assert.ok(!isLabRunStatus("queued"));
   assert.ok(!isLabRunStatus(42));
   assert.ok(isLabRunTerminal("succeeded"));
   assert.ok(isLabRunTerminal("failed"));
@@ -50,19 +50,25 @@ test("membership and terminal predicates", () => {
   assert.ok(!isLabRunTerminal("running"));
 });
 
-test("the full transition table: submitted -> running -> exactly the three terminals; terminals lock", () => {
+test("the full 25-cell transition table: submitted -> running -> a terminal; terminals lock", () => {
+  const LEGAL: Readonly<Record<string, ReadonlySet<string>>> = {
+    submitted: new Set(["running"]),
+    running: new Set(["succeeded", "failed", "retired"]),
+    succeeded: new Set([]),
+    failed: new Set([]),
+    retired: new Set([]),
+  };
+  let legalCount = 0;
   for (const from of LAB_RUN_STATUSES) {
     for (const to of LAB_RUN_STATUSES) {
       const legal = isLegalLabRunTransition(from, to);
-      if (from === "submitted") {
-        assert.equal(legal, to === "running", `${from} -> ${to}`);
-      } else if (from === "running") {
-        assert.equal(legal, isLabRunTerminal(to), `${from} -> ${to}`);
-      } else {
-        assert.equal(legal, false, `${from} -> ${to} must be locked`);
+      assert.equal(legal, (LEGAL[from] as ReadonlySet<string>).has(to), `${from} -> ${to}`);
+      if (legal) {
+        legalCount += 1;
       }
     }
   }
+  assert.equal(legalCount, 4);
 });
 
 test("refusal reasons are stable strings", () => {
@@ -70,24 +76,23 @@ test("refusal reasons are stable strings", () => {
   assert.equal(labRunTransitionRefusal("running", "succeeded"), null);
   assert.equal(labRunTransitionRefusal("running", "failed"), null);
   assert.equal(labRunTransitionRefusal("running", "retired"), null);
+  assert.equal(labRunTransitionRefusal("submitted", "succeeded"), "transition-not-on-ladder");
+  assert.equal(labRunTransitionRefusal("submitted", "retired"), "transition-not-on-ladder");
+  assert.equal(labRunTransitionRefusal("running", "submitted"), "transition-not-on-ladder");
   assert.equal(labRunTransitionRefusal("submitted", "submitted"), "no-op-transition");
   assert.equal(labRunTransitionRefusal("running", "running"), "no-op-transition");
+  assert.equal(labRunTransitionRefusal("succeeded", "succeeded"), "no-op-transition");
   assert.equal(labRunTransitionRefusal("succeeded", "running"), "run-terminal-locked");
   assert.equal(labRunTransitionRefusal("failed", "succeeded"), "run-terminal-locked");
   assert.equal(labRunTransitionRefusal("retired", "failed"), "run-terminal-locked");
-  // Off-ladder moves: a run must run before it can finish or retire.
-  assert.equal(labRunTransitionRefusal("submitted", "succeeded"), "transition-not-on-ladder");
-  assert.equal(labRunTransitionRefusal("submitted", "failed"), "transition-not-on-ladder");
-  assert.equal(labRunTransitionRefusal("submitted", "retired"), "transition-not-on-ladder");
-  assert.equal(labRunTransitionRefusal("running", "submitted"), "transition-not-on-ladder");
 });
 
 test("constructLabRun builds the immutable simulated submitted record", () => {
   const run = submittedRun();
   assert.equal(run.status, "submitted");
-  assert.equal(run.experimentId, "you_lab-experiment_0000000000000001");
   assert.equal(run.arm, "searched");
-  assert.equal(run.planHash, "planhash-9a-0001");
+  assert.equal(run.planHash, "plan-hash-abc");
+  assert.equal(run.experimentId, "you_lab-experiment_0000000000000001");
   assert.equal(run.submittedAt, "2026-01-01T00:00:01.000Z");
   assert.equal(run.completedAt, null);
   assert.equal(run.evidenceManifestRef, null);
@@ -97,65 +102,65 @@ test("constructLabRun builds the immutable simulated submitted record", () => {
 
 test("constructLabRun refuses malformed intake (validator never throws)", () => {
   const cases: readonly [unknown, string][] = [
-    [{ experimentId: "", arm: "searched", planHash: "h" }, "experiment-id-empty"],
-    [{ experimentId: "you_lab-experiment_1", arm: "mystery", planHash: "h" }, "arm-invalid"],
+    [{ experimentId: "", arm: "searched", planHash: "p" }, "experiment-id-empty"],
+    [{ experimentId: "you_lab-experiment_1", arm: "champion", planHash: "p" }, "arm-invalid"],
     [{ experimentId: "you_lab-experiment_1", arm: "searched", planHash: "" }, "plan-hash-empty"],
-    [{ experimentId: "you_lab-experiment_1", arm: "searched", planHash: "  " }, "plan-hash-empty"],
+    [{ experimentId: "you_lab-experiment_1", arm: "searched", planHash: "   " }, "plan-hash-empty"],
   ];
   for (const [input, reason] of cases) {
-    const refusal = validateLabRunInput(input as { experimentId: string; arm: "searched"; planHash: string });
+    const refusal = validateLabRunInput(input as LabRunInput);
     assert.ok(refusal !== null, String(reason));
     assert.equal(refusal?.reason, reason);
   }
+  const wrongArm = { experimentId: "you_lab-experiment_1", arm: "nope", planHash: "p" };
   assert.throws(
-    () => constructLabRun({ experimentId: "you_lab-experiment_1", arm: "searched", planHash: "" }, DEPS),
-    /plan-hash-empty/,
+    () => constructLabRun(wrongArm as LabRunInput, DEPS),
+    /arm-invalid/,
   );
 });
 
-test("applyLabRunTransition walks the ladder with immutable replacements; terminals lock", () => {
+test("advanceLabRun walks the ladder with immutable replacement; terminals lock", () => {
   const original = submittedRun();
-  const running = applyLabRunTransition(original, "running", "2026-01-01T00:00:02.000Z");
+  const running = advanceLabRun(original, "running", "2026-01-01T00:00:02.000Z");
   assert.equal(running.status, "running");
   assert.equal(running.completedAt, null);
   assert.equal(running.id, original.id);
-  // The original record is untouched (append-only ladder law).
+  // The original record is untouched (immutable replacement law).
   assert.equal(original.status, "submitted");
   assert.ok(Object.isFrozen(running));
-  const succeeded = applyLabRunTransition(running, "succeeded", "2026-01-01T00:00:03.000Z");
+  const succeeded = advanceLabRun(running, "succeeded", "2026-01-01T00:00:03.000Z");
   assert.equal(succeeded.status, "succeeded");
   assert.equal(succeeded.completedAt, "2026-01-01T00:00:03.000Z");
-  // Terminal lock: every further move refuses with the stable reason.
-  assert.throws(() => applyLabRunTransition(succeeded, "failed", "2026-01-01T00:00:04.000Z"), /run-terminal-locked/);
-  assert.throws(() => applyLabRunTransition(succeeded, "succeeded", "2026-01-01T00:00:04.000Z"), /no-op-transition/);
-  assert.throws(() => applyLabRunTransition(running, "running", "2026-01-01T00:00:04.000Z"), /no-op-transition/);
-  assert.throws(() => applyLabRunTransition(original, "succeeded", "2026-01-01T00:00:04.000Z"), /transition-not-on-ladder/);
+  assert.equal(running.completedAt, null);
+  // Terminals refuse further transitions.
+  assert.throws(() => advanceLabRun(succeeded, "failed", "2026-01-01T00:00:04.000Z"), /run-terminal-locked/);
+  assert.throws(() => advanceLabRun(succeeded, "succeeded", "2026-01-01T00:00:04.000Z"), /no-op-transition/);
+  // Off-ladder moves refuse before they start.
+  assert.throws(() => advanceLabRun(original, "retired", "2026-01-01T00:00:04.000Z"), /transition-not-on-ladder/);
 });
 
-test("bindLabRunEvidenceManifest replaces the head immutably without a ladder move", () => {
-  const terminal = applyLabRunTransition(
-    applyLabRunTransition(submittedRun(), "running", "2026-01-01T00:00:02.000Z"),
-    "succeeded",
-    "2026-01-01T00:00:03.000Z",
-  );
-  const bound = bindLabRunEvidenceManifest(terminal, "you_lab-evidence-manifest_0000000000000001");
+test("attachLabRunEvidence replaces the run head immutably", () => {
+  const run = submittedRun();
+  const bound = attachLabRunEvidence(run, "you_lab-evidence-manifest_0000000000000001");
   assert.equal(bound.evidenceManifestRef, "you_lab-evidence-manifest_0000000000000001");
-  assert.equal(bound.status, "succeeded");
-  assert.equal(bound.completedAt, "2026-01-01T00:00:03.000Z");
-  assert.equal(bound.id, terminal.id);
-  assert.equal(terminal.evidenceManifestRef, null);
+  assert.equal(bound.status, run.status);
+  assert.equal(run.evidenceManifestRef, null);
   assert.ok(Object.isFrozen(bound));
+  assert.throws(() => attachLabRunEvidence(run, ""), /non-empty evidence manifest ref/);
 });
 
-test("sortLabRuns orders by id deterministically", () => {
-  const runA = deepFreeze({ ...submittedRun(), id: "you_lab-run_000000000000000a" });
-  const runB = deepFreeze({ ...submittedRun(), id: "you_lab-run_000000000000000b" });
-  const runC = deepFreeze({ ...submittedRun(), id: "you_lab-run_000000000000000c" });
-  assert.deepEqual(sortLabRuns([runC, runA, runB]).map((run) => run.id), [
-    "you_lab-run_000000000000000a",
-    "you_lab-run_000000000000000b",
-    "you_lab-run_000000000000000c",
-  ]);
-  const statuses: readonly LabRunStatus[] = LAB_RUN_STATUSES;
-  assert.equal(statuses.length, 5);
+test("sortLabRuns orders by id (stable ordering law)", () => {
+  const first = constructLabRun(
+    { experimentId: "you_lab-experiment_1", arm: "searched", planHash: "p1" },
+    DEPS,
+  );
+  const second = constructLabRun(
+    { experimentId: "you_lab-experiment_1", arm: "searched", planHash: "p2" },
+    DEPS,
+  );
+  const sorted = sortLabRuns([second, first]);
+  assert.deepEqual(
+    sorted.map((run) => run.id),
+    [first.id, second.id],
+  );
 });

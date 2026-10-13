@@ -1,62 +1,53 @@
-// YOU lab service — LabExperiment declaration flow (W9A). The ops live
-// here; labService.ts is the single authority that dispatches into them
-// (the W1A/W6A/W8A flow precedent). The experiment is the durable
-// container: one intent + one constraint set, compared across the three
-// LAB.md arms. Records are immutable once declared (LAB PERSISTENCE
-// LAW).
-//
-// Experiments are SERVICE STATE (the W8A retry-policy/provider
-// precedent): the frozen v9 event set has no experiment event type, so
-// declaration emits NOTHING — experiment facts materialize in the
-// ledger only through the events that reference them (lab-run-recorded
-// / lab-promotion-decided carry experimentId) and stay readable through
-// the service seam.
+// YOU lab service — LabExperiment declaration flow (W9A): the durable
+// experiment container. Intake runs the three-arm-law validator and
+// maps refusals to typed errors BEFORE the throwing constructor (the
+// W8A arenaGapFlow precedent); the record is immutable once declared;
+// the ONLY later change is the promotion head linkage (immutable
+// replacement — see labPromotionFlow.ts). The declaration itself
+// appends no ledger event (the frozen wave-9 event set has no
+// experiment-declaration event): experiments materialize in the
+// ledger through their runs (the W6A service-state precedent), with
+// the declaration facts riding every lab-run-recorded payload.
 
-import type { LabArmKind, LabExperiment, OpaqueId } from "@zcode/shared";
-import { constructLabExperiment, validateLabExperimentInput } from "../../../shared/src/you/labExperiment.js";
-import { labFailure, type LabFlowDeps, type LabPlaneRecord, type LabServiceResult } from "./labServiceTypes.js";
-
-/** Experiment intake (the durable container facts — see shared/src/you/labExperiment.ts). */
-export interface LabExperimentIntakeInput {
-  readonly intentRef: OpaqueId;
-  readonly constraintsHash: string;
-  readonly objective: string;
-  readonly arms: readonly LabArmKind[];
-}
+import type { LabExperiment } from "@zcode/shared";
+import {
+  constructLabExperiment,
+  validateLabExperimentInput,
+  type LabExperimentInput,
+} from "../../../shared/src/you/labExperiment.js";
+import {
+  labFailure,
+  type LabFlowDeps,
+  type LabPlaneRecord,
+  type LabServiceResult,
+} from "./labServiceTypes.js";
 
 /**
- * Declares an immutable LabExperiment (the three-arm law enforced by the
- * shared validator). No event is emitted (service state — the W8A
- * policy/provider precedent; the frozen v9 event set has no experiment
- * event). Refusals: typed YOU_INVALID_STATE for intake shape with the
- * validator's stable reason.
+ * Declares an immutable LabExperiment (three-arm law enforced). The
+ * record lands as durable service state; the ledger sees it through
+ * the experiment's runs. Refusals: typed YOU_INVALID_STATE for intake
+ * shape (the three-arm law and the declaration gates).
  */
 export function declareLabExperimentOp(
   plane: LabPlaneRecord,
   deps: LabFlowDeps,
-  input: LabExperimentIntakeInput,
+  input: LabExperimentInput,
 ): LabServiceResult<{ readonly experiment: LabExperiment }> {
-  const refusal = validateLabExperimentInput({
-    intentRef: input.intentRef,
-    constraintsHash: input.constraintsHash,
-    objective: input.objective,
-    arms: input.arms,
-  });
+  const refusal = validateLabExperimentInput(input);
   if (refusal !== null) {
     return labFailure("YOU_INVALID_STATE", `lab experiment intake refused: ${refusal.detail}`, {
       reason: "invalid-experiment-intake",
       refusal: refusal.reason,
     });
   }
-  const experiment = constructLabExperiment(
-    {
-      intentRef: input.intentRef,
-      constraintsHash: input.constraintsHash,
-      objective: input.objective,
-      arms: input.arms,
-    },
-    { nextId: deps.ids.next },
-  );
+  const experiment = constructLabExperiment(input, {
+    nextId: (kind: string) => deps.ids.next(kind),
+  });
   plane.experiments.set(experiment.id, experiment);
   return { ok: true, value: { experiment } };
+}
+
+/** Re-applies an immutable experiment head (the promotion linkage walk). */
+export function storeLabExperimentHead(plane: LabPlaneRecord, experiment: LabExperiment): void {
+  plane.experiments.set(experiment.id, experiment);
 }

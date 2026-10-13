@@ -2,35 +2,45 @@
 // of the full lab persistence arrow (docs/you/WORK_ORDERS.md W9A;
 // FIXTURES.md):
 //
-//   experiment declared (+ three-arm-law intake refusals) -> baseline
-//   arm run (submitted -> running -> succeeded) -> hand-designed arm
-//   run (succeeded) -> searched attempt one retired (running ->
-//   retired) -> ladder refusals (terminal locked, off-ladder, no-op)
-//   -> searched attempt two succeeded -> evidence published for the
-//   baseline run -> evidence published for the searched run (+ the
-//   malformed/unknown-manifest and run-not-terminal refusals) ->
-//   promotion gate refusals (searched not beating, wrong arm, not
-//   succeeded, manifest not bound, no head to reverse, unknown
-//   experiment/run) -> promotion decided (searched 0.87 beats baseline
-//   0.71 under the recorded objective) -> reversal refused while the
-//   searched arm still beats (truth law) -> promotion reversed with new
-//   evidence (baseline wins; a NEW record, never a mutation) -> ledger
-//   readout (all three wave-9 events present; projection == replay).
+//   experiment declared (three-arm law + invalid-intake refusals) ->
+//   three arms submitted (baseline / hand-designed / searched; the
+//   hand-designed arm fails once and re-runs — the append-only ladder;
+//   + unknown-experiment / arm-not-declared / plan-hash refusals) ->
+//   run ladder advanced (submitted -> running -> terminals; + no-op /
+//   terminal-locked / off-ladder / unknown-run refusals) -> evidence
+//   published (content-addressed manifests for the baseline and
+//   searched runs; + non-terminal-run / empty-artifacts / unknown-run
+//   refusals; an extra run stays "running" as the open head) ->
+//   manifests verified (deep store-backed verification; + unknown-
+//   manifest refusal and the shared-level tampered-address fail-closed
+//   fact) -> promotion refusals (nothing to reverse, searched does not
+//   beat, unknown manifest, unknown experiment) -> promotion decided
+//   (searched 0.87 beats baseline 0.62) -> reversal (searched 0.55 no
+//   longer beats — a NEW record; + still-beats refusal) -> evidence
+//   re-published (a second manifest appends for the searched run) ->
+//   re-promotion (searched 0.91; the chain walks promote -> reverse ->
+//   promote) -> ledger readout (all three wave-9 events present;
+//   projection == replay).
 //
 // Every arrow is a deterministic step with a recorded fact set; running
-// the scenario twice with the same seed produces byte-identical traces
-// (golden expectation). Fixture experiments/runs/manifests/promotions
-// stay `simulated: true` (truth law).
+// the scenario twice with the same service seed produces byte-identical
+// traces (golden expectation). Fixture experiments/runs/manifests/
+// promotions stay `simulated: true` (truth law).
 
-import type { SolutionEvent } from "@zcode/shared";
+import type { LabArmKind, OpaqueId, SolutionEvent } from "@zcode/shared";
 import { createDeterministicClock } from "../../../shared/src/you/clock.js";
+import { createDeterministicRng, seedFromString, type YouRng } from "../../../shared/src/you/rng.js";
 import { stableStringify } from "../../../shared/src/you/serialize.js";
+import { verifyLabEvidenceManifest } from "../../../shared/src/you/labEvidence.js";
 import { createLabService, LabService } from "./labService.js";
 import {
+  LAB_SCENARIO_ARTIFACT_BYTES,
+  LAB_SCENARIO_BASELINE_SCORE,
   LAB_SCENARIO_EXPERIMENT_INPUT,
   LAB_SCENARIO_PLAN_HASHES,
-  LAB_SCENARIO_PROMOTION_SCORES,
-  LAB_SCENARIO_REVERSAL_SCORES,
+  LAB_SCENARIO_REPROMOTED_SEARCHED_SCORE,
+  LAB_SCENARIO_REVERSED_SEARCHED_SCORE,
+  LAB_SCENARIO_SEARCHED_SCORE,
   LAB_SCENARIO_SEED,
   LAB_SCENARIO_SOLUTION_ID,
   outcomeCode,
@@ -40,10 +50,13 @@ import {
 } from "./labFixtureScenarioTypes.js";
 
 export {
+  LAB_SCENARIO_ARTIFACT_BYTES,
+  LAB_SCENARIO_BASELINE_SCORE,
   LAB_SCENARIO_EXPERIMENT_INPUT,
   LAB_SCENARIO_PLAN_HASHES,
-  LAB_SCENARIO_PROMOTION_SCORES,
-  LAB_SCENARIO_REVERSAL_SCORES,
+  LAB_SCENARIO_REPROMOTED_SEARCHED_SCORE,
+  LAB_SCENARIO_REVERSED_SEARCHED_SCORE,
+  LAB_SCENARIO_SEARCHED_SCORE,
   LAB_SCENARIO_SEED,
   LAB_SCENARIO_SOLUTION_ID,
 } from "./labFixtureScenarioTypes.js";
@@ -63,9 +76,20 @@ function must<T>(
   return result.value;
 }
 
-/** Deterministic artifact bytes (FIXTURES.md law 1: no ambient nondeterminism). */
-function artifactBytes(label: string, index: number): Uint8Array {
-  return new TextEncoder().encode(`lab-artifact-${label}-${index}`);
+/** Deterministic artifact bytes from the scenario RNG (frozen consumption order: 4 bytes per word, little-endian). */
+function artifactBytes(rng: YouRng, count: number): Uint8Array {
+  const bytes = new Uint8Array(count);
+  for (let offset = 0; offset + 4 <= count; offset += 4) {
+    const word = rng.nextUint32();
+    bytes[offset] = word & 0xff;
+    bytes[offset + 1] = (word >>> 8) & 0xff;
+    bytes[offset + 2] = (word >>> 16) & 0xff;
+    bytes[offset + 3] = (word >>> 24) & 0xff;
+  }
+  for (let offset = count - (count % 4); offset < count; offset += 1) {
+    bytes[offset] = rng.nextUint32() & 0xff;
+  }
+  return bytes;
 }
 
 /**
@@ -74,34 +98,48 @@ function artifactBytes(label: string, index: number): Uint8Array {
  */
 export function runLabFixtureScenario(options: LabScenarioOptions = {}): LabScenarioTrace {
   const solutionId = options.solutionId ?? LAB_SCENARIO_SOLUTION_ID;
+  // The scenario owns the injected clock and its own artifact RNG (both
+  // derived from the stable scenario seed — FIXTURES.md laws 1-3).
+  const clock = createDeterministicClock();
+  const seed = options.seed ?? LAB_SCENARIO_SEED;
+  const artifactRng = createDeterministicRng(seedFromString(seed));
   const service = createLabService({
     workspaceIdentity: "ws-w9a-scenario-lab",
-    seed: options.seed ?? LAB_SCENARIO_SEED,
-    clock: createDeterministicClock(),
+    seed,
+    clock,
   });
 
   const steps: LabScenarioStep[] = [];
   let stepIndex = 0;
   const refusalOutcomes: Record<string, string> = {};
+  const runIds: OpaqueId[] = [];
   const ladderWalk: string[] = [];
+  const manifestIds: OpaqueId[] = [];
+  const promotionChain: OpaqueId[] = [];
+  const decisionKinds: string[] = [];
 
-  // -- experiment declared (+ the three-arm-law intake refusals) ---------------
+  // -- experiment declared (the three-arm law) + intake refusals ----------------
 
   const experiment = must(
-    service.declareExperiment(solutionId, LAB_SCENARIO_EXPERIMENT_INPUT),
-    "declareExperiment",
+    service.declareLabExperiment(solutionId, { ...LAB_SCENARIO_EXPERIMENT_INPUT }),
+    "declareLabExperiment",
   );
   const experimentId = experiment.experiment.id;
-  const missingArm = service.declareExperiment(solutionId, {
+  const invalidArmsCount = service.declareLabExperiment(solutionId, {
     ...LAB_SCENARIO_EXPERIMENT_INPUT,
-    arms: ["generalist-baseline", "searched"],
+    arms: ["generalist-baseline", "hand-designed"],
   });
-  refusalOutcomes["experiment-arms-missing"] = outcomeCode(missingArm);
-  const duplicateArm = service.declareExperiment(solutionId, {
+  refusalOutcomes["experiment-arms-count"] = outcomeCode(invalidArmsCount);
+  const invalidArmsDuplicate = service.declareLabExperiment(solutionId, {
     ...LAB_SCENARIO_EXPERIMENT_INPUT,
-    arms: ["searched", "searched", "hand-designed"],
+    arms: ["generalist-baseline", "hand-designed", "hand-designed"],
   });
-  refusalOutcomes["experiment-arms-duplicate"] = outcomeCode(duplicateArm);
+  refusalOutcomes["experiment-arms-duplicate"] = outcomeCode(invalidArmsDuplicate);
+  const invalidObjective = service.declareLabExperiment(solutionId, {
+    ...LAB_SCENARIO_EXPERIMENT_INPUT,
+    objective: "  ",
+  });
+  refusalOutcomes["experiment-objective-empty"] = outcomeCode(invalidObjective);
   steps.push(
     step((stepIndex += 1), "experiment-declared", {
       experimentId,
@@ -110,222 +148,281 @@ export function runLabFixtureScenario(options: LabScenarioOptions = {}): LabScen
       objective: experiment.experiment.objective,
       armCount: experiment.experiment.arms.length,
       promotionRefIsNull: experiment.experiment.promotionRef === null,
-      simulated: experiment.experiment.simulated,
     }),
   );
 
-  // -- the baseline arm run (submitted -> running -> succeeded) -----------------
+  // -- three arms submitted (the comparison law) + submission refusals ----------
 
-  const baselineRun = must(
-    service.submitLabRun(solutionId, experimentId, {
-      arm: "generalist-baseline",
-      planHash: LAB_SCENARIO_PLAN_HASHES["generalist-baseline"],
-    }),
-    "submitBaselineRun",
-  );
-  const baselineRunId = baselineRun.run.id;
-  ladderWalk.push(baselineRun.run.status);
-  must(service.startLabRun(solutionId, baselineRunId), "startBaselineRun");
-  ladderWalk.push("running");
-  const baselineSucceeded = must(service.succeedLabRun(solutionId, baselineRunId), "succeedBaselineRun");
-  ladderWalk.push(baselineSucceeded.run.status);
-
-  // -- the hand-designed arm run (succeeded) -------------------------------------
-
-  const handDesignedRun = must(
-    service.submitLabRun(solutionId, experimentId, {
-      arm: "hand-designed",
-      planHash: LAB_SCENARIO_PLAN_HASHES["hand-designed"],
-    }),
-    "submitHandDesignedRun",
-  );
-  const handDesignedRunId = handDesignedRun.run.id;
-  ladderWalk.push(handDesignedRun.run.status);
-  must(service.startLabRun(solutionId, handDesignedRunId), "startHandDesignedRun");
-  ladderWalk.push("running");
-  const handDesignedSucceeded = must(service.succeedLabRun(solutionId, handDesignedRunId), "succeedHandDesignedRun");
-  ladderWalk.push(handDesignedSucceeded.run.status);
+  const submittedRuns: Record<string, OpaqueId> = {};
+  for (const arm of ["generalist-baseline", "hand-designed", "searched"] as const) {
+    const submitted = must(
+      service.submitLabRun(solutionId, experimentId, { arm, planHash: LAB_SCENARIO_PLAN_HASHES[arm] ?? "plan-x" }),
+      `submitLabRun-${arm}`,
+    );
+    submittedRuns[arm] = submitted.run.id;
+    runIds.push(submitted.run.id);
+    ladderWalk.push(submitted.run.status);
+  }
+  const unknownExperimentRun = service.submitLabRun(solutionId, "you_lab-experiment_missing000000", {
+    arm: "searched",
+    planHash: "plan-x",
+  });
+  refusalOutcomes["run-unknown-experiment"] = outcomeCode(unknownExperimentRun);
+  const undeclaredArmInput = { arm: "searched-hand-designed-hybrid", planHash: "plan-x" };
+  const undeclaredArm = service.submitLabRun(solutionId, experimentId, undeclaredArmInput as { arm: LabArmKind; planHash: string });
+  refusalOutcomes["run-arm-not-declared"] = outcomeCode(undeclaredArm);
+  const emptyPlanHash = service.submitLabRun(solutionId, experimentId, { arm: "searched", planHash: "  " });
+  refusalOutcomes["run-plan-hash-empty"] = outcomeCode(emptyPlanHash);
   steps.push(
-    step((stepIndex += 1), "baseline-and-hand-designed-runs-succeeded", {
-      baselineRunId,
-      handDesignedRunId,
-      baselineStatus: baselineSucceeded.run.status,
-      handDesignedStatus: handDesignedSucceeded.run.status,
-      runCount: 2,
+    step((stepIndex += 1), "three-arms-submitted", {
+      experimentId,
+      runCount: runIds.length,
+      baselineRunId: submittedRuns["generalist-baseline"] ?? "",
+      handDesignedRunId: submittedRuns["hand-designed"] ?? "",
+      searchedRunId: submittedRuns["searched"] ?? "",
+      planHashes: Object.values(LAB_SCENARIO_PLAN_HASHES).join("|"),
     }),
   );
 
-  // -- the searched arm: attempt one retired, attempt two succeeded --------------
+  // -- the run ladder advanced (append-only; terminals locked) ------------------
 
-  const searchedRetired = must(
-    service.submitLabRun(solutionId, experimentId, {
-      arm: "searched",
-      planHash: LAB_SCENARIO_PLAN_HASHES.searched,
-    }),
-    "submitSearchedRunOne",
+  const advance = (runId: OpaqueId, action: "startLabRun" | "succeedLabRun" | "failLabRun" | "retireLabRun"): string => {
+    const result = must(service[action](solutionId, runId), `${action}:${runId}`);
+    ladderWalk.push(result.run.status);
+    return result.run.status;
+  };
+  advance(submittedRuns["generalist-baseline"] ?? "", "startLabRun");
+  advance(submittedRuns["generalist-baseline"] ?? "", "succeedLabRun");
+  advance(submittedRuns["hand-designed"] ?? "", "startLabRun");
+  advance(submittedRuns["hand-designed"] ?? "", "failLabRun");
+  // The hand-designed arm re-runs (the append-only ladder).
+  const handDesignedRetry = must(
+    service.submitLabRun(solutionId, experimentId, { arm: "hand-designed", planHash: "plan-hand-designed-v2" }),
+    "submitLabRun-hand-designed-retry",
   );
-  const searchedRetiredRunId = searchedRetired.run.id;
-  ladderWalk.push(searchedRetired.run.status);
-  const searchedRunning = must(service.startLabRun(solutionId, searchedRetiredRunId), "startSearchedRunOne");
-  ladderWalk.push(searchedRunning.run.status);
-  // The run-not-terminal evidence refusal (a running run has no bundle).
-  const earlyEvidence = service.publishLabEvidence(solutionId, searchedRetiredRunId, { artifacts: [artifactBytes("early", 0)] });
-  refusalOutcomes["evidence-run-not-terminal"] = outcomeCode(earlyEvidence);
-  const searchedRetiredTerminal = must(service.retireLabRun(solutionId, searchedRetiredRunId), "retireSearchedRunOne");
-  ladderWalk.push(searchedRetiredTerminal.run.status);
+  runIds.push(handDesignedRetry.run.id);
+  ladderWalk.push(handDesignedRetry.run.status);
+  advance(handDesignedRetry.run.id, "startLabRun");
+  advance(handDesignedRetry.run.id, "succeedLabRun");
+  advance(submittedRuns["searched"] ?? "", "startLabRun");
+  advance(submittedRuns["searched"] ?? "", "succeedLabRun");
 
-  const searchedRun = must(
-    service.submitLabRun(solutionId, experimentId, {
-      arm: "searched",
-      planHash: LAB_SCENARIO_PLAN_HASHES.searched,
-    }),
-    "submitSearchedRunTwo",
+  // An extra run stays open on the ladder: born "submitted" (the
+  // off-ladder refusal fires there), then advanced to "running" (the
+  // open head used by the evidence refusals below).
+  const openRun = must(
+    service.submitLabRun(solutionId, experimentId, { arm: "generalist-baseline", planHash: "plan-baseline-v1-open" }),
+    "submitLabRun-open",
   );
-  const searchedRunId = searchedRun.run.id;
-  ladderWalk.push(searchedRun.run.status);
-  const offLadder = service.succeedLabRun(solutionId, searchedRunId);
+  runIds.push(openRun.run.id);
+  ladderWalk.push(openRun.run.status);
+  const offLadder = service.retireLabRun(solutionId, openRun.run.id);
   refusalOutcomes["run-off-ladder"] = outcomeCode(offLadder);
-  must(service.startLabRun(solutionId, searchedRunId), "startSearchedRunTwo");
-  ladderWalk.push("running");
-  const noOp = service.startLabRun(solutionId, searchedRunId);
-  refusalOutcomes["run-no-op-transition"] = outcomeCode(noOp);
-  const searchedSucceeded = must(service.succeedLabRun(solutionId, searchedRunId), "succeedSearchedRunTwo");
-  ladderWalk.push(searchedSucceeded.run.status);
-  // Terminals lock (typed refusal with the ladder's stable reason).
-  const locked = service.retireLabRun(solutionId, searchedRunId);
-  refusalOutcomes["run-terminal-locked"] = outcomeCode(locked);
+  advance(openRun.run.id, "startLabRun");
+
+  const unknownRunAdvance = service.startLabRun(solutionId, "you_lab-run_missing00000000000");
+  refusalOutcomes["run-unknown"] = outcomeCode(unknownRunAdvance);
+  const noOpAdvance = service.succeedLabRun(solutionId, submittedRuns["generalist-baseline"] ?? "");
+  refusalOutcomes["run-no-op-transition"] = outcomeCode(noOpAdvance);
+  const lockedAdvance = service.startLabRun(solutionId, submittedRuns["generalist-baseline"] ?? "");
+  refusalOutcomes["run-terminal-locked"] = outcomeCode(lockedAdvance);
   steps.push(
-    step((stepIndex += 1), "searched-arm-runs-recorded", {
-      searchedRetiredRunId,
-      searchedRunId,
-      retiredStatus: searchedRetiredTerminal.run.status,
-      succeededStatus: searchedSucceeded.run.status,
-      runCount: 4,
+    step((stepIndex += 1), "run-ladder-advanced", {
+      runCount: runIds.length,
+      ladderWalk: ladderWalk.join("->"),
+      openRunId: openRun.run.id,
+      handDesignedRetryId: handDesignedRetry.run.id,
     }),
   );
 
-  // -- evidence published (baseline + searched; content-addressed) ----------------
+  // -- evidence published (content-addressed) + publication refusals ------------
 
-  const baselineManifest = must(
-    service.publishLabEvidence(solutionId, baselineRunId, {
-      artifacts: [artifactBytes("baseline", 0), artifactBytes("baseline", 1)],
-    }),
-    "publishBaselineEvidence",
+  const baselineArtifact = artifactBytes(artifactRng, LAB_SCENARIO_ARTIFACT_BYTES);
+  const baselineEvidence = must(
+    service.publishLabEvidence(solutionId, submittedRuns["generalist-baseline"] ?? "", [baselineArtifact]),
+    "publishLabEvidence-baseline",
   );
-  const baselineManifestId = baselineManifest.manifest.id;
-  const emptyArtifacts = service.publishLabEvidence(solutionId, searchedRunId, { artifacts: [] });
-  refusalOutcomes["manifest-artifacts-empty"] = outcomeCode(emptyArtifacts);
-  const searchedManifest = must(
-    service.publishLabEvidence(solutionId, searchedRunId, {
-      artifacts: [artifactBytes("searched", 0), artifactBytes("searched", 1), artifactBytes("searched", 2)],
-    }),
-    "publishSearchedEvidence",
+  manifestIds.push(baselineEvidence.manifest.id);
+  const searchedArtifacts = [
+    artifactBytes(artifactRng, LAB_SCENARIO_ARTIFACT_BYTES),
+    artifactBytes(artifactRng, LAB_SCENARIO_ARTIFACT_BYTES),
+  ];
+  const searchedEvidence = must(
+    service.publishLabEvidence(solutionId, submittedRuns["searched"] ?? "", searchedArtifacts),
+    "publishLabEvidence-searched",
   );
-  const searchedManifestId = searchedManifest.manifest.id;
-  const rePublish = service.publishLabEvidence(solutionId, searchedRunId, { artifacts: [artifactBytes("searched", 9)] });
-  refusalOutcomes["manifest-run-already-carries"] = outcomeCode(rePublish);
-  const unknownManifest = service.verifyLabEvidence(solutionId, "you_lab-evidence-manifest_missing00000");
-  refusalOutcomes["manifest-unknown"] = outcomeCode(unknownManifest);
-  const baselineVerified = must(service.verifyLabEvidence(solutionId, baselineManifestId), "verifyBaselineEvidence");
-  const searchedVerified = must(service.verifyLabEvidence(solutionId, searchedManifestId), "verifySearchedEvidence");
-  const baselineRunHead = must(service.runOf(solutionId, baselineRunId), "baselineRunHead");
-  const searchedRunHead = must(service.runOf(solutionId, searchedRunId), "searchedRunHead");
+  manifestIds.push(searchedEvidence.manifest.id);
+
+  const evidenceNotTerminal = service.publishLabEvidence(solutionId, openRun.run.id, [artifactBytes(artifactRng, 16)]);
+  refusalOutcomes["evidence-run-not-terminal"] = outcomeCode(evidenceNotTerminal);
+  const evidenceEmpty = service.publishLabEvidence(solutionId, submittedRuns["searched"] ?? "", []);
+  refusalOutcomes["evidence-artifacts-empty"] = outcomeCode(evidenceEmpty);
+  const evidenceUnknownRun = service.publishLabEvidence(solutionId, "you_lab-run_missing00000000000", [baselineArtifact]);
+  refusalOutcomes["evidence-unknown-run"] = outcomeCode(evidenceUnknownRun);
   steps.push(
     step((stepIndex += 1), "evidence-published", {
-      baselineManifestId,
-      searchedManifestId,
-      baselineArtifactCount: baselineVerified.manifest.artifactRefs.length,
-      searchedArtifactCount: searchedVerified.manifest.artifactRefs.length,
-      searchedContentHashPrefix: searchedManifest.manifest.contentHash.slice(0, 16),
-      bothVerified: baselineVerified.verified && searchedVerified.verified,
-      baselineRunLinked: baselineRunHead.run.evidenceManifestRef === baselineManifestId,
-      searchedRunLinked: searchedRunHead.run.evidenceManifestRef === searchedManifestId,
-      simulated: searchedManifest.manifest.simulated,
+      manifestCount: manifestIds.length,
+      baselineManifestId: baselineEvidence.manifest.id,
+      searchedManifestId: searchedEvidence.manifest.id,
+      baselineContentHash: baselineEvidence.manifest.contentHash,
+      searchedContentHash: searchedEvidence.manifest.contentHash,
+      searchedArtifactCount: searchedEvidence.bindings.length,
+      searchedRunEvidenceRef: searchedEvidence.run.evidenceManifestRef ?? "",
+      contentStoreSize: service.contentStoreSize(),
     }),
   );
 
-  // -- the promotion gate: refusals, then the lawful promotion --------------------
+  // -- manifests verified (fail-closed) -------------------------------------------
 
-  const promotionInput = {
-    searchedRunId,
-    baselineRunId,
-    evidenceManifestRef: searchedManifestId,
-    ...LAB_SCENARIO_PROMOTION_SCORES,
-  };
-  const notBeating = service.decidePromotion(solutionId, experimentId, {
-    ...promotionInput,
-    objectiveScore: 0.5,
+  const verifiedBaseline = must(service.verifyLabEvidenceManifest(solutionId, baselineEvidence.manifest.id), "verify-baseline");
+  const verifiedSearched = must(service.verifyLabEvidenceManifest(solutionId, searchedEvidence.manifest.id), "verify-searched");
+  const verifyUnknown = service.verifyLabEvidenceManifest(solutionId, "you_lab-evidence-manifest_missing");
+  refusalOutcomes["manifest-verify-unknown"] = outcomeCode(verifyUnknown);
+  // The shared-level tamper law: a manifest whose recorded address lies
+  // about its own bundle fails closed (the pure verification authority).
+  const tampered = verifyLabEvidenceManifest(
+    { ...searchedEvidence.manifest, contentHash: "0".repeat(64) },
+    searchedEvidence.bindings,
+  );
+  steps.push(
+    step((stepIndex += 1), "manifests-verified", {
+      baselineVerified: verifiedBaseline.verified,
+      searchedVerified: verifiedSearched.verified,
+      searchedHashMatches: verifiedSearched.contentHash === searchedEvidence.manifest.contentHash,
+      tamperRefusal: tampered.verified ? "UNEXPECTED-PASS" : tampered.reason,
+    }),
+  );
+
+  // -- promotion refusals (the gate law) -------------------------------------------
+
+  const reverseTooEarly = service.reverseLabPromotion(solutionId, experimentId, {
+    objectiveScore: LAB_SCENARIO_REVERSED_SEARCHED_SCORE,
+    baselineScore: LAB_SCENARIO_BASELINE_SCORE,
+    evidenceManifestRef: searchedEvidence.manifest.id,
   });
-  refusalOutcomes["promotion-searched-does-not-beat-baseline"] = outcomeCode(notBeating);
-  const wrongArm = service.decidePromotion(solutionId, experimentId, {
-    ...promotionInput,
-    baselineRunId: handDesignedRunId,
+  refusalOutcomes["promotion-nothing-to-reverse"] = outcomeCode(reverseTooEarly);
+  const promoteNotBeating = service.promoteLabExperiment(solutionId, experimentId, {
+    objectiveScore: LAB_SCENARIO_BASELINE_SCORE,
+    baselineScore: LAB_SCENARIO_BASELINE_SCORE,
+    evidenceManifestRef: searchedEvidence.manifest.id,
   });
-  refusalOutcomes["promotion-run-arm-mismatch-baseline"] = outcomeCode(wrongArm);
-  const notSucceeded = service.decidePromotion(solutionId, experimentId, {
-    ...promotionInput,
-    searchedRunId: searchedRetiredRunId,
+  refusalOutcomes["promotion-searched-does-not-beat"] = outcomeCode(promoteNotBeating);
+  const promoteUnknownManifest = service.promoteLabExperiment(solutionId, experimentId, {
+    objectiveScore: LAB_SCENARIO_SEARCHED_SCORE,
+    baselineScore: LAB_SCENARIO_BASELINE_SCORE,
+    evidenceManifestRef: "you_lab-evidence-manifest_missing",
   });
-  refusalOutcomes["promotion-run-not-succeeded"] = outcomeCode(notSucceeded);
-  const wrongManifest = service.decidePromotion(solutionId, experimentId, {
-    ...promotionInput,
-    evidenceManifestRef: baselineManifestId,
+  refusalOutcomes["promotion-unknown-manifest"] = outcomeCode(promoteUnknownManifest);
+  const promoteUnknownExperiment = service.promoteLabExperiment(solutionId, "you_lab-experiment_missing000000", {
+    objectiveScore: LAB_SCENARIO_SEARCHED_SCORE,
+    baselineScore: LAB_SCENARIO_BASELINE_SCORE,
+    evidenceManifestRef: searchedEvidence.manifest.id,
   });
-  refusalOutcomes["promotion-manifest-not-bound-to-searched-run"] = outcomeCode(wrongManifest);
-  const noHead = service.reversePromotion(solutionId, experimentId, { ...promotionInput, ...LAB_SCENARIO_REVERSAL_SCORES });
-  refusalOutcomes["reversal-no-promotion-to-reverse"] = outcomeCode(noHead);
-  const unknownExperiment = service.decidePromotion(solutionId, "you_lab-experiment_missing000000", promotionInput);
-  refusalOutcomes["promotion-unknown-experiment"] = outcomeCode(unknownExperiment);
-  const unknownRun = service.decidePromotion(solutionId, experimentId, { ...promotionInput, searchedRunId: "you_lab-run_missing00000000000" });
-  refusalOutcomes["promotion-unknown-run"] = outcomeCode(unknownRun);
-  const promoted = must(service.decidePromotion(solutionId, experimentId, promotionInput), "decidePromotion");
-  const promotionId = promoted.promotion.id;
-  const experimentAfterPromotion = must(service.experimentOf(solutionId, experimentId), "experimentAfterPromotion");
+  refusalOutcomes["promotion-unknown-experiment"] = outcomeCode(promoteUnknownExperiment);
+  steps.push(
+    step((stepIndex += 1), "promotion-refusals", {
+      experimentId,
+      refusalCount: 4,
+    }),
+  );
+
+  // -- promotion decided (the searched arm beats the baseline) ---------------------
+
+  const promoted = must(
+    service.promoteLabExperiment(solutionId, experimentId, {
+      objectiveScore: LAB_SCENARIO_SEARCHED_SCORE,
+      baselineScore: LAB_SCENARIO_BASELINE_SCORE,
+      evidenceManifestRef: searchedEvidence.manifest.id,
+    }),
+    "promoteLabExperiment",
+  );
+  promotionChain.push(promoted.promotion.id);
+  decisionKinds.push("promote");
   steps.push(
     step((stepIndex += 1), "promotion-decided", {
-      promotionId,
+      promotionId: promoted.promotion.id,
       experimentId,
       winnerArm: promoted.promotion.winnerArm,
       objectiveScore: promoted.promotion.objectiveScore,
       baselineScore: promoted.promotion.baselineScore,
-      evidenceManifestRef: promoted.promotion.evidenceManifestRef,
-      experimentPromotionRef: experimentAfterPromotion.experiment.promotionRef ?? "",
-      simulated: promoted.promotion.simulated,
+      experimentPromotionRef: promoted.experiment.promotionRef ?? "",
     }),
   );
 
-  // -- the reversal: refused while the searched arm still beats, then recorded ----
+  // -- reversal (new evidence: the searched arm no longer beats) -------------------
 
-  const prematureReversal = service.reversePromotion(solutionId, experimentId, promotionInput);
-  refusalOutcomes["reversal-requires-baseline-win"] = outcomeCode(prematureReversal);
+  const reverseStillBeats = service.reverseLabPromotion(solutionId, experimentId, {
+    objectiveScore: LAB_SCENARIO_SEARCHED_SCORE,
+    baselineScore: LAB_SCENARIO_BASELINE_SCORE,
+    evidenceManifestRef: searchedEvidence.manifest.id,
+  });
+  refusalOutcomes["reversal-still-beats"] = outcomeCode(reverseStillBeats);
   const reversed = must(
-    service.reversePromotion(solutionId, experimentId, {
-      searchedRunId,
-      baselineRunId,
-      evidenceManifestRef: searchedManifestId,
-      ...LAB_SCENARIO_REVERSAL_SCORES,
+    service.reverseLabPromotion(solutionId, experimentId, {
+      objectiveScore: LAB_SCENARIO_REVERSED_SEARCHED_SCORE,
+      baselineScore: LAB_SCENARIO_BASELINE_SCORE,
+      evidenceManifestRef: searchedEvidence.manifest.id,
     }),
-    "reversePromotion",
+    "reverseLabPromotion",
   );
-  const reversalId = reversed.promotion.id;
-  const ledgerAfterReversal = must(service.promotionLedgerOf(solutionId, experimentId), "promotionLedgerOf");
-  const experimentAfterReversal = must(service.experimentOf(solutionId, experimentId), "experimentAfterReversal");
+  promotionChain.push(reversed.promotion.id);
+  decisionKinds.push("reverse");
   steps.push(
     step((stepIndex += 1), "promotion-reversed", {
-      reversalId,
+      promotionId: reversed.promotion.id,
       experimentId,
-      reversalOfPromotionId: promotionId,
       winnerArm: reversed.promotion.winnerArm,
       objectiveScore: reversed.promotion.objectiveScore,
       baselineScore: reversed.promotion.baselineScore,
-      ledgerLength: ledgerAfterReversal.ledger.length,
-      firstRecordUntouched: ledgerAfterReversal.ledger[0]?.winnerArm === "searched",
-      experimentPromotionRef: experimentAfterReversal.experiment.promotionRef ?? "",
-      simulated: reversed.promotion.simulated,
+      experimentPromotionRef: reversed.experiment.promotionRef ?? "",
+      chainLength: promotionChain.length,
     }),
   );
 
-  // -- ledger readout: all three wave-9 events, projection == replay ---------------
+  // -- evidence re-published (a second manifest appends for the searched run) ------
+
+  const reEvidence = must(
+    service.publishLabEvidence(solutionId, submittedRuns["searched"] ?? "", [artifactBytes(artifactRng, LAB_SCENARIO_ARTIFACT_BYTES)]),
+    "publishLabEvidence-searched-again",
+  );
+  manifestIds.push(reEvidence.manifest.id);
+  steps.push(
+    step((stepIndex += 1), "evidence-republished", {
+      manifestCount: manifestIds.length,
+      newManifestId: reEvidence.manifest.id,
+      searchedRunEvidenceRef: reEvidence.run.evidenceManifestRef ?? "",
+      manifestCountForSearchedRun: 2,
+    }),
+  );
+
+  // -- re-promotion (the chain walks promote -> reverse -> promote) ------------------
+
+  const repromoted = must(
+    service.promoteLabExperiment(solutionId, experimentId, {
+      objectiveScore: LAB_SCENARIO_REPROMOTED_SEARCHED_SCORE,
+      baselineScore: LAB_SCENARIO_BASELINE_SCORE,
+      evidenceManifestRef: reEvidence.manifest.id,
+    }),
+    "promoteLabExperiment-again",
+  );
+  promotionChain.push(repromoted.promotion.id);
+  decisionKinds.push("promote");
+  const unknownPromotionRead = service.promotionOf(solutionId, "you_lab-promotion_missing00000000");
+  refusalOutcomes["promotion-unknown-read"] = outcomeCode(unknownPromotionRead);
+  steps.push(
+    step((stepIndex += 1), "promotion-repromoted", {
+      promotionId: repromoted.promotion.id,
+      experimentId,
+      winnerArm: repromoted.promotion.winnerArm,
+      objectiveScore: repromoted.promotion.objectiveScore,
+      baselineScore: repromoted.promotion.baselineScore,
+      experimentPromotionRef: repromoted.experiment.promotionRef ?? "",
+      chainLength: promotionChain.length,
+      decisionKinds: decisionKinds.join("->"),
+    }),
+  );
+
+  // -- ledger readout: all three wave-9 events, projection == replay ----------------
 
   const events: readonly SolutionEvent[] = must(service.ledgerEventsOf(solutionId), "ledgerEventsOf");
   const eventCounts: Record<string, number> = {};
@@ -350,15 +447,11 @@ export function runLabFixtureScenario(options: LabScenarioOptions = {}): LabScen
   return {
     solutionId,
     experimentId,
-    baselineRunId,
-    handDesignedRunId,
-    searchedRetiredRunId,
-    searchedRunId,
-    baselineManifestId,
-    searchedManifestId,
-    promotionId,
-    reversalId,
+    runIds,
     ladderWalk,
+    manifestIds,
+    promotionChain,
+    decisionKinds,
     refusalOutcomes,
     eventCounts,
     eventCount: events.length,

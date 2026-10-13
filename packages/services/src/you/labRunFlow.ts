@@ -1,20 +1,21 @@
 // YOU lab service — the LabRun ladder flow (W9A): experiment-gated run
-// submissions (the arm must be one of the experiment's declared arms —
-// the three-arm law) and immutable ladder transitions (submitted ->
+// submission (the arm must be one of the experiment's declared
+// three-arm-law arms) and immutable ladder advancement (submitted ->
 // running -> succeeded | failed | retired, terminals locked). Every
 // transition appends lab-run-recorded; the run record is replaced
-// immutably, never mutated (the W7A/W8A replacement precedent); the
-// per-experiment run list is append-only (LAB PERSISTENCE LAW).
+// immutably, never mutated (the W7A AvatarSession replacement
+// precedent); the per-experiment run list is append-only.
 
 import type { LabArmKind, LabRun, LabRunStatus, OpaqueId } from "@zcode/shared";
 import {
-  applyLabRunTransition,
+  advanceLabRun,
   constructLabRun,
   labRunTransitionRefusal,
   validateLabRunInput,
 } from "../../../shared/src/you/labRunLadder.js";
 import { appendLabRunRecorded } from "./labLedgerOps.js";
 import {
+  isDeclaredArm,
   labFailure,
   requireLabExperiment,
   requireLabRun,
@@ -24,11 +25,13 @@ import {
 } from "./labServiceTypes.js";
 
 /**
- * Submits a new run of an experiment arm (born "submitted"). Gates: the
- * experiment must exist (typed YOU_LAB_EXPERIMENT_NOT_FOUND); the arm
- * must be one of the experiment's declared arms (typed YOU_INVALID_STATE
- * "arm-not-declared"); intake shape (typed YOU_INVALID_STATE with the
- * validator's reason). Emits lab-run-recorded (statusAfter "submitted").
+ * Submits a new run of an experiment arm (the append-only ladder).
+ * Gates: the experiment must exist (typed
+ * YOU_LAB_EXPERIMENT_NOT_FOUND); the arm must be one of the
+ * experiment's declared arms (typed YOU_INVALID_STATE,
+ * "arm-not-declared"); the intake shape (typed YOU_INVALID_STATE with
+ * the validator's stable refusal). Emits lab-run-recorded
+ * (statusAfter "submitted", declaration facts ride along).
  */
 export function submitLabRunOp(
   plane: LabPlaneRecord,
@@ -40,8 +43,9 @@ export function submitLabRunOp(
   if ("error" in found) {
     return { ok: false, error: found.error };
   }
-  if (!found.experiment.arms.includes(input.arm)) {
-    return labFailure("YOU_INVALID_STATE", "run arm is not among the experiment's declared arms", {
+  const experiment = found.experiment;
+  if (!isDeclaredArm(experiment, input.arm)) {
+    return labFailure("YOU_INVALID_STATE", `arm "${input.arm}" is not declared on the experiment`, {
       reason: "arm-not-declared",
       experimentId,
       arm: input.arm,
@@ -57,20 +61,20 @@ export function submitLabRunOp(
   }
   const run = constructLabRun(intake, { now: () => deps.clock.now(), nextId: deps.ids.next });
   plane.runs.set(run.id, run);
-  const ladder = plane.runsByExperiment.get(experimentId) ?? [];
+  const ladder = plane.runIdsByExperiment.get(experimentId) ?? [];
   ladder.push(run.id);
-  plane.runsByExperiment.set(experimentId, ladder);
-  appendLabRunRecorded(plane, run, "");
+  plane.runIdsByExperiment.set(experimentId, ladder);
+  appendLabRunRecorded(plane, run, experiment, "");
   return { ok: true, value: { run } };
 }
 
 /**
- * Applies a ladder transition to a run (immutable record replacement).
+ * Applies a legal ladder step to a run (immutable record replacement).
  * Emits lab-run-recorded. Refusals: typed YOU_LAB_RUN_NOT_FOUND for
- * unknown runs; typed YOU_INVALID_STATE with the ladder's stable reason
- * for locked terminals, no-ops and off-ladder moves.
+ * unknown runs; typed YOU_INVALID_STATE with the ladder's stable
+ * reason for locked terminals, no-ops and off-ladder moves.
  */
-export function transitionLabRunOp(
+export function advanceLabRunOp(
   plane: LabPlaneRecord,
   deps: LabFlowDeps,
   runId: OpaqueId,
@@ -89,8 +93,16 @@ export function transitionLabRunOp(
       status: current.status,
     });
   }
-  const after = applyLabRunTransition(current, to, deps.clock.now());
+  const experiment = plane.experiments.get(current.experimentId);
+  if (experiment === undefined) {
+    return labFailure("YOU_LAB_EXPERIMENT_NOT_FOUND", "lab run references an unknown experiment", {
+      reason: "unknown-experiment",
+      experimentId: current.experimentId,
+      runId,
+    });
+  }
+  const after = advanceLabRun(current, to, deps.clock.now());
   plane.runs.set(runId, after);
-  appendLabRunRecorded(plane, after, current.status);
+  appendLabRunRecorded(plane, after, experiment, current.status);
   return { ok: true, value: { run: after } };
 }

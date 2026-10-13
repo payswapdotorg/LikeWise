@@ -59,6 +59,6 @@ import "./gapProjections.test.js";
 import "./arenaLedger.test.js";
 import "./labRunLadder.test.js";
 import "./labExperiment.test.js";
-import "./labEvidenceManifest.test.js";
+import "./labEvidence.test.js";
 import "./labPromotion.test.js";
 import "./labLedger.test.js";
