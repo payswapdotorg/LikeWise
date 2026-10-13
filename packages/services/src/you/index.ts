@@ -19,3 +19,5 @@ import "./embodimentService.test.js";
 import "./embodimentFixtureScenario.test.js";
 import "./arenaService.test.js";
 import "./arenaFixtureScenario.test.js";
+import "./labService.test.js";
+import "./labFixtureScenario.test.js";
