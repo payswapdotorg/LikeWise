@@ -1399,3 +1399,20 @@ Workers never mark their own work DONE; they submit evidence to TL.
 - Merged as PR #37 (merge commit 621ea8f) by the station TL. The
   W9A lane is now tree-stable (one verified implementation, full
   history of both attempts preserved).
+
+### W9C merge record (2026-10-13)
+
+- Harvested from `you/w9c-researchorg` @ 0aa45fe (worker turn admitted
+  ~23:00Z through the late-admission window). 15 files, +3748/-2:
+  you-lab/src/research/** (worlds, searchLadder, failureAtlas,
+  pipelineGenome, promotionEvidence, researchSeam + tests + fixtures)
+  + contractSeam.ts v8->v9 extension (the only-module seam pattern;
+  the 2 deletions are the seam header comment) + index registrations.
+- Station verification: you-lab tsc exit 0 + battery **471/471**
+  (baseline 417 + 54 new). Laws verified: LAB DETERMINISM LAW
+  (byte-identical world from seed, test-pinned); YOU_LAB_WORLD_INVALID
+  typed on world replay failure; SEARCH BUDGET LAW (exhaustion =
+  recorded terminal); YOU_SEARCH_LADDER_INVALID fail-closed plan
+  validation; promotion evidence harness; seam routing through
+  contractSeam.
+- Merged as PR #38 (merge commit c5f942b) by the station TL.
