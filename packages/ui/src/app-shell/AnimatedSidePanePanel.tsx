@@ -58,6 +58,7 @@ import { EditingStudioSurface } from "@/you/EditingStudioSurface.js";
 import { LearningStudioSurface } from "@/you/LearningStudioSurface.js";
 import { AvatarStudioSurface } from "@/you/AvatarStudioSurface.js";
 import { EscalationStudioSurface } from "@/you/EscalationStudioSurface.js";
+import { LabStudioSurface } from "@/you/LabStudioSurface.js";
 import {
   getSidePaneTabTitle,
   SidePaneTabDragOverlay,
@@ -107,6 +108,7 @@ import {
   GraduationCapIcon,
   GlobeIcon,
   LifeBuoyIcon,
+  MicroscopeIcon,
   MessageSquareTextIcon,
   PersonStandingIcon,
   PlusIcon,
@@ -337,6 +339,7 @@ export function AnimatedSidePanePanel({
   onOpenLearningStudio,
   onOpenAvatarStudio,
   onOpenEscalationStudio,
+  onOpenLabStudio,
   onOpenTerminalTab,
   onOpenReviewTab,
   onOpenSelectionSideConversation,
@@ -418,6 +421,8 @@ export function AnimatedSidePanePanel({
   onOpenAvatarStudio: () => void;
   /** YOU Escalation surface（W8B）：幂等打开/聚焦 Escalation tab。 */
   onOpenEscalationStudio: () => void;
+  /** YOU Lab surface（W9B）：幂等打开/聚焦 Lab tab。 */
+  onOpenLabStudio: () => void;
   onOpenTerminalTab: () => void;
   onOpenReviewTab: () => void;
   onOpenSelectionSideConversation: () => void;
@@ -496,6 +501,7 @@ export function AnimatedSidePanePanel({
   const hasLearningTab = tabs.some((tab) => tab.type === "learning");
   const hasAvatarTab = tabs.some((tab) => tab.type === "avatar");
   const hasEscalationTab = tabs.some((tab) => tab.type === "escalation");
+  const hasLabTab = tabs.some((tab) => tab.type === "lab");
   const canOpenSelectionSideConversation = shouldOfferSelectionSideConversation({
     activeTaskId,
   });
@@ -893,6 +899,17 @@ export function AnimatedSidePanePanel({
             <span>{intl.formatMessage({ id: "you.escalation.tabTitle" })}</span>
           </DropdownMenuItem>
         ) : null}
+        {!hasLabTab ? (
+          <DropdownMenuItem
+            data-side-pane-add-item="lab"
+            onSelect={() => {
+              onOpenLabStudio();
+            }}
+          >
+            <MicroscopeIcon className="size-4" />
+            <span>{intl.formatMessage({ id: "you.lab.tabTitle" })}</span>
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -975,6 +992,12 @@ export function AnimatedSidePanePanel({
       icon: LifeBuoyIcon,
       onOpen: onOpenEscalationStudio,
     },
+    lab: {
+      id: "lab",
+      label: intl.formatMessage({ id: "you.lab.tabTitle" }),
+      icon: MicroscopeIcon,
+      onOpen: onOpenLabStudio,
+    },
   };
   const openTabLauncherItems: OpenTabLauncherItem[] = resolveOpenTabLauncherItemIds({
     canOpenSelectionSideConversation,
@@ -988,6 +1011,7 @@ export function AnimatedSidePanePanel({
     hasLearningTab,
     hasAvatarTab,
     hasEscalationTab,
+    hasLabTab,
     supportsEmbeddedBrowser,
   })
     .filter((itemId) => !isOfficeMode || (itemId !== "terminal" && itemId !== "review"))
@@ -1085,6 +1109,7 @@ export function AnimatedSidePanePanel({
         learningTitle: intl.formatMessage({ id: "you.learning.tabTitle" }),
         avatarTitle: intl.formatMessage({ id: "you.avatar.tabTitle" }),
         escalationTitle: intl.formatMessage({ id: "you.escalation.tabTitle" }),
+        labTitle: intl.formatMessage({ id: "you.lab.tabTitle" }),
         terminalTitle: intl.formatMessage({ id: "terminal.title" }),
         subagentTypeLabel: intl.formatMessage({ id: "sidePane.subagent" }),
         subagentDirectoryTitle: intl.formatMessage({
@@ -1515,6 +1540,13 @@ export function AnimatedSidePanePanel({
                           />
                         ) : tab.type === "escalation" ? (
                           <EscalationStudioSurface
+                            key={tab.id}
+                            tab={tab}
+                            workspaceKey={workspaceKey}
+                            isActive={isVisible && tab.id === visibleActiveTabId}
+                          />
+                        ) : tab.type === "lab" ? (
+                          <LabStudioSurface
                             key={tab.id}
                             tab={tab}
                             workspaceKey={workspaceKey}

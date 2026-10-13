@@ -64,3 +64,10 @@ import "./escalationStudioStore.test.js";
 import "./escalationStudioProjection.test.js";
 import "./escalationSimulatedController.test.js";
 import "./escalationStudioDemo.test.js";
+// W9B — Lab Studio 逻辑测试。
+import "./labTabRegistration.test.js";
+import "./labMessages.test.js";
+import "./labStudioStore.test.js";
+import "./labStudioProjection.test.js";
+import "./labSimulatedController.test.js";
+import "./labStudioDemo.test.js";

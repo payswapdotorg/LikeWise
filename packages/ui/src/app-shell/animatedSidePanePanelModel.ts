@@ -13,7 +13,8 @@ export type OpenTabLauncherItemId =
   | "editing"
   | "learning"
   | "avatar"
-  | "escalation";
+  | "escalation"
+  | "lab";
 
 export function resolveOpenTabLauncherItemIds({
   developerToolsEnabled,
@@ -26,6 +27,7 @@ export function resolveOpenTabLauncherItemIds({
   hasLearningTab = false,
   hasAvatarTab = false,
   hasEscalationTab = false,
+  hasLabTab = false,
   canOpenSelectionSideConversation = false,
   supportsEmbeddedBrowser = true,
 }: {
@@ -47,6 +49,8 @@ export function resolveOpenTabLauncherItemIds({
   hasAvatarTab?: boolean;
   /** YOU Escalation tab 已开时不再提供入口（W8B，同幂等聚焦语义）。缺省 false。 */
   hasEscalationTab?: boolean;
+  /** YOU Lab tab 已开时不再提供入口（W9B，同幂等聚焦语义）。缺省 false。 */
+  hasLabTab?: boolean;
   canOpenSelectionSideConversation?: boolean;
   supportsEmbeddedBrowser?: boolean;
 }): OpenTabLauncherItemId[] {
@@ -100,6 +104,10 @@ export function resolveOpenTabLauncherItemIds({
 
   if (!hasEscalationTab) {
     itemIds.push("escalation");
+  }
+
+  if (!hasLabTab) {
+    itemIds.push("lab");
   }
 
   return itemIds;
