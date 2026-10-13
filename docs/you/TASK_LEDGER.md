@@ -1382,3 +1382,20 @@ Workers never mark their own work DONE; they submit evidence to TL.
   documented payload conventions; append-only run ladder;
   contract.ts untouched (v9 freeze honored).
 - Merged as PR #36 (merge commit ecd2097) by the station TL.
+
+### W9A supersession merge record (2026-10-13)
+
+- The duplicate w9a turn (the late-admission pair's survivor; its
+  sibling workspace was released pre-merge) completed its delivery
+  AFTER the first: found the lane branch already carrying 590fdd0
+  (merged as PR #36), rebased on it, and pushed a supersession merge
+  a3e2ca5 preserving the prior history with its own complete tree
+  (self-reported shared tsc 0 / 432 tests; services tsc 0 / 183).
+- Station re-verification of the supersession tree: shared tsc exit 0
+  + **432/432** (one more test than the first delivery); services
+  tsc -b exit 0 + **183/183**; write surface fully in-scope vs the v9
+  freeze (the 590fdd0→a3e2ca5 delta touches only the 26 in-surface
+  lab files); contract.ts untouched.
+- Merged as PR #37 (merge commit 621ea8f) by the station TL. The
+  W9A lane is now tree-stable (one verified implementation, full
+  history of both attempts preserved).
