@@ -1363,3 +1363,22 @@ Workers never mark their own work DONE; they submit evidence to TL.
   Escalation Studio's simulated controller port mirrors the W8A
   arena-service seams 1:1 — the T9-class binding swaps simulated for
   real with zero UI changes.
+
+### W9A merge record (2026-10-13)
+
+- Harvested from `you/w9a-labpersistence` @ 590fdd0 (worker turn
+  admitted 18:46-18:59Z through the post-dedup window; the station
+  managed a late-admission duplicate pair — one workspace released
+  pre-merge, the redundant turn's push lands non-FF rejected by
+  design). 24 files, +3810/-0: shared/src/you (labExperiment,
+  labRunLadder, labEvidenceManifest, labPromotion, labLedger + tests)
+  + services/src/you (lab flows + labService + fixture scenario +
+  tests) + index registrations.
+- Station verification: shared tsc exit 0 + battery **431/431**
+  (freeze baseline 401 + 30 new); services tsc -b exit 0 + battery
+  **183/183** (163 + 20 new). Laws verified: LAB PROMOTION LAW
+  strict-beats (searched-only winners; baseline winner = reversal);
+  manifest sha-256 verification fail-closed; the three v9 events with
+  documented payload conventions; append-only run ladder;
+  contract.ts untouched (v9 freeze honored).
+- Merged as PR #36 (merge commit ecd2097) by the station TL.
