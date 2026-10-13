@@ -17,6 +17,7 @@ export interface SidePaneTabPresentationLabels {
   learningTitle: string;
   avatarTitle: string;
   escalationTitle: string;
+  labTitle: string;
   terminalTitle: string;
   subagentTypeLabel: string;
   subagentDirectoryTitle: string;
@@ -104,6 +105,10 @@ export function getSidePaneTabSearchHint(tab: WorkspaceSidePaneTab): string {
   if (tab.type === "escalation") {
     return "you escalation arena capability gap tool editor model skill knowledge data expert authorization gate scope expiry learning permission none aggregate full ladder requested authorized in-progress delivered applied rejected cancelled run retry backoff provider expert result changeset artifact guidance typed payload withdrawal gap projection simulated";
   }
+  // YOU Lab surface（W9B）：搜索面覆盖实验三臂/run 阶梯/证据 manifest/晋升门/搜索预算标注。
+  if (tab.type === "lab") {
+    return "you lab experiment three-arm comparison generalist baseline hand-designed searched run ladder submitted running succeeded failed retired evidence manifest content-addressed artifact hash verification verified unverified mismatch promotion gate winner objective score baseline reversal supersedes search ladder budget exhaustion terminal world seed deterministic actors ground truth constraints objective intent simulated";
+  }
   if (tab.type === "terminal" || tab.type === "bash-output")
     return `${tab.title} terminal shell command`;
   return tab.source.path ?? tab.source.title;
@@ -130,6 +135,7 @@ export function getLocalizedSidePaneTabTitle(
       "you.learning.tabTitle": labels.learningTitle,
       "you.avatar.tabTitle": labels.avatarTitle,
       "you.escalation.tabTitle": labels.escalationTitle,
+      "you.lab.tabTitle": labels.labTitle,
       "terminal.title": labels.terminalTitle,
       "sidePane.subagent": labels.subagentTypeLabel,
       "sidePane.subagentDirectory": labels.subagentDirectoryTitle,
@@ -173,6 +179,7 @@ export function getSidePaneTabTypeLabel(
   if (tab.type === "learning") return labels.learningTitle;
   if (tab.type === "avatar") return labels.avatarTitle;
   if (tab.type === "escalation") return labels.escalationTitle;
+  if (tab.type === "lab") return labels.labTitle;
   if (tab.type === "terminal" || tab.type === "bash-output") return labels.terminalTitle;
   return labels.codeViewerTitle;
 }

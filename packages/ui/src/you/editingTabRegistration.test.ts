@@ -99,11 +99,12 @@ test("launcher offers editing only when the tab is not open", () => {
     "learning",
     "avatar",
     "escalation",
+    "lab",
   ]);
 
   assert.deepEqual(
     resolveOpenTabLauncherItemIds({ ...base, hasEditingTab: true }),
-    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "learning", "avatar", "escalation"],
+    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "learning", "avatar", "escalation", "lab"],
   );
 
   // 既有行为不受影响：developer tools / review / 无浏览器环境 / 缺省参数向后兼容。
@@ -115,7 +116,7 @@ test("launcher offers editing only when the tab is not open", () => {
       hasCaptureTab: false,
       supportsEmbeddedBrowser: false,
     }),
-    ["terminal", "developer-tools", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation"],
+    ["terminal", "developer-tools", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab"],
   );
 
   // 未传 hasEditingTab 时缺省 false（既有调用点零行为变化，editing 入口照常出现）。
@@ -126,7 +127,7 @@ test("launcher offers editing only when the tab is not open", () => {
       hasSolutionTab: false,
       hasCaptureTab: false,
     }),
-    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation"],
+    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab"],
   );
 
   assert.deepEqual(
@@ -151,6 +152,7 @@ test("launcher offers editing only when the tab is not open", () => {
       "learning",
       "avatar",
       "escalation",
+      "lab",
     ],
   );
 });

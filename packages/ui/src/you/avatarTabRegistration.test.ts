@@ -102,11 +102,12 @@ test("launcher offers avatar only when the tab is not open (avatar is LAST, afte
     "learning",
     "avatar",
     "escalation",
+    "lab",
   ]);
 
   assert.deepEqual(
     resolveOpenTabLauncherItemIds({ ...base, hasAvatarTab: true }),
-    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "escalation"],
+    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "escalation", "lab"],
   );
 
   // 既有行为不受影响：developer tools / review / 无浏览器环境 / 缺省参数向后兼容。
@@ -118,7 +119,7 @@ test("launcher offers avatar only when the tab is not open (avatar is LAST, afte
       hasCaptureTab: false,
       supportsEmbeddedBrowser: false,
     }),
-    ["terminal", "developer-tools", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation"],
+    ["terminal", "developer-tools", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab"],
   );
 
   // 未传 hasAvatarTab 时缺省 false（既有调用点零行为变化，avatar 入口照常出现）。
@@ -129,7 +130,7 @@ test("launcher offers avatar only when the tab is not open (avatar is LAST, afte
       hasSolutionTab: false,
       hasCaptureTab: false,
     }),
-    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation"],
+    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab"],
   );
 
   assert.deepEqual(
@@ -154,6 +155,7 @@ test("launcher offers avatar only when the tab is not open (avatar is LAST, afte
       "learning",
       "avatar",
       "escalation",
+      "lab",
     ],
   );
 });

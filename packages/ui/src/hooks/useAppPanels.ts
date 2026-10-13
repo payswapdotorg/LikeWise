@@ -42,6 +42,7 @@ import {
   openLearningStudioSidePane,
   openAvatarStudioSidePane,
   openEscalationStudioSidePane,
+  openLabStudioSidePane,
   openBrowserSidePane,
   openOrActivateBrowserSidePaneByUrl,
   findBrowserSidePaneTabByUrl,
@@ -906,6 +907,20 @@ export function useAppPanels(options: {
     });
   }, [commitOpenedSidePaneState, revealSidePaneForCurrentOwner, workspaceAbsPath]);
 
+  // YOU Lab surface（W9B 注册点）：幂等打开/聚焦 native Lab tab。
+  const handleOpenLabStudio = useCallback(() => {
+    revealSidePaneForCurrentOwner();
+    commitOpenedSidePaneState((current) => {
+      const next = openLabStudioSidePane(current, {
+        workspaceKey: activeWorkspaceKeyRef.current,
+      });
+      logger.info(
+        `[App] 打开右侧面板 mode=lab workspace=${workspaceAbsPath} tabs=${next.tabs.length}`,
+      );
+      return next;
+    });
+  }, [commitOpenedSidePaneState, revealSidePaneForCurrentOwner, workspaceAbsPath]);
+
   const handleOpenTerminalTab = useCallback(() => {
     if (isOfficeMode) return;
     revealSidePaneForCurrentOwner();
@@ -1715,6 +1730,7 @@ export function useAppPanels(options: {
     handleOpenLearningStudio,
     handleOpenAvatarStudio,
     handleOpenEscalationStudio,
+    handleOpenLabStudio,
     handleOpenTerminalTab,
     handleOpenModelTrajectory,
     handleOpenSubagentSession,

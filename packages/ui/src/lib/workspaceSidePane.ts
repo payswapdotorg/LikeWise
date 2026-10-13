@@ -10,6 +10,7 @@ import { resolveEditingTabState } from "@/you/editingTabRegistration.js";
 import { resolveLearningTabState } from "@/you/learningTabRegistration.js";
 import { resolveAvatarTabState } from "@/you/avatarTabRegistration.js";
 import { resolveEscalationTabState } from "@/you/escalationTabRegistration.js";
+import { resolveLabTabState } from "@/you/labTabRegistration.js";
 
 export interface BrowserSidePaneTab {
   id: string;
@@ -197,6 +198,20 @@ export interface AvatarStudioSidePaneTab {
 export interface EscalationStudioSidePaneTab {
   id: "escalation";
   type: "escalation";
+  ownerTaskId?: string | null;
+  workspaceKey?: string | null;
+  openedAt?: number;
+}
+
+/**
+ * YOU Lab surface tab（W9B）——与 Solution/Capture/Twin/Performance/Editing/
+ * Learning/Avatar/Escalation 同级的 native workspace 表面。固定单例 id：一个
+ * workspace 一个 Lab tab（重复打开幂等地聚焦既有 tab）；内容与视图状态由
+ * `packages/ui/src/you/**` 子树自持（lab 系列模块）。
+ */
+export interface LabStudioSidePaneTab {
+  id: "lab";
+  type: "lab";
   ownerTaskId?: string | null;
   workspaceKey?: string | null;
   openedAt?: number;
@@ -647,6 +662,7 @@ export type WorkspaceSidePaneTab =
   | LearningStudioSidePaneTab
   | AvatarStudioSidePaneTab
   | EscalationStudioSidePaneTab
+  | LabStudioSidePaneTab
   | TerminalSidePaneTab
   | BrowserUseSidePaneTab
   | SubagentSessionSidePaneTab
@@ -1196,6 +1212,8 @@ const WORKSPACE_GLOBAL_SIDE_PANE_TAB_TYPES = new Set<WorkspaceSidePaneTab["type"
   "avatar",
   // Escalation 同为 workspace 级表面（W8B，同 ADR-002 语义）。
   "escalation",
+  // Lab 同为 workspace 级表面（W9B，同 ADR-002 语义）。
+  "lab",
 ]);
 
 function isWorkspaceGlobalSidePaneTab(tab: WorkspaceSidePaneTab): boolean {
@@ -1829,6 +1847,19 @@ export function openEscalationStudioSidePane(
   },
 ): WorkspaceSidePaneState {
   return resolveEscalationTabState(current, options);
+}
+
+/**
+ * 打开（或幂等聚焦）YOU Lab 表面 tab（W9B 注册点）。
+ * 纯转移逻辑在 `@/you/labTabRegistration.js`（you 子树自含，可被 tsx 直接加载）。
+ */
+export function openLabStudioSidePane(
+  current: WorkspaceSidePaneState | null,
+  options: {
+    workspaceKey?: string | null;
+  },
+): WorkspaceSidePaneState {
+  return resolveLabTabState(current, options);
 }
 
 export function openTerminalSidePane(

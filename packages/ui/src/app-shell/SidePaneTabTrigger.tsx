@@ -13,6 +13,7 @@ import {
   FilePenLineIcon,
   GraduationCapIcon,
   LifeBuoyIcon,
+  MicroscopeIcon,
   MapIcon,
   MessageSquareTextIcon,
   ListTreeIcon,
@@ -381,6 +382,14 @@ export function SidePaneTabIcon({ tab }: { tab: WorkspaceSidePaneTab }) {
     return <LifeBuoyIcon className="size-3.5" />;
   }
 
+  // YOU Lab surface（W9B）：与 Solution/Capture/Twin/Performance/Editing/Learning/
+  // Avatar/Escalation 同级的 workspace 表面，固定显微镜（microscope）图标——Lab
+  // 是组织/工具链的对照实验台（ARCHITECTURE §11：The Lab optimizes the
+  // organization/toolchain）。
+  if (tab.type === "lab") {
+    return <MicroscopeIcon className="size-3.5" />;
+  }
+
   if (tab.type === "terminal" || tab.type === "bash-output") {
     return <SquareTerminalIcon className="size-3.5" />;
   }
@@ -627,6 +636,11 @@ export function getSidePaneTabTitle(
   // YOU Escalation surface（W8B）：标题走中央文案表（you.escalation.tabTitle）。
   if (tab.type === "escalation") {
     return formatMessage({ id: "you.escalation.tabTitle" });
+  }
+
+  // YOU Lab surface（W9B）：标题走中央文案表（you.lab.tabTitle）。
+  if (tab.type === "lab") {
+    return formatMessage({ id: "you.lab.tabTitle" });
   }
 
   if (tab.type === "terminal" || tab.type === "bash-output") {
