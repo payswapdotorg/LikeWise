@@ -974,6 +974,144 @@ export {
   type CapabilityGapConstruction,
 } from "./contractSeam.js";
 
+// W9C: research organization — deterministic worlds, the search/RL ladder
+// under an explicit cumulative budget, the Failure Atlas, the Pipeline
+// Genome, the promotion-evidence benchmark harness, and the frozen v9 seam
+// mapping (worlds/ladder/atlas/genome/runs/manifests/promotion).
+
+export {
+  CAMERA_VIEW_LABELS,
+  HUMAN_ACTOR_LABELS,
+  LAB_FAILURE_CLASSES,
+  LAB_WORLD_INVALID_CODE,
+  LabWorldInvalidError,
+  LIGHTING_VARIANT_LABELS,
+  PROP_ACTOR_LABELS,
+  WORLD_PERTURBATION_KINDS,
+  WORLD_SENSOR_KINDS,
+  assertWorldReplays,
+  labWorldId,
+  runWorldPipeline,
+  synthesizeLabWorld,
+  worldDifficulty,
+  type LabWorld,
+  type LabWorldActor,
+  type LabWorldCamera,
+  type LabWorldEnvironment,
+  type LabWorldGroundTruth,
+  type LabWorldLightingVariant,
+  type LabWorldPerturbation,
+  type LabWorldRunOutcome,
+  type LabWorldRunRequest,
+  type LabWorldSensor,
+  type LabWorldSpec,
+  type NeutralLabWorldDescriptor,
+} from "./research/worlds.js";
+
+export {
+  GENOME_BASE_STRENGTH,
+  GENOME_STRENGTH_CAP,
+  MUTATION_KINDS,
+  MUTATION_KIND_WEIGHTS,
+  PIPELINE_GENOME_INVALID_CODE,
+  PipelineGenomeInvalidError,
+  appendGenomeMutation,
+  appendGenomeNode,
+  assertGenomeIntegrity,
+  assertLineageIntegrity,
+  bestGenomeNode,
+  createPipelineGenome,
+  createPipelineGenomeFromNode,
+  genomeChildNodeId,
+  genomeLineage,
+  lineageStrength,
+  nextMutationKind,
+  seedGenomeNode,
+  seedGenomeNodeId,
+  type NeutralMutationKind,
+  type NeutralPipelineGenomeNode,
+  type PipelineGenome,
+} from "./research/pipelineGenome.js";
+
+export {
+  SEARCH_LADDER_INVALID_CODE,
+  SEARCH_LADDER_STRATEGIES,
+  SEARCH_LADDER_TERMINAL_STRATEGIES,
+  STANDARD_SEARCH_STRATEGIES,
+  SearchLadderInvalidError,
+  appendSearchLadderStep,
+  assertValidSearchLadderPlan,
+  exploreSearchLadder,
+  searchLadderStepId,
+  type NeutralSearchLadderStep,
+  type NeutralSearchStrategy,
+  type SearchLadderPlan,
+  type SearchLadderResult,
+  type SearchLadderScorer,
+  type SearchLadderTerminal,
+} from "./research/searchLadder.js";
+
+export {
+  FAILURE_ATLAS_INVALID_CODE,
+  FailureAtlasInvalidError,
+  appendAtlasEntry,
+  buildFailureAtlasEntry,
+  collectFailureObservations,
+  failureAtlasEntryId,
+  summarizeFailureAtlas,
+  type FailureAtlasSummary,
+  type NeutralFailureAtlasEntry,
+} from "./research/failureAtlas.js";
+
+export {
+  GOLDEN_ARM_OVERALL as GOLDEN_PROMOTION_ARM_OVERALL,
+  GOLDEN_PROMOTION_REPORT_RUN_ID,
+  HAND_DESIGNED_MUTATIONS,
+  LAB_BENCH_SUBMITTED_AT,
+  LAB_COMPARISON_ARMS,
+  LAB_EVIDENCE_MANIFEST_INVALID_CODE,
+  LAB_PROMOTION_INVALID_CODE,
+  LabEvidenceManifestInvalidError,
+  LabPromotionInvalidError,
+  PROMOTION_EVIDENCE_FIXTURES,
+  PROMOTION_EVIDENCE_FIXTURE_SET_VERSION,
+  STANDARD_LAB_EXPERIMENT_ID,
+  STANDARD_LAB_INTENT_REF,
+  STANDARD_LAB_OBJECTIVE,
+  STANDARD_SEARCH_LADDER_PLAN,
+  assertValidEvidenceManifest,
+  evaluatePromotionEvidence,
+  runPromotionEvidenceBenchmark,
+  runStandardPromotionEvidenceBenchmark,
+  standardLabExperiment,
+  type ArmEvidenceResult,
+  type FixtureArmScore as PromotionFixtureArmScore,
+  type NeutralLabArmKind,
+  type NeutralLabEvidenceManifest,
+  type NeutralLabExperiment,
+  type NeutralLabRunRecord,
+  type NeutralLabRunStatus,
+  type PromotionDecisionEvidence,
+  type PromotionEvidenceFixture,
+  type PromotionEvidenceReport,
+} from "./research/promotionEvidence.js";
+
+export {
+  labResearchThroughHarness,
+  mapLabArmKind,
+  mapLabRunStatus,
+  toFrozenFailureAtlasEntry,
+  toFrozenLabEvidenceManifest,
+  toFrozenLabExperiment,
+  toFrozenLabPromotionRecord,
+  toFrozenLabRun,
+  toFrozenLabWorldDescriptor,
+  toFrozenPipelineGenomeNode,
+  toFrozenSearchLadderStep,
+  type FrozenLabResearchPath,
+  type LabPromotionRecordConstruction,
+} from "./contractSeam.js";
+
 // ---------------------------------------------------------------------------
 // Test-suite entry for the station command
 //
