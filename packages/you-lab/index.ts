@@ -48,4 +48,40 @@ if (isTestRunnerDirectoryEntry()) {
   await import("./src/learning/learningSeam.test.js");
   await import("./src/contractSeam.test.js");
   await import("./src/consumer-sim.test.js");
+  // W3C-W7C additions (reconstruction/render/editing/soul/realtime) and the
+  // W8C arena-automation additions — the directory form now reports the
+  // FULL suite (parity with the glob form; the W2C-era list above is kept
+  // verbatim for history, the additions follow the src/index.ts order).
+  await import("./src/technology/reconstructionSeedProfiles.test.js");
+  await import("./src/technology/renderSeedProfiles.test.js");
+  await import("./src/technology/editorSeedProfiles.test.js");
+  await import("./src/reconstruction/mockReconstructionAdapter.test.js");
+  await import("./src/reconstruction/colmapPhotogrammetryAdapter.test.js");
+  await import("./src/reconstruction/reconstructionEvaluation.test.js");
+  await import("./src/reconstruction/reconstructionBenchmark.test.js");
+  await import("./src/reconstruction/reconstructionSeam.test.js");
+  await import("./src/render/mockRenderAdapter.test.js");
+  await import("./src/render/renderEvaluation.test.js");
+  await import("./src/render/renderBenchmark.test.js");
+  await import("./src/render/renderSeam.test.js");
+  await import("./src/editing/capabilityProfiles.test.js");
+  await import("./src/editing/editorEvaluation.test.js");
+  await import("./src/editing/mockEditingAdapter.test.js");
+  await import("./src/editing/roundTripBenchmark.test.js");
+  await import("./src/editing/editingSeam.test.js");
+  await import("./src/technology/soulSeedProfiles.test.js");
+  await import("./src/soul/capabilityProfiles.test.js");
+  await import("./src/soul/soulEvaluation.test.js");
+  await import("./src/soul/mockSoulAdapter.test.js");
+  await import("./src/soul/soulBenchmark.test.js");
+  await import("./src/soul/soulSeam.test.js");
+  await import("./src/realtime/realtimeAdapterSeam.test.js");
+  await import("./src/technology/gapDetectionSeedProfiles.test.js");
+  await import("./src/technology/retryBackoffSeedProfiles.test.js");
+  await import("./src/arena/arenaAdapterSeam.test.js");
+  await import("./src/arena/arenaEvaluation.test.js");
+  await import("./src/arena/mockArenaAdapter.test.js");
+  await import("./src/arena/gapProjections.test.js");
+  await import("./src/arena/arenaBenchmark.test.js");
+  await import("./src/arena/arenaSeam.test.js");
 }

@@ -1,5 +1,6 @@
-/* eslint-disable max-lines -- the single seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7 is consolidated BY DESIGN: exactly one module maps every neutral you-lab shape onto the frozen contracts (the only-module law asserted by tests), so the full W1C/W2C/W3C/W4C/W5C/W6C/W7C mapping surface intentionally lives in this one file. */
-// SINGLE seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7
+/* eslint-disable max-lines -- the single seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7+v8 is consolidated BY DESIGN: exactly one module maps every neutral you-lab shape onto the frozen contracts (the only-module law asserted by tests), so the full W1C/W2C/W3C/W4C/W5C/W6C/W7C/W8C mapping surface intentionally lives in this one file. */
+// SINGLE seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7+v8
+// (packages/shared/src/you/contract.ts).
 // (packages/shared/src/you/contract.ts).
 //
 // SEAM NOTE (W1C sandbox): importing "@zcode/shared" from packages/you-lab
@@ -76,6 +77,21 @@ import type {
   RealtimeChannelDescriptor as FrozenRealtimeChannelDescriptor,
   SoulBinding as FrozenSoulBinding,
   SoulRoutingProfile,
+  ArenaExpertResult as FrozenArenaExpertResult,
+  ArenaLearningPermission,
+  ArenaProviderDescriptor as FrozenArenaProviderDescriptor,
+  ArenaRetryPolicy as FrozenArenaRetryPolicy,
+  ArenaRun as FrozenArenaRun,
+  ArenaRunStatus,
+  ArenaEscalationRef as FrozenArenaEscalationRef,
+  ArenaEscalationStatus,
+  AttemptedStrategy as FrozenAttemptedStrategy,
+  CapabilityGap as FrozenCapabilityGap,
+  CapabilityGapCategory,
+  EscalationAuthorization as FrozenEscalationAuthorization,
+  EscalationEligibility as FrozenEscalationEligibility,
+  KnowledgeGapProjection as FrozenKnowledgeGapProjection,
+  ToolGapProjection as FrozenToolGapProjection,
 } from "../../shared/src/you/contract.js";
 import type { CandidateOperation, EditorArtifact, NeutralEntity } from "./adapters/editorAdapterSeam.js";
 import type { CaptureObservation, NeutralCaptureModality } from "./capture/captureAdapterSeam.js";
@@ -127,6 +143,23 @@ import type {
 } from "./soul/soulAdapterSeam.js";
 import type { CandidateSoulResult } from "./soul/soulRunner.js";
 import type { NeutralRealtimeChannel } from "./realtime/realtimeAdapterSeam.js";
+import type {
+  ArenaAdapter,
+  NeutralArenaAuthorizationContext,
+  NeutralArenaBackoffClass,
+  NeutralArenaGapRecord,
+  NeutralArenaInvocation,
+  NeutralArenaLearningPermission,
+  NeutralArenaOutput,
+  NeutralArenaProviderDescriptor,
+  NeutralArenaRetryLadder,
+  NeutralArenaRunRecord,
+  NeutralArenaRunStatus,
+  NeutralCapabilityGapCategory,
+  NeutralEscalationEligibility,
+} from "./arena/arenaAdapterSeam.js";
+import type { CandidateArenaResult } from "./arena/arenaRunner.js";
+import type { NeutralKnowledgeGapProjection, NeutralToolGapProjection } from "./arena/gapProjections.js";
 import { canonicalJson } from "./determinism.js";
 
 /**
@@ -1490,4 +1523,293 @@ export function soulThroughAdapter(
     closedAt: null,
   });
   return { binding, avatarSession, records: output.records, output };
+}
+
+// ---------------------------------------------------------------------------
+// W8C: seam mapping onto the frozen v8 arena contracts (CapabilityGap /
+// ArenaRun / ArenaRetryPolicy / EscalationAuthorization /
+// ArenaProviderDescriptor / ToolGapProjection / KnowledgeGapProjection).
+// The neutral W8C shapes in arena/arenaAdapterSeam.ts and
+// arena/gapProjections.ts are structurally aligned with the frozen v8
+// shapes, so this mapping is 1:1 and never redeclares or mutates contract
+// semantics. The category/eligibility/status/learning-permission/backoff
+// mappings also happen here — the ONLY place neutral arena shapes meet the
+// frozen v8 literals. IDENTITY LAW: run records thread the invocation's
+// gap identity and the output's request identity (adapters never mint
+// identity — enforced on the full path below). GAP PERSISTENCE LAW: the
+// gap is an immutable input; run records map append-only; projections are
+// derived, never authoritative. TRUTH LAW: fixture arena runs stay
+// `simulated: true`.
+// ---------------------------------------------------------------------------
+
+/** Map a neutral gap category onto the frozen v1/v8 CapabilityGapCategory (1:1 across the seven literals, validated). */
+export function mapCapabilityGapCategory(category: NeutralCapabilityGapCategory): CapabilityGapCategory {
+  if (category.length === 0) {
+    throw new Error("mapCapabilityGapCategory: empty gap category (truth law — refusing to map an unaddressed category)");
+  }
+  if (
+    category === "TOOL_GAP" || category === "EDITOR_GAP" || category === "MODEL_GAP" || category === "SKILL_GAP" ||
+    category === "KNOWLEDGE_GAP" || category === "DATA_GAP" || category === "EXPERT_GAP"
+  ) {
+    // Open-union guard — the cast is sound (see mapLearningScope).
+    return category as CapabilityGapCategory;
+  }
+  throw new Error(`mapCapabilityGapCategory: neutral category "${category}" has no frozen v1/v8 mapping (the seven categories are frozen; extension requires a TL contract update)`);
+}
+
+/** Map a neutral escalation eligibility onto the frozen v1 EscalationEligibility (1:1, validated). */
+export function mapEscalationEligibility(eligibility: NeutralEscalationEligibility): FrozenEscalationEligibility {
+  if (eligibility === "not-eligible" || eligibility === "eligible" || eligibility === "escalated") {
+    // Open-union guard — the cast is sound (see mapLearningScope).
+    return eligibility as FrozenEscalationEligibility;
+  }
+  throw new Error(`mapEscalationEligibility: neutral eligibility "${eligibility}" has no frozen v1 mapping (not-eligible/eligible/escalated)`);
+}
+
+/** Map a neutral arena run status onto the frozen v8 ArenaRunStatus (1:1 across the four literals, validated). */
+export function mapArenaRunStatus(status: NeutralArenaRunStatus): ArenaRunStatus {
+  if (status === "started" || status === "completed" || status === "failed" || status === "aborted") {
+    // Open-union guard — the cast is sound (see mapLearningScope).
+    return status as ArenaRunStatus;
+  }
+  throw new Error(`mapArenaRunStatus: neutral status "${status}" has no frozen v8 mapping (started/completed/failed/aborted)`);
+}
+
+/** Map a neutral arena learning permission onto the frozen v8 ArenaLearningPermission (1:1, validated). */
+export function mapArenaLearningPermission(permission: NeutralArenaLearningPermission): ArenaLearningPermission {
+  if (permission === "none" || permission === "aggregate" || permission === "full") {
+    // Open-union guard — the cast is sound (see mapLearningScope).
+    return permission as ArenaLearningPermission;
+  }
+  throw new Error(`mapArenaLearningPermission: neutral permission "${permission}" has no frozen v8 mapping (none/aggregate/full)`);
+}
+
+/**
+ * Map a neutral backoff class onto the frozen v8 ArenaRetryPolicy
+ * .backoffClass (an opaque string whose registry authority is the W8C
+ * lane — the authored four-class vocabulary is validated here, the ONLY
+ * gate; extension requires a W8C registry update plus this seam table).
+ */
+export function mapArenaBackoffClass(backoffClass: NeutralArenaBackoffClass): string {
+  if (backoffClass.length === 0) {
+    throw new Error("mapArenaBackoffClass: empty backoff class (truth law — refusing to map an unaddressed class)");
+  }
+  if (
+    backoffClass === "circuit-breaker" || backoffClass === "hedged-request" ||
+    backoffClass === "exponential-backoff-jitter" || backoffClass === "token-bucket"
+  ) {
+    return backoffClass;
+  }
+  throw new Error(`mapArenaBackoffClass: neutral class "${backoffClass}" is outside the W8C authored backoff vocabulary (circuit-breaker/hedged-request/exponential-backoff-jitter/token-bucket)`);
+}
+
+/** Map a neutral arena escalation status onto the frozen v1 ArenaEscalationStatus (1:1 across the seven-state ladder, validated). */
+export function mapArenaEscalationStatus(status: string): ArenaEscalationStatus {
+  if (
+    status === "requested" || status === "authorized" || status === "in-progress" || status === "delivered" ||
+    status === "applied" || status === "rejected" || status === "cancelled"
+  ) {
+    return status;
+  }
+  throw new Error(`mapArenaEscalationStatus: status "${status}" has no frozen v1 mapping (the seven-state escalation ladder is frozen)`);
+}
+
+/** Inputs for frozen v1 CapabilityGap construction (the escalation link is service-owned identity, injected here). */
+export interface CapabilityGapConstruction {
+  readonly gap: NeutralArenaGapRecord;
+  readonly arenaEscalationRef: {
+    readonly escalationId: string;
+    readonly status: string;
+    readonly minimumContext: readonly string[];
+    readonly expertResult: {
+      readonly deliveredAt: string;
+      readonly resultType: "typed-payload" | "artifact" | "guidance";
+      readonly payload: Readonly<Record<string, string | number | boolean>>;
+      readonly appliesAsChangeSetId: string | null;
+    } | null;
+  } | null;
+}
+
+/** Build a frozen v1 CapabilityGap from the construction (validated 1:1 mapping; the gap stays immutable). */
+export function toFrozenCapabilityGap(construction: CapabilityGapConstruction): FrozenCapabilityGap {
+  const gap = construction.gap;
+  if (gap.id.length === 0) throw new Error("toFrozenCapabilityGap: empty gap id");
+  const attemptedStrategies: FrozenAttemptedStrategy[] = [];
+  for (const strategy of gap.attemptedStrategies) {
+    if (strategy.strategy.length === 0) throw new Error("toFrozenCapabilityGap: empty attempted-strategy string");
+    if (strategy.outcome !== "failed" && strategy.outcome !== "partial" && strategy.outcome !== "rejected") {
+      throw new Error(`toFrozenCapabilityGap: invalid strategy outcome '${strategy.outcome}'`);
+    }
+    attemptedStrategies.push({ strategy: strategy.strategy, outcome: strategy.outcome, evidenceRef: strategy.evidenceRef });
+  }
+  let arenaEscalationRef: FrozenArenaEscalationRef | null = null;
+  const ref = construction.arenaEscalationRef;
+  if (ref !== null) {
+    if (ref.escalationId.length === 0) throw new Error("toFrozenCapabilityGap: empty escalationId on the escalation ref");
+    let expertResult: FrozenArenaExpertResult | null = null;
+    if (ref.expertResult !== null) {
+      if (ref.expertResult.deliveredAt.length === 0) throw new Error("toFrozenCapabilityGap: empty deliveredAt on the expert result");
+      expertResult = { ...ref.expertResult, payload: { ...ref.expertResult.payload } };
+    }
+    arenaEscalationRef = {
+      escalationId: ref.escalationId,
+      status: mapArenaEscalationStatus(ref.status),
+      minimumContext: [...ref.minimumContext],
+      expertResult,
+    };
+  }
+  return {
+    id: gap.id,
+    intentRef: gap.intentRef,
+    attemptedStrategies,
+    failureEvidence: [...gap.failureEvidence],
+    category: mapCapabilityGapCategory(gap.category),
+    confidence: gap.confidence,
+    suggestedNextAction: gap.suggestedNextAction,
+    escalationEligibility: mapEscalationEligibility(gap.escalationEligibility),
+    arenaEscalationRef,
+  };
+}
+
+/** Build a frozen v8 ArenaRun from a neutral run record (append-only ladder entry; identity threaded). */
+export function toFrozenArenaRun(record: NeutralArenaRunRecord): FrozenArenaRun {
+  if (record.id.length === 0) throw new Error("toFrozenArenaRun: empty run id");
+  if (record.gapId.length === 0) throw new Error("toFrozenArenaRun: empty gapId (a run names its gap)");
+  if (record.strategy.length === 0) throw new Error("toFrozenArenaRun: empty strategy");
+  if (!Number.isInteger(record.attempt) || record.attempt < 1) throw new Error(`toFrozenArenaRun: attempt must be an integer >= 1 (got ${record.attempt})`);
+  return {
+    id: record.id,
+    gapId: record.gapId,
+    strategy: record.strategy,
+    attempt: record.attempt,
+    status: mapArenaRunStatus(record.status),
+    startedAt: record.startedAt,
+    completedAt: record.completedAt,
+    outcomeEvidenceRef: record.outcomeEvidenceRef,
+    simulated: record.simulated,
+  };
+}
+
+/** Build a frozen v8 ArenaRetryPolicy from a neutral retry ladder (validated 1:1 mapping). */
+export function toFrozenArenaRetryPolicy(ladder: NeutralArenaRetryLadder): FrozenArenaRetryPolicy {
+  if (!Number.isInteger(ladder.maxAttempts) || ladder.maxAttempts < 1) {
+    throw new Error(`toFrozenArenaRetryPolicy: maxAttempts must be an integer >= 1 (got ${ladder.maxAttempts})`);
+  }
+  if (ladder.eligibilityCategories.length === 0) {
+    throw new Error("toFrozenArenaRetryPolicy: eligibilityCategories is empty");
+  }
+  return {
+    maxAttempts: ladder.maxAttempts,
+    backoffClass: mapArenaBackoffClass(ladder.backoffClass),
+    eligibilityCategories: ladder.eligibilityCategories.map(mapCapabilityGapCategory),
+    requiresAuthorization: ladder.requiresAuthorization,
+  };
+}
+
+/** Build a frozen v8 EscalationAuthorization from a neutral authorization context (validated 1:1 mapping). */
+export function toFrozenEscalationAuthorization(authorization: NeutralArenaAuthorizationContext): FrozenEscalationAuthorization {
+  if (authorization.authorizationId.length === 0) throw new Error("toFrozenEscalationAuthorization: empty authorizationId");
+  if (authorization.escalationId.length === 0) throw new Error("toFrozenEscalationAuthorization: empty escalationId");
+  if (authorization.authorizedBy.length === 0) throw new Error("toFrozenEscalationAuthorization: empty authorizedBy");
+  if (authorization.scope.length === 0) throw new Error("toFrozenEscalationAuthorization: empty scope");
+  if (authorization.grantedAt.length === 0) throw new Error("toFrozenEscalationAuthorization: empty grantedAt");
+  return {
+    id: authorization.authorizationId,
+    escalationId: authorization.escalationId,
+    authorizedBy: authorization.authorizedBy,
+    scope: authorization.scope,
+    grantedAt: authorization.grantedAt,
+    expiresAt: authorization.expiresAt,
+    learningPermission: mapArenaLearningPermission(authorization.learningPermission),
+  };
+}
+
+/** Build a frozen v8 ArenaProviderDescriptor from a neutral provider descriptor (1:1; provider references opaque). */
+export function toFrozenArenaProviderDescriptor(provider: NeutralArenaProviderDescriptor): FrozenArenaProviderDescriptor {
+  if (provider.id.length === 0) throw new Error("toFrozenArenaProviderDescriptor: empty id");
+  if (provider.providerKind.length === 0) throw new Error("toFrozenArenaProviderDescriptor: empty providerKind");
+  if (provider.capabilityClasses.length === 0) throw new Error("toFrozenArenaProviderDescriptor: empty capabilityClasses");
+  return {
+    id: provider.id,
+    providerKind: provider.providerKind,
+    capabilityClasses: [...provider.capabilityClasses],
+    endpointRef: provider.endpointRef,
+  };
+}
+
+/** Build a frozen v8 ToolGapProjection from a neutral tool projection (derived, never authoritative). */
+export function toFrozenToolGapProjection(projection: NeutralToolGapProjection): FrozenToolGapProjection {
+  if (projection.gapId.length === 0) throw new Error("toFrozenToolGapProjection: empty gapId");
+  if (projection.requiredCapability.length === 0) throw new Error("toFrozenToolGapProjection: empty requiredCapability");
+  if (projection.remediation.length === 0) throw new Error("toFrozenToolGapProjection: empty remediation");
+  return {
+    gapId: projection.gapId,
+    toolId: projection.toolId,
+    requiredCapability: projection.requiredCapability,
+    remediation: projection.remediation,
+  };
+}
+
+/** Build a frozen v8 KnowledgeGapProjection from a neutral knowledge projection (derived, never authoritative). */
+export function toFrozenKnowledgeGapProjection(projection: NeutralKnowledgeGapProjection): FrozenKnowledgeGapProjection {
+  if (projection.gapId.length === 0) throw new Error("toFrozenKnowledgeGapProjection: empty gapId");
+  if (projection.domain.length === 0) throw new Error("toFrozenKnowledgeGapProjection: empty domain");
+  if (projection.remediation.length === 0) throw new Error("toFrozenKnowledgeGapProjection: empty remediation");
+  return {
+    gapId: projection.gapId,
+    domain: projection.domain,
+    missingKnowledgeRef: projection.missingKnowledgeRef,
+    remediation: projection.remediation,
+  };
+}
+
+/** Honest effort observations for an arena benchmark result (structured not-measured markers). */
+export function toArenaEffortObservations(
+  result: CandidateArenaResult,
+): Readonly<Record<string, string | number | boolean>> {
+  const out: Record<string, string | number | boolean> = {
+    fixtureCount: result.fixtureScores.length,
+    simulated: true,
+  };
+  appendMetricField(out, "arenaEffort", result.effort);
+  appendMetricField(out, "latencyMs", result.latency);
+  appendMetricField(out, "costUnits", result.cost);
+  return out;
+}
+
+/**
+ * Full W8C path: invoke the arena adapter and construct the frozen v8
+ * shapes (neutral provider + gap + ladder -> adapter.invoke() -> frozen
+ * ArenaProviderDescriptor + CapabilityGap + append-only ArenaRun ladder).
+ * IDENTITY LAW: every run record must thread the invocation's gap identity
+ * and the output must thread the request identity — an adapter minting
+ * records for another gap/request is refused. Pure orchestration — no
+ * business logic; the adapter remains the only arena provider and the
+ * arena authority service (W8A) remains the authority.
+ */
+export function arenaThroughAdapter(
+  adapter: ArenaAdapter,
+  invocation: NeutralArenaInvocation,
+  escalationRef: CapabilityGapConstruction["arenaEscalationRef"],
+): {
+  readonly provider: FrozenArenaProviderDescriptor;
+  readonly gap: FrozenCapabilityGap;
+  readonly runs: readonly FrozenArenaRun[];
+  readonly output: NeutralArenaOutput;
+} {
+  const output = adapter.invoke(invocation);
+  if (output.requestId !== invocation.requestId) {
+    throw new Error(`arenaThroughAdapter: output requestId "${output.requestId}" diverges from the invocation (identity law — adapters never mint request identity)`);
+  }
+  for (const record of output.runRecords) {
+    if (record.gapId !== invocation.gap.id) {
+      throw new Error(`arenaThroughAdapter: run record ${record.id} gapId "${record.gapId}" diverges from the invocation gap (identity law — adapters never mint gap identity)`);
+    }
+    // every record's status must be a valid frozen v8 literal
+    mapArenaRunStatus(record.status);
+  }
+  const provider = toFrozenArenaProviderDescriptor(invocation.provider);
+  const gap = toFrozenCapabilityGap({ gap: invocation.gap, arenaEscalationRef: escalationRef });
+  const runs = output.runRecords.map(toFrozenArenaRun);
+  return { provider, gap, runs, output };
 }
