@@ -1245,3 +1245,26 @@ Workers never mark their own work DONE; they submit evidence to TL.
   arenaLedger.ts.
 - Merged as PR #33 (merge commit cbf5913) by the station TL
   (workers never merge their own PRs).
+
+### W8B merge record (2026-10-13)
+
+- Harvested from `you/w8b-escalation` @ b75417c (worker turn admitted
+  14:55Z post workspace-gate cure). 46 files, +9265/−20: 35 under
+  packages/ui/src/you (escalation surfaces — gate, progress ladder,
+  expert-result review, CapabilityGap panels, permissions
+  display/withdrawal, simulated controller, storyboard, messages
+  en-US/zh-CN) + the EXACT 11-file W2B-W7B disclosed registration
+  seam set (verified identical file set to the W7B delivery; all 20
+  deletions are tab-registry lines gaining the escalation entry —
+  the sanctioned registration mechanism).
+- Station verification: ui you-tests **381/381** (W7B parity 334 +
+  47 new, zero fail); ui tsc batch OOM-SIGKILLs station-side (the
+  documented W5A environmental condition — live worker renderers
+  hold ~1.6GB; the W7B station law accepts split-run parity + the
+  station ui battery as the evidence class); shared/services
+  reference closures tsc -b exit 0 at the same base.
+- Completion pattern: the worker's turn ended after branch push,
+  before the final report post (the W7B operational precedent);
+  report fields remain template-echo only — branch + station battery
+  are the deliverable truth.
+- Merged as PR #34 (merge commit 8d5a5b9) by the station TL.
