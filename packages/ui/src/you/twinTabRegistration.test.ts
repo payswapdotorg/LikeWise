@@ -99,11 +99,12 @@ test("launcher offers twin only when the tab is not open", () => {
     "editing",
     "learning",
     "avatar",
+    "escalation",
   ]);
 
   assert.deepEqual(
     resolveOpenTabLauncherItemIds({ ...base, hasTwinTab: true }),
-    ["review", "terminal", "browser", "solution", "capture", "performance", "editing", "learning", "avatar"],
+    ["review", "terminal", "browser", "solution", "capture", "performance", "editing", "learning", "avatar", "escalation"],
   );
 
   // 既有行为不受影响：developer tools / review / 无浏览器环境 / 缺省参数向后兼容。
@@ -115,7 +116,7 @@ test("launcher offers twin only when the tab is not open", () => {
       hasCaptureTab: false,
       supportsEmbeddedBrowser: false,
     }),
-    ["terminal", "developer-tools", "solution", "capture", "twin", "performance", "editing", "learning", "avatar"],
+    ["terminal", "developer-tools", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation"],
   );
 
   // 未传 hasTwinTab 时缺省 false（既有调用点零行为变化，twin 入口照常出现）。
@@ -126,7 +127,7 @@ test("launcher offers twin only when the tab is not open", () => {
       hasSolutionTab: false,
       hasCaptureTab: false,
     }),
-    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "avatar"],
+    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation"],
   );
 
   assert.deepEqual(
@@ -150,6 +151,7 @@ test("launcher offers twin only when the tab is not open", () => {
       "editing",
       "learning",
       "avatar",
+      "escalation",
     ],
   );
 });

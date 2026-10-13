@@ -57,3 +57,10 @@ import "./avatarStudioStore.test.js";
 import "./avatarStudioProjection.test.js";
 import "./avatarSimulatedController.test.js";
 import "./avatarStudioDemo.test.js";
+// W8B — Escalation Studio 逻辑测试。
+import "./escalationTabRegistration.test.js";
+import "./escalationMessages.test.js";
+import "./escalationStudioStore.test.js";
+import "./escalationStudioProjection.test.js";
+import "./escalationSimulatedController.test.js";
+import "./escalationStudioDemo.test.js";

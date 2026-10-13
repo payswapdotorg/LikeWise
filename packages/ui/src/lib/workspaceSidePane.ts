@@ -9,6 +9,7 @@ import { resolvePerformanceTabState } from "@/you/performanceTabRegistration.js"
 import { resolveEditingTabState } from "@/you/editingTabRegistration.js";
 import { resolveLearningTabState } from "@/you/learningTabRegistration.js";
 import { resolveAvatarTabState } from "@/you/avatarTabRegistration.js";
+import { resolveEscalationTabState } from "@/you/escalationTabRegistration.js";
 
 export interface BrowserSidePaneTab {
   id: string;
@@ -182,6 +183,20 @@ export interface LearningStudioSidePaneTab {
 export interface AvatarStudioSidePaneTab {
   id: "avatar";
   type: "avatar";
+  ownerTaskId?: string | null;
+  workspaceKey?: string | null;
+  openedAt?: number;
+}
+
+/**
+ * YOU Escalation surface tab（W8B）——与 Solution/Capture/Twin/Performance/Editing/
+ * Learning/Avatar 同级的 native workspace 表面。固定单例 id：一个 workspace 一个
+ * Escalation tab（重复打开幂等地聚焦既有 tab）；内容与视图状态由
+ * `packages/ui/src/you/**` 子树自持（escalation 系列模块）。
+ */
+export interface EscalationStudioSidePaneTab {
+  id: "escalation";
+  type: "escalation";
   ownerTaskId?: string | null;
   workspaceKey?: string | null;
   openedAt?: number;
@@ -631,6 +646,7 @@ export type WorkspaceSidePaneTab =
   | EditingStudioSidePaneTab
   | LearningStudioSidePaneTab
   | AvatarStudioSidePaneTab
+  | EscalationStudioSidePaneTab
   | TerminalSidePaneTab
   | BrowserUseSidePaneTab
   | SubagentSessionSidePaneTab
@@ -1178,6 +1194,8 @@ const WORKSPACE_GLOBAL_SIDE_PANE_TAB_TYPES = new Set<WorkspaceSidePaneTab["type"
   "learning",
   // Avatar 同为 workspace 级表面（W7B，同 ADR-002 语义）。
   "avatar",
+  // Escalation 同为 workspace 级表面（W8B，同 ADR-002 语义）。
+  "escalation",
 ]);
 
 function isWorkspaceGlobalSidePaneTab(tab: WorkspaceSidePaneTab): boolean {
@@ -1798,6 +1816,19 @@ export function openAvatarStudioSidePane(
   },
 ): WorkspaceSidePaneState {
   return resolveAvatarTabState(current, options);
+}
+
+/**
+ * 打开（或幂等聚焦）YOU Escalation 表面 tab（W8B 注册点）。
+ * 纯转移逻辑在 `@/you/escalationTabRegistration.js`（you 子树自含，可被 tsx 直接加载）。
+ */
+export function openEscalationStudioSidePane(
+  current: WorkspaceSidePaneState | null,
+  options: {
+    workspaceKey?: string | null;
+  },
+): WorkspaceSidePaneState {
+  return resolveEscalationTabState(current, options);
 }
 
 export function openTerminalSidePane(

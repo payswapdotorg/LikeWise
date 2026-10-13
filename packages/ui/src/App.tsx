@@ -238,6 +238,7 @@ export function App({
     handleOpenEditingStudio,
     handleOpenLearningStudio,
     handleOpenAvatarStudio,
+    handleOpenEscalationStudio,
     handleOpenTerminalTab,
     handleOpenSubagentSession,
     handleOpenBackgroundBash,
@@ -1258,6 +1259,7 @@ export function App({
         handleOpenEditingStudio={handleOpenEditingStudio}
         handleOpenLearningStudio={handleOpenLearningStudio}
         handleOpenAvatarStudio={handleOpenAvatarStudio}
+        handleOpenEscalationStudio={handleOpenEscalationStudio}
         handleOpenTerminalTab={handleOpenTerminalTabIfWritable}
         handleToggleGit={handleToggleGitIfWritable}
         handleToggleSidePane={handleToggleSidePane}

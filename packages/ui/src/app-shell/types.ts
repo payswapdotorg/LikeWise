@@ -251,6 +251,8 @@ export interface WorkspaceShellLayoutProps extends Omit<AppProps, "baseFeedbackS
   handleOpenLearningStudio: () => void;
   /** YOU Avatar surface（W7B）：幂等打开/聚焦 native Avatar tab。 */
   handleOpenAvatarStudio: () => void;
+  /** YOU Escalation surface（W8B）：幂等打开/聚焦 native Escalation tab。 */
+  handleOpenEscalationStudio: () => void;
   handleOpenTerminalTab: () => void;
   handleToggleGit: () => void;
   handleOpenGitReview: (sourceId?: GitChangeSourceId) => void;
