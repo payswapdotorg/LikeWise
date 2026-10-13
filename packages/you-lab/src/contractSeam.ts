@@ -1,5 +1,5 @@
-/* eslint-disable max-lines -- the single seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7+v8 is consolidated BY DESIGN: exactly one module maps every neutral you-lab shape onto the frozen contracts (the only-module law asserted by tests), so the full W1C/W2C/W3C/W4C/W5C/W6C/W7C/W8C mapping surface intentionally lives in this one file. */
-// SINGLE seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7+v8
+/* eslint-disable max-lines -- the single seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7+v8+v9 is consolidated BY DESIGN: exactly one module maps every neutral you-lab shape onto the frozen contracts (the only-module law asserted by tests), so the full W1C/W2C/W3C/W4C/W5C/W6C/W7C/W8C/W9C mapping surface intentionally lives in this one file. */
+// SINGLE seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7+v8+v9
 // (packages/shared/src/you/contract.ts).
 // (packages/shared/src/you/contract.ts).
 //
@@ -92,6 +92,16 @@ import type {
   EscalationEligibility as FrozenEscalationEligibility,
   KnowledgeGapProjection as FrozenKnowledgeGapProjection,
   ToolGapProjection as FrozenToolGapProjection,
+  FailureAtlasEntry as FrozenFailureAtlasEntry,
+  LabArmKind,
+  LabEvidenceManifest as FrozenLabEvidenceManifest,
+  LabExperiment as FrozenLabExperiment,
+  LabPromotionRecord as FrozenLabPromotionRecord,
+  LabRun as FrozenLabRun,
+  LabRunStatus,
+  LabWorldDescriptor as FrozenLabWorldDescriptor,
+  PipelineGenomeNode as FrozenPipelineGenomeNode,
+  SearchLadderStep as FrozenSearchLadderStep,
 } from "../../shared/src/you/contract.js";
 import type { CandidateOperation, EditorArtifact, NeutralEntity } from "./adapters/editorAdapterSeam.js";
 import type { CaptureObservation, NeutralCaptureModality } from "./capture/captureAdapterSeam.js";
@@ -160,7 +170,21 @@ import type {
 } from "./arena/arenaAdapterSeam.js";
 import type { CandidateArenaResult } from "./arena/arenaRunner.js";
 import type { NeutralKnowledgeGapProjection, NeutralToolGapProjection } from "./arena/gapProjections.js";
+import type { NeutralFailureAtlasEntry } from "./research/failureAtlas.js";
+import type { NeutralPipelineGenomeNode } from "./research/pipelineGenome.js";
+import type { NeutralSearchLadderStep } from "./research/searchLadder.js";
+import type {
+  NeutralLabArmKind,
+  NeutralLabEvidenceManifest,
+  NeutralLabExperiment,
+  NeutralLabRunRecord,
+  NeutralLabRunStatus,
+  PromotionDecisionEvidence,
+  PromotionEvidenceReport,
+} from "./research/promotionEvidence.js";
+import type { NeutralLabWorldDescriptor } from "./research/worlds.js";
 import { canonicalJson } from "./determinism.js";
+import { sha256Hex } from "./arena/arenaAdapterSeam.js";
 
 /**
  * Build a frozen-contract EditorRecommendation from a derived capability
@@ -1812,4 +1836,314 @@ export function arenaThroughAdapter(
   const gap = toFrozenCapabilityGap({ gap: invocation.gap, arenaEscalationRef: escalationRef });
   const runs = output.runRecords.map(toFrozenArenaRun);
   return { provider, gap, runs, output };
+}
+
+// ---------------------------------------------------------------------------
+// W9C: seam mapping onto the frozen v9 lab persistence / research
+// organization contracts (LabRun / LabExperiment / LabEvidenceManifest /
+// LabPromotionRecord / LabWorldDescriptor / FailureAtlasEntry /
+// PipelineGenomeNode / SearchLadderStep). The neutral W9C shapes in
+// research/worlds.ts, research/pipelineGenome.ts, research/searchLadder.ts,
+// research/failureAtlas.ts and research/promotionEvidence.ts are
+// structurally aligned with the frozen v9 shapes, so this mapping is 1:1
+// and never redeclares or mutates contract semantics. The run-status and
+// arm-kind mappings also happen here — the ONLY place neutral lab shapes
+// meet the frozen v9 literals. LAB PROMOTION LAW: the promotion record
+// construction refuses non-admissible promotions (a searched arm that does
+// not beat the baseline never mints a record — the gate decides, this seam
+// maps). IDENTITY LAWS: runs thread the experiment identity, manifests
+// thread the run identity, atlas entries thread world/run identities,
+// ladder steps thread the experiment identity, genome parentRefs resolve
+// (enforced on the full path below). TRUTH LAW: fixture lab research stays
+// `simulated: true` (W10+ compute-plane boundary).
+// ---------------------------------------------------------------------------
+
+/** Map a neutral lab run status onto the frozen v9 LabRunStatus (1:1 across the five literals, validated). */
+export function mapLabRunStatus(status: NeutralLabRunStatus): LabRunStatus {
+  if (status === "submitted" || status === "running" || status === "succeeded" || status === "failed" || status === "retired") {
+    // Open-union guard — the cast is sound (see mapLearningScope).
+    return status as LabRunStatus;
+  }
+  throw new Error(`mapLabRunStatus: neutral status "${status}" has no frozen v9 mapping (submitted/running/succeeded/failed/retired)`);
+}
+
+/** Map a neutral comparison arm onto the frozen v9 LabArmKind (1:1 across the three LAB.md arms, validated). */
+export function mapLabArmKind(kind: NeutralLabArmKind): LabArmKind {
+  if (kind === "generalist-baseline" || kind === "hand-designed" || kind === "searched") {
+    // Open-union guard — the cast is sound (see mapLearningScope).
+    return kind as LabArmKind;
+  }
+  throw new Error(`mapLabArmKind: neutral arm "${kind}" has no frozen v9 mapping (the LAB.md three-arm comparison only)`);
+}
+
+/** Build a frozen v9 LabWorldDescriptor from a neutral world descriptor (seed-deterministic world identity). */
+export function toFrozenLabWorldDescriptor(descriptor: NeutralLabWorldDescriptor): FrozenLabWorldDescriptor {
+  if (descriptor.id.length === 0) throw new Error("toFrozenLabWorldDescriptor: empty id");
+  if (descriptor.seed.length === 0) throw new Error("toFrozenLabWorldDescriptor: empty seed (a world derives from its seed)");
+  if (!Number.isInteger(descriptor.actorCount) || descriptor.actorCount < 1) {
+    throw new Error(`toFrozenLabWorldDescriptor: actorCount ${descriptor.actorCount} must be an integer >= 1`);
+  }
+  return {
+    id: descriptor.id,
+    seed: descriptor.seed,
+    actorCount: descriptor.actorCount,
+    groundTruthRef: descriptor.groundTruthRef,
+    simulated: descriptor.simulated,
+  };
+}
+
+/** Build a frozen v9 SearchLadderStep from a neutral ladder step (append-only; budget law fields validated). */
+export function toFrozenSearchLadderStep(step: NeutralSearchLadderStep): FrozenSearchLadderStep {
+  if (step.id.length === 0) throw new Error("toFrozenSearchLadderStep: empty id");
+  if (step.experimentId.length === 0) throw new Error("toFrozenSearchLadderStep: empty experimentId");
+  if (!Number.isInteger(step.step) || step.step < 1) {
+    throw new Error(`toFrozenSearchLadderStep: step ${step.step} must be an integer >= 1`);
+  }
+  if (step.strategy.length === 0) throw new Error("toFrozenSearchLadderStep: empty strategy");
+  if (!Number.isInteger(step.exploredNodes) || step.exploredNodes < 0) {
+    throw new Error(`toFrozenSearchLadderStep: exploredNodes ${step.exploredNodes} must be an integer >= 0`);
+  }
+  if (!Number.isFinite(step.bestScore) || step.bestScore < 0 || step.bestScore > 1) {
+    throw new Error(`toFrozenSearchLadderStep: bestScore ${step.bestScore} is outside [0, 1]`);
+  }
+  if (!Number.isFinite(step.cumulativeBudget) || step.cumulativeBudget < 0) {
+    throw new Error(`toFrozenSearchLadderStep: cumulativeBudget ${step.cumulativeBudget} must be finite >= 0`);
+  }
+  return {
+    id: step.id,
+    experimentId: step.experimentId,
+    step: step.step,
+    strategy: step.strategy,
+    exploredNodes: step.exploredNodes,
+    bestScore: step.bestScore,
+    cumulativeBudget: step.cumulativeBudget,
+    simulated: step.simulated,
+  };
+}
+
+/** Build a frozen v9 FailureAtlasEntry from a neutral atlas entry (immutable observation, evidence ref required). */
+export function toFrozenFailureAtlasEntry(entry: NeutralFailureAtlasEntry): FrozenFailureAtlasEntry {
+  if (entry.id.length === 0) throw new Error("toFrozenFailureAtlasEntry: empty id");
+  if (entry.worldRef.length === 0) throw new Error("toFrozenFailureAtlasEntry: empty worldRef");
+  if (entry.runRef.length === 0) throw new Error("toFrozenFailureAtlasEntry: empty runRef");
+  if (entry.failureClass.length === 0) throw new Error("toFrozenFailureAtlasEntry: empty failureClass");
+  if (entry.evidenceRef.length === 0) {
+    throw new Error("toFrozenFailureAtlasEntry: empty evidenceRef (the FAILURE ATLAS LAW requires an evidence ref)");
+  }
+  if (entry.firstObservedAt.length === 0) throw new Error("toFrozenFailureAtlasEntry: empty firstObservedAt");
+  return {
+    id: entry.id,
+    worldRef: entry.worldRef,
+    runRef: entry.runRef,
+    failureClass: entry.failureClass,
+    evidenceRef: entry.evidenceRef,
+    firstObservedAt: entry.firstObservedAt,
+    simulated: entry.simulated,
+  };
+}
+
+/** Build a frozen v9 PipelineGenomeNode from a neutral lineage node (append-only lineage fields validated). */
+export function toFrozenPipelineGenomeNode(node: NeutralPipelineGenomeNode): FrozenPipelineGenomeNode {
+  if (node.id.length === 0) throw new Error("toFrozenPipelineGenomeNode: empty id");
+  if (node.parentRef !== null && node.parentRef.length === 0) {
+    throw new Error(`toFrozenPipelineGenomeNode: node ${node.id} carries an empty parentRef (null or a resolvable ref)`);
+  }
+  if (node.mutationKind.length === 0) throw new Error(`toFrozenPipelineGenomeNode: node ${node.id} carries an empty mutationKind`);
+  if (!Number.isFinite(node.score) || node.score < 0 || node.score > 1) {
+    throw new Error(`toFrozenPipelineGenomeNode: node ${node.id} score ${node.score} is outside [0, 1]`);
+  }
+  if (!Number.isInteger(node.generation) || node.generation < 0) {
+    throw new Error(`toFrozenPipelineGenomeNode: node ${node.id} generation ${node.generation} must be an integer >= 0`);
+  }
+  return {
+    id: node.id,
+    parentRef: node.parentRef,
+    mutationKind: node.mutationKind,
+    score: node.score,
+    generation: node.generation,
+    simulated: node.simulated,
+  };
+}
+
+/** Build a frozen v9 LabRun from a neutral durable run record (identity + status/arm mappings validated). */
+export function toFrozenLabRun(record: NeutralLabRunRecord): FrozenLabRun {
+  if (record.id.length === 0) throw new Error("toFrozenLabRun: empty id");
+  if (record.experimentId.length === 0) throw new Error("toFrozenLabRun: empty experimentId (a run threads its experiment)");
+  if (record.planHash.length === 0) throw new Error("toFrozenLabRun: empty planHash (a run names its plan)");
+  if (record.submittedAt.length === 0) throw new Error("toFrozenLabRun: empty submittedAt");
+  return {
+    id: record.id,
+    experimentId: record.experimentId,
+    arm: mapLabArmKind(record.arm),
+    planHash: record.planHash,
+    status: mapLabRunStatus(record.status),
+    submittedAt: record.submittedAt,
+    completedAt: record.completedAt,
+    evidenceManifestRef: record.evidenceManifestRef,
+    simulated: record.simulated,
+  };
+}
+
+/** Build a frozen v9 LabExperiment from a neutral experiment container (the three-arm law validated). */
+export function toFrozenLabExperiment(experiment: NeutralLabExperiment): FrozenLabExperiment {
+  if (experiment.id.length === 0) throw new Error("toFrozenLabExperiment: empty id");
+  if (experiment.intentRef.length === 0) throw new Error("toFrozenLabExperiment: empty intentRef");
+  if (experiment.constraintsHash.length === 0) throw new Error("toFrozenLabExperiment: empty constraintsHash");
+  if (experiment.objective.length === 0) throw new Error("toFrozenLabExperiment: empty objective");
+  if (experiment.arms.length === 0) throw new Error("toFrozenLabExperiment: arms is empty (the LAB.md three-arm comparison)");
+  return {
+    id: experiment.id,
+    intentRef: experiment.intentRef,
+    constraintsHash: experiment.constraintsHash,
+    objective: experiment.objective,
+    arms: experiment.arms.map(mapLabArmKind),
+    promotionRef: experiment.promotionRef,
+    simulated: experiment.simulated,
+  };
+}
+
+/** Build a frozen v9 LabEvidenceManifest from a neutral manifest (content-addressing law validated). */
+export function toFrozenLabEvidenceManifest(manifest: NeutralLabEvidenceManifest): FrozenLabEvidenceManifest {
+  if (manifest.id.length === 0) throw new Error("toFrozenLabEvidenceManifest: empty id");
+  if (manifest.runId.length === 0) throw new Error("toFrozenLabEvidenceManifest: empty runId (a manifest threads its run)");
+  if (manifest.contentHash.length === 0) {
+    throw new Error("toFrozenLabEvidenceManifest: empty contentHash (evidence is content-addressed)");
+  }
+  if (manifest.publishedAt.length === 0) throw new Error("toFrozenLabEvidenceManifest: empty publishedAt");
+  for (const ref of manifest.artifactRefs) {
+    if (ref.length === 0) throw new Error(`toFrozenLabEvidenceManifest: empty artifactRef on manifest ${manifest.id}`);
+  }
+  return {
+    id: manifest.id,
+    runId: manifest.runId,
+    contentHash: manifest.contentHash,
+    artifactRefs: [...manifest.artifactRefs],
+    publishedAt: manifest.publishedAt,
+    simulated: manifest.simulated,
+  };
+}
+
+/** Construction for the frozen v9 LabPromotionRecord: the gate-minted id + the harness's decision evidence. */
+export interface LabPromotionRecordConstruction {
+  readonly id: string;
+  readonly evidence: PromotionDecisionEvidence;
+}
+
+/**
+ * Build a frozen v9 LabPromotionRecord from the promotion-decision
+ * evidence. LAB PROMOTION LAW (fail-closed): a record is constructible
+ * ONLY when the searched arm beat the generalist baseline under the
+ * recorded objective — non-admissible evidence never mints a promotion
+ * record (the promotion gate decides; this seam refuses to map a
+ * non-promotion into a record).
+ */
+export function toFrozenLabPromotionRecord(construction: LabPromotionRecordConstruction): FrozenLabPromotionRecord {
+  const evidence = construction.evidence;
+  if (construction.id.length === 0) throw new Error("toFrozenLabPromotionRecord: empty id (the gate mints the record id)");
+  if (evidence.experimentId.length === 0) throw new Error("toFrozenLabPromotionRecord: empty experimentId");
+  if (evidence.evidenceManifestRef.length === 0) throw new Error("toFrozenLabPromotionRecord: empty evidenceManifestRef");
+  if (evidence.decidedAt.length === 0) throw new Error("toFrozenLabPromotionRecord: empty decidedAt");
+  if (!evidence.promotionAdmissible) {
+    throw new Error(
+      "toFrozenLabPromotionRecord: the searched arm does not beat the generalist baseline under the recorded objective — YOU_LAB_PROMOTION_INVALID (the promotion gate records only admissible promotions)",
+    );
+  }
+  return {
+    id: construction.id,
+    experimentId: evidence.experimentId,
+    winnerArm: "searched",
+    objectiveScore: evidence.searchedArmScore,
+    baselineScore: evidence.baselineScore,
+    evidenceManifestRef: evidence.evidenceManifestRef,
+    decidedAt: evidence.decidedAt,
+    simulated: evidence.simulated,
+  };
+}
+
+/** The full frozen v9 mapping of one promotion-evidence report (identity laws enforced). */
+export interface FrozenLabResearchPath {
+  readonly experiment: FrozenLabExperiment;
+  readonly worlds: readonly FrozenLabWorldDescriptor[];
+  readonly runs: readonly FrozenLabRun[];
+  readonly manifests: readonly FrozenLabEvidenceManifest[];
+  readonly ladderSteps: readonly FrozenSearchLadderStep[];
+  readonly genomeNodes: readonly FrozenPipelineGenomeNode[];
+  readonly atlasEntries: readonly FrozenFailureAtlasEntry[];
+  readonly promotion: FrozenLabPromotionRecord | null;
+}
+
+/**
+ * Full W9C path: map a promotion-evidence report onto the complete frozen
+ * v9 shape set (experiment + world descriptors + runs + evidence manifests
+ * + search-ladder steps + genome lineage + atlas entries + the promotion
+ * record when admissible). IDENTITY LAWS (fail-closed): runs thread the
+ * experiment identity; manifests thread run identity; every run's
+ * evidenceManifestRef resolves; atlas entries reference present worlds and
+ * runs; ladder steps thread the experiment identity; genome parentRefs
+ * resolve within the deduplicated node set (the three arms share the seed
+ * root). Pure orchestration — no business logic; the harness remains the
+ * evidence producer and the promotion gate (W9A) remains the authority.
+ */
+export function labResearchThroughHarness(report: PromotionEvidenceReport): FrozenLabResearchPath {
+  const experiment = toFrozenLabExperiment(report.experiment);
+  const worlds = report.worlds.map((world) => toFrozenLabWorldDescriptor(world.descriptor));
+  const worldIds = new Set(worlds.map((world) => world.id));
+  const runs = report.armResults.map((arm) => toFrozenLabRun(arm.run));
+  const runIds = new Set(runs.map((run) => run.id));
+  const manifests = report.armResults.map((arm) => toFrozenLabEvidenceManifest(arm.manifest));
+  const manifestIds = new Set(manifests.map((manifest) => manifest.id));
+  for (const run of runs) {
+    if (run.experimentId !== experiment.id) {
+      throw new Error(`labResearchThroughHarness: run ${run.id} threads experiment '${run.experimentId}' != '${experiment.id}' (identity law)`);
+    }
+    if (run.evidenceManifestRef !== null && !manifestIds.has(run.evidenceManifestRef)) {
+      throw new Error(`labResearchThroughHarness: run ${run.id} evidenceManifestRef '${run.evidenceManifestRef}' does not resolve (identity law)`);
+    }
+  }
+  for (const manifest of manifests) {
+    if (!runIds.has(manifest.runId)) {
+      throw new Error(`labResearchThroughHarness: manifest ${manifest.id} threads run '${manifest.runId}' which is not present (identity law)`);
+    }
+  }
+  const searchedArm = report.armResults.find((arm) => arm.arm === "searched");
+  const ladderSteps = searchedArm?.searchLadder === null || searchedArm?.searchLadder === undefined
+    ? []
+    : searchedArm.searchLadder.steps.map(toFrozenSearchLadderStep);
+  for (const step of ladderSteps) {
+    if (step.experimentId !== experiment.id) {
+      throw new Error(`labResearchThroughHarness: ladder step ${step.id} threads experiment '${step.experimentId}' != '${experiment.id}' (identity law)`);
+    }
+  }
+  const genomeNodesById = new Map<string, NeutralPipelineGenomeNode>();
+  for (const arm of report.armResults) {
+    for (const node of arm.genome.nodes) {
+      const existing = genomeNodesById.get(node.id);
+      if (existing !== undefined && canonicalJson(existing) !== canonicalJson(node)) {
+        throw new Error(`labResearchThroughHarness: genome node '${node.id}' appears with divergent content across arms (identity law)`);
+      }
+      genomeNodesById.set(node.id, node);
+    }
+  }
+  for (const node of genomeNodesById.values()) {
+    if (node.parentRef !== null && !genomeNodesById.has(node.parentRef)) {
+      throw new Error(`labResearchThroughHarness: genome node ${node.id} parentRef '${node.parentRef}' does not resolve (lineage integrity)`);
+    }
+  }
+  const genomeNodes = [...genomeNodesById.values()].map(toFrozenPipelineGenomeNode);
+  const atlasEntries = report.failureAtlas.map(toFrozenFailureAtlasEntry);
+  for (const entry of atlasEntries) {
+    if (!worldIds.has(entry.worldRef)) {
+      throw new Error(`labResearchThroughHarness: atlas entry ${entry.id} references world '${entry.worldRef}' which is not present (identity law)`);
+    }
+    if (!runIds.has(entry.runRef)) {
+      throw new Error(`labResearchThroughHarness: atlas entry ${entry.id} references run '${entry.runRef}' which is not present (identity law)`);
+    }
+  }
+  const promotion = report.promotion.promotionAdmissible
+    ? toFrozenLabPromotionRecord({
+        id: `you_promotion_${sha256Hex(`${report.promotion.experimentId}|${report.promotion.evidenceManifestRef}|${report.promotion.decidedAt}`).slice(0, 16)}`,
+        evidence: report.promotion,
+      })
+    : null;
+  return { experiment, worlds, runs, manifests, ladderSteps, genomeNodes, atlasEntries, promotion };
 }

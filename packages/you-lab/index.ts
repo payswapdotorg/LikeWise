@@ -84,4 +84,12 @@ if (isTestRunnerDirectoryEntry()) {
   await import("./src/arena/gapProjections.test.js");
   await import("./src/arena/arenaBenchmark.test.js");
   await import("./src/arena/arenaSeam.test.js");
+  // W9C research-organization additions — the directory form reports the
+  // FULL suite (parity with the glob form).
+  await import("./src/research/worlds.test.js");
+  await import("./src/research/pipelineGenome.test.js");
+  await import("./src/research/searchLadder.test.js");
+  await import("./src/research/failureAtlas.test.js");
+  await import("./src/research/promotionEvidence.test.js");
+  await import("./src/research/researchSeam.test.js");
 }
