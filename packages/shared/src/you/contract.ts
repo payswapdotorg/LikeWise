@@ -484,7 +484,12 @@ export type SolutionEventType =
   | "escalation-authorized"
   | "escalation-cancelled"
   | "learning-permission-recorded"
-  | "gap-projection-published";
+  | "gap-projection-published"
+  | "lab-run-recorded"
+  | "lab-evidence-published"
+  | "lab-promotion-decided"
+  | "failure-atlas-entry-recorded"
+  | "pipeline-genome-node-recorded";
 
 export interface SolutionEvent {
   readonly id: OpaqueId;
@@ -536,7 +541,13 @@ export type YouErrorCode =
   | "YOU_ARENA_RUN_NOT_FOUND"
   | "YOU_RETRY_POLICY_INVALID"
   | "YOU_ARENA_ADAPTER_UNSUPPORTED"
-  | "YOU_GAP_PROJECTION_INVALID";
+  | "YOU_GAP_PROJECTION_INVALID"
+  | "YOU_LAB_RUN_NOT_FOUND"
+  | "YOU_LAB_EXPERIMENT_NOT_FOUND"
+  | "YOU_LAB_EVIDENCE_MANIFEST_INVALID"
+  | "YOU_LAB_PROMOTION_INVALID"
+  | "YOU_LAB_WORLD_INVALID"
+  | "YOU_SEARCH_LADDER_INVALID";
 
 // ---------------------------------------------------------------------------
 // Evidence / Capture / Consent — frozen v2 (wave 2, TL freeze at T1->W2)
@@ -1444,4 +1455,156 @@ export interface KnowledgeGapProjection {
   readonly domain: string;
   readonly missingKnowledgeRef: string | null;
   readonly remediation: string;
+}
+
+// ---------------------------------------------------------------------------
+// Lab Persistence / Research Organization — frozen v9 (wave 9, TL freeze at
+// T8->W9)
+//
+// Authority: docs/you/CONTRACTS.md "Wave-9 contract freeze (v9)".
+// Dispatched by: docs/you/WORK_ORDERS.md (W9A / W9B / W9C).
+// Additive only: no existing shape changes (the no-drift rule).
+// ---------------------------------------------------------------------------
+
+/**
+ * The lab run ladder. Append-only: a projection of attempts over an
+ * experiment arm, never mutated in place.
+ */
+export type LabRunStatus =
+  | "submitted"
+  | "running"
+  | "succeeded"
+  | "failed"
+  | "retired";
+
+/**
+ * The LAB.md comparison law: every serious lab experiment compares a
+ * generalist baseline, a hand-designed organization, and a searched
+ * organization. Only a searched arm that beats the baseline under the
+ * recorded objective and constraints can promote.
+ */
+export type LabArmKind =
+  | "generalist-baseline"
+  | "hand-designed"
+  | "searched";
+
+/**
+ * One durable run of an experiment arm. Authority = the lab
+ * persistence service (W9A). Records are immutable; lifecycle is the
+ * append-only LabRun ladder.
+ */
+export interface LabRun {
+  readonly id: OpaqueId;
+  readonly experimentId: OpaqueId;
+  readonly arm: LabArmKind;
+  readonly planHash: string;
+  readonly status: LabRunStatus;
+  readonly submittedAt: string;
+  readonly completedAt: string | null;
+  readonly evidenceManifestRef: OpaqueId | null;
+  readonly simulated: boolean;
+}
+
+/**
+ * The durable experiment container: one intent + one constraint set,
+ * compared across arms. Immutable once declared; runs and promotion
+ * decisions append around it.
+ */
+export interface LabExperiment {
+  readonly id: OpaqueId;
+  readonly intentRef: OpaqueId;
+  readonly constraintsHash: string;
+  readonly objective: string;
+  readonly arms: readonly LabArmKind[];
+  readonly promotionRef: OpaqueId | null;
+  readonly simulated: boolean;
+}
+
+/**
+ * Content-addressed evidence bundle for a lab run. The manifest is
+ * the durability unit: artifact content hashes make runs replayable
+ * and auditable without trusting the storage layer.
+ */
+export interface LabEvidenceManifest {
+  readonly id: OpaqueId;
+  readonly runId: OpaqueId;
+  readonly contentHash: string;
+  readonly artifactRefs: readonly OpaqueId[];
+  readonly publishedAt: string;
+  readonly simulated: boolean;
+}
+
+/**
+ * The promotion gate outcome. LAB PROMOTION LAW: a searched arm
+ * promotes ONLY when it beats the generalist baseline under the
+ * experiment's recorded objective and constraints. Immutable; a
+ * reversal is a new record, never a mutation.
+ */
+export interface LabPromotionRecord {
+  readonly id: OpaqueId;
+  readonly experimentId: OpaqueId;
+  readonly winnerArm: LabArmKind;
+  readonly objectiveScore: number;
+  readonly baselineScore: number;
+  readonly evidenceManifestRef: OpaqueId;
+  readonly decidedAt: string;
+  readonly simulated: boolean;
+}
+
+/**
+ * A deterministic lab world: seed-derived actors, ground truth and
+ * cameras. Same seed -> byte-identical world (the LAB DETERMINISM
+ * LAW). Real-world integration stays behind the compute plane.
+ */
+export interface LabWorldDescriptor {
+  readonly id: OpaqueId;
+  readonly seed: string;
+  readonly actorCount: number;
+  readonly groundTruthRef: string | null;
+  readonly simulated: boolean;
+}
+
+/**
+ * One Failure Atlas observation: a failure class seen in a world run,
+ * with evidence. Entries are immutable observations, never
+ * authoritative conclusions (the FAILURE ATLAS LAW).
+ */
+export interface FailureAtlasEntry {
+  readonly id: OpaqueId;
+  readonly worldRef: OpaqueId;
+  readonly runRef: OpaqueId;
+  readonly failureClass: string;
+  readonly evidenceRef: OpaqueId;
+  readonly firstObservedAt: string;
+  readonly simulated: boolean;
+}
+
+/**
+ * One Pipeline Genome lineage node: a candidate pipeline configuration
+ * with its parent lineage and recorded score. The genome is
+ * append-only lineage, never mutated.
+ */
+export interface PipelineGenomeNode {
+  readonly id: OpaqueId;
+  readonly parentRef: OpaqueId | null;
+  readonly mutationKind: string;
+  readonly score: number;
+  readonly generation: number;
+  readonly simulated: boolean;
+}
+
+/**
+ * One search/RL ladder step over an experiment. SEARCH BUDGET LAW:
+ * exploration under an explicit cumulative budget; steps append-only;
+ * budget exhaustion is a recorded terminal, never a silent stop.
+ */
+export interface SearchLadderStep {
+  readonly id: OpaqueId;
+  readonly experimentId: OpaqueId;
+  readonly step: number;
+  readonly strategy: string;
+  readonly exploredNodes: number;
+  readonly bestScore: number;
+  readonly cumulativeBudget: number;
+  readonly simulated: boolean;
 }

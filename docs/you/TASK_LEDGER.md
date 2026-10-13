@@ -1334,3 +1334,32 @@ Workers never mark their own work DONE; they submit evidence to TL.
   window-grinding via kick loops, and a two-station convergence on the
   same verified branches. Evidence-grade batch dumps of every lane's
   chat content are banked per-deployment (scripts/worker-reports/).
+
+### W9 contract freeze + dispatch record (2026-10-13)
+
+- Frozen by the TL (this station) at the T8->W9 transition. Contract
+  freeze commit: THIS COMMIT. Machine authority:
+  `packages/shared/src/you/contract.ts` v9 (ADDITIVE — LabRunStatus,
+  LabRun, LabArmKind, LabExperiment, LabEvidenceManifest,
+  LabPromotionRecord, LabWorldDescriptor, FailureAtlasEntry,
+  PipelineGenomeNode, SearchLadderStep; events lab-run-recorded /
+  lab-evidence-published / lab-promotion-decided /
+  failure-atlas-entry-recorded / pipeline-genome-node-recorded; error
+  codes YOU_LAB_RUN_NOT_FOUND / YOU_LAB_EXPERIMENT_NOT_FOUND /
+  YOU_LAB_EVIDENCE_MANIFEST_INVALID / YOU_LAB_PROMOTION_INVALID /
+  YOU_LAB_WORLD_INVALID / YOU_SEARCH_LADDER_INVALID).
+- Docs: CONTRACTS.md "Wave-9 contract freeze (v9)" (the LAB
+  PERSISTENCE LAW + LAB PROMOTION LAW + LAB DETERMINISM LAW + SEARCH
+  BUDGET LAW + FAILURE ATLAS LAW); WORK_ORDERS.md W9A/W9B/W9C
+  expanded to full binding orders.
+- Wave-9 lanes: W9A Lab Persistence (`you/w9a-labpersistence`), W9B
+  Lab Studio (`you/w9b-labstudio`), W9C Research Organization
+  (`you/w9c-researchorg`); branches pre-cut at the freeze.
+- Verified at freeze: shared tsc exit 0; shared battery 401/401
+  unchanged (additive-only).
+- Context: W8 completed 1362/1362 green via two-station convergence
+  (W8A+W8B this station, W8C parallel station; cross-verified). T8
+  binding point disclosed in the W8 completion record (c660e9f): the
+  Escalation Studio's simulated controller port mirrors the W8A
+  arena-service seams 1:1 — the T9-class binding swaps simulated for
+  real with zero UI changes.

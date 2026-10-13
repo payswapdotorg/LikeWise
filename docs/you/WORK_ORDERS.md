@@ -1089,18 +1089,113 @@ Acceptance:
 
 ## W9A — Lab Persistence
 
+Branch: `you/w9a-labpersistence`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch (the W9 contract-freeze commit on main).
+
 Objective:
-Durable experiment/run/evidence manifests.
+Durable LabExperiment/LabRun records, content-addressed evidence
+manifests, the promotion gate, and the lab event integration on the
+frozen v9 contracts.
+
+Frozen write surface (wave 9):
+- `packages/shared/src/you/**` — EXCEPT `you/contract.ts` is TL-frozen;
+- `packages/services/src/you/**`.
+
+Zero edits to any other existing file; no new dependencies.
+
+Acceptance:
+- LabExperiment persistence: immutable experiment records (intentRef,
+  constraintsHash, objective, arms per the LAB.md three-arm law);
+  typed `YOU_LAB_EXPERIMENT_NOT_FOUND`;
+- LabRun ladder: append-only run records (submitted -> running ->
+  succeeded | failed | retired terminals locked); typed
+  `YOU_LAB_RUN_NOT_FOUND`;
+- LabEvidenceManifest: content-addressed bundles (runId, contentHash,
+  artifactRefs); manifest verification (hash mismatch fails closed);
+  typed `YOU_LAB_EVIDENCE_MANIFEST_INVALID`;
+- LabPromotionRecord: the promotion gate (a searched arm promotes ONLY
+  when it beats the generalist baseline under the recorded objective
+  and constraints — the LAB PROMOTION LAW); immutable records,
+  reversals as new records; typed `YOU_LAB_PROMOTION_INVALID`;
+- LAB PERSISTENCE LAW enforced: no record mutated in place; the run
+  ladder append-only;
+- deterministic fixtures: seeded scenarios (experiment declared ->
+  three arms run -> evidence published -> promotion decided; refusal
+  paths: invalid promotion, unknown experiment/run, malformed
+  manifest) — injected clock/rng, byte-identical replay,
+  `simulated: true`;
+- event ledger integration: lab-run-recorded / lab-evidence-published
+  / lab-promotion-decided;
+- tests (node:test) covering the run-ladder transition table, the
+  promotion gate refusal paths, manifest verification, error taxonomy.
 
 ## W9B — Lab Studio
 
+Branch: `you/w9b-labstudio`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch.
+
 Objective:
-Lab and benchmark Solution experiences.
+Lab and benchmark Solution experiences on the W9A service seams.
+
+Frozen write surface (wave 9):
+- `packages/ui/src/you/**` + the disclosed registration-only seams (the
+  same pre-expanded seam list as W2B-W8B).
+
+Zero edits to any other existing file; no new dependencies.
+
+Acceptance:
+- experiment surface: the LabExperiment declaration + three-arm
+  comparison display (generalist baseline / hand-designed / searched)
+  from controller projections — zero business logic in the UI
+  (W1B-W8B controller pattern; simulated controller until T9 binding);
+- run surface: the LabRun status ladder (submitted -> running ->
+  succeeded | failed | retired) rendered from projected events — never
+  UI-local state;
+- evidence surface: LabEvidenceManifest panels (content-addressed
+  artifact labels, verification status);
+- promotion surface: LabPromotionRecord display (winner arm, objective
+  vs baseline scores, evidence links) + the promotion gate refusal
+  states;
+- loading/error/empty states for every region; the v9 typed error codes
+  (YOU_LAB_RUN_NOT_FOUND / YOU_LAB_EXPERIMENT_NOT_FOUND /
+  YOU_LAB_EVIDENCE_MANIFEST_INVALID / YOU_LAB_PROMOTION_INVALID /
+  YOU_LAB_WORLD_INVALID / YOU_SEARCH_LADDER_INVALID) as typed error
+  panels;
+- i18n: en-US + zh-CN strings for every visible label;
+- dedicated UX tests under the you subtree (node:test).
 
 ## W9C — Research Organization
 
+Branch: `you/w9c-researchorg`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch.
+
 Objective:
-worlds, search, RL ladder, Failure Atlas, Pipeline Genome, promotion.
+Deterministic worlds, the search/RL ladder, Failure Atlas, Pipeline
+Genome, and promotion evidence inside the lab research plane.
+
+Frozen write surface (wave 9):
+- `packages/you-lab/**` ONLY. Zero edits outside.
+
+Acceptance:
+- LabWorldDescriptor machinery: seed-derived deterministic worlds
+  (actors, ground truth, cameras — the LAB.md world model); same seed
+  -> byte-identical world; typed `YOU_LAB_WORLD_INVALID`;
+- search/RL ladder: SearchLadderStep append-only exploration under an
+  explicit cumulative budget (the SEARCH BUDGET LAW); budget
+  exhaustion is a recorded terminal; typed `YOU_SEARCH_LADDER_INVALID`;
+- Failure Atlas: FailureAtlasEntry builders from world-run outcomes
+  (immutable observations with evidence refs — the FAILURE ATLAS LAW);
+- Pipeline Genome: append-only lineage nodes (parentRef, mutationKind,
+  score, generation) with determinism from seed;
+- promotion evidence: benchmark harness producing the reproducible
+  organization/pipeline evidence the promotion gate consumes (the
+  stage-9 exit: HUMAN-REALITY benchmark produces reproducible
+  organization/pipeline evidence);
+- seam mapping onto frozen v9 contracts (the contractSeam.ts
+  consolidation; only the seam module touches contract types);
+- tests (node:test) covering world determinism (byte-identical replay
+  from seed), ladder budget terminals, atlas entry builders, genome
+  lineage integrity, golden benchmark scores, seam mapping validity.
 
 ## W10A — Platform Hardening
 

@@ -611,3 +611,52 @@ W8C.
 - PROVIDER NEUTRALITY: arena providers are adapters behind a
   fail-closed seam (the W4C/W6C/W7C precedent). Provider references
   are opaque; real runtime integration stays W9+ compute-plane work.
+
+## Wave-9 contract freeze (v9)
+
+- Frozen by the TL at the T8->W9 transition (the W8 completion record
+  c660e9f disclosed the T8 binding point; this freeze opens wave 9).
+  Machine authority: `packages/shared/src/you/contract.ts` v9
+  (ADDITIVE — LabRunStatus, LabRun, LabArmKind, LabExperiment,
+  LabEvidenceManifest, LabPromotionRecord, LabWorldDescriptor,
+  FailureAtlasEntry, PipelineGenomeNode, SearchLadderStep; events
+  lab-run-recorded / lab-evidence-published / lab-promotion-decided /
+  failure-atlas-entry-recorded / pipeline-genome-node-recorded; error
+  codes YOU_LAB_RUN_NOT_FOUND / YOU_LAB_EXPERIMENT_NOT_FOUND /
+  YOU_LAB_EVIDENCE_MANIFEST_INVALID / YOU_LAB_PROMOTION_INVALID /
+  YOU_LAB_WORLD_INVALID / YOU_SEARCH_LADDER_INVALID).
+- Wave-9 lanes: W9A Lab Persistence (`you/w9a-labpersistence`), W9B
+  Lab Studio (`you/w9b-labstudio`), W9C Research Organization
+  (`you/w9c-researchorg`); branches pre-cut at the freeze.
+- Wave-9 consumption: Worker A implements the lab persistence
+  authority (durable LabExperiment/LabRun records, content-addressed
+  evidence manifests, the promotion gate). Worker B builds the Lab
+  Studio UX on Worker A's seams (the W1B-W8B controller pattern;
+  simulated controller until T9 binding). Worker C implements the
+  research organization machinery inside `packages/you-lab`
+  (deterministic worlds, the search/RL ladder, Failure Atlas,
+  Pipeline Genome, promotion evidence).
+- LAB PERSISTENCE LAW: LabExperiment, LabRun, LabEvidenceManifest and
+  LabPromotionRecord records are immutable; the run ladder is
+  append-only; evidence manifests are content-addressed (artifact
+  content hashes make runs replayable and auditable without trusting
+  the storage layer).
+- LAB PROMOTION LAW: a searched organization promotes ONLY when it
+  beats the generalist baseline under the experiment's recorded
+  objective and constraints (the LAB.md three-arm comparison law).
+  Promotion records are immutable; a reversal is a new record, never
+  a mutation. The service refuses invalid promotions with
+  YOU_LAB_PROMOTION_INVALID.
+- LAB DETERMINISM LAW: lab worlds and benchmark runs are
+  seed-deterministic — same seed, byte-identical replay; injected
+  clock/rng; everything simulated stays labeled `simulated: true`
+  (the truth law). Real compute-plane integration stays W10+.
+- SEARCH BUDGET LAW: the search/RL ladder explores under an explicit
+  cumulative budget; every step is an appended SearchLadderStep;
+  budget exhaustion is a recorded terminal, never a silent stop.
+- FAILURE ATLAS LAW: FailureAtlasEntry records are immutable
+  observations with evidence refs — never authoritative conclusions;
+  the atlas informs, the promotion gate decides.
+- PROVIDER NEUTRALITY (carried): the lab compute plane stays behind
+  adapter seams (the W4C/W6C/W7C/W8C precedent); no lab service
+  mutates YOU state outside its own authority.
