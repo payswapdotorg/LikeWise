@@ -1298,3 +1298,39 @@ Workers never mark their own work DONE; they submit evidence to TL.
 - Operational note: the lane survived 5 chat deaths + turn-death cycles
   through the capacity-window grind (kick loops); the final 1.4M-char
   burst (17:0xZ window) produced the complete deliverable.
+
+### W8 completion record (2026-10-13)
+
+- WAVE 8 COMPLETE: freeze (2e3e68b, v8 contracts) → W8A (PR #33,
+  cbf5913, parallel-station delivery ef9c578) → W8B (PR #34, 8d5a5b9,
+  parallel-station delivery b75417c) → W8C (PR #35, 854f5d4, THIS
+  station's emission-harvest relay-push dcc8395) → station lint-parity
+  fixup (dbfc32c: the 3 max-lines W8B files gain the established
+  disable-header pattern; 3 unused imports removed; root lint exact
+  baseline 0/70).
+- Integrated main battery (at dbfc32c): shared+services **564/564**
+  (W8A: 401 shared + 163 services) + ui **381/381** (W7B parity 334 +
+  47 W8B) + you-lab **417/417** (W7C parity 369 + 48 W8C) = **1362/1362
+  GREEN**; root lint 0 errors / 70 warnings (exact baseline); zero
+  dependency drift (manifests + lockfiles untouched vs freeze across
+  all three lanes); contract.ts untouched by every lane (the v8 freeze
+  honored throughout).
+- Cross-station operation: W8A + W8B delivered + merged by the
+  parallel station (ali22), independently parity-verified by this
+  station (matching counts exactly); W8C delivered by THIS station's
+  lane (ali9) through the emission-harvest path. Both stations cured
+  the same 18h workspace-gate drought (account 3/3 zombie workspaces;
+  the parallel station's 4d68e60 doctrine, replicated here at 15:28Z).
+- T8 rebinding point (disclosed): the Escalation Studio runs on a
+  simulated controller whose port mirrors the W8A arena-service seams
+  1:1 (gap/run ledgers, authorization lifecycle, provider-neutral
+  client); the binding (or a later wave) can swap the simulated
+  controller for the real services with zero UI changes. The W8C
+  arena-adapter seam (deterministic mock + fail-closed eval adapter)
+  is the compute-plane contract for that binding.
+- Operational note: the wave closed through the longest capacity-wall
+  siege of the project (Oct 12 20:08Z → Oct 13 15:28Z — root-caused as
+  the workspace gate, not an outage), 5 W8C chat deaths, turn-death
+  window-grinding via kick loops, and a two-station convergence on the
+  same verified branches. Evidence-grade batch dumps of every lane's
+  chat content are banked per-deployment (scripts/worker-reports/).
