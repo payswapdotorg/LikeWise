@@ -1226,3 +1226,22 @@ Workers never mark their own work DONE; they submit evidence to TL.
   (`you/w8c-automation`); branches pre-cut at the freeze.
 - Verified at freeze: shared tsc exit 0; shared battery 344/344
   unchanged.
+
+### W8A merge record (2026-10-13)
+
+- Harvested from `you/w8a-arena` @ ef9c578 (worker turn admitted
+  14:46Z after the station cured an 18h admission drought — root
+  cause: the account workspace limit 3/3 held by zombie prompt-only
+  chats since Oct 12 20:08Z; released, standing ws_reaper armed).
+- Station verification (independent, canonical): shared tsc exit 0 +
+  battery 401/404→401/401 pass (baseline 344 + 57 new, zero lost);
+  services tsc -b exit 0 + battery 163/163; diff purely additive
+  (6395 insertions / 0 deletions); frozen write surface respected
+  (shared/src/you + services/src/you only; `contract.ts` untouched);
+  ARENA BOUNDARY LAW documented and enforced in the service design;
+  all seven v8 typed error codes present; deterministic fixtures
+  byte-identical x2 with load-bearing seed; `simulated: true` truth
+  law; all eight event payload conventions documented in
+  arenaLedger.ts.
+- Merged as PR #33 (merge commit cbf5913) by the station TL
+  (workers never merge their own PRs).
