@@ -814,6 +814,165 @@ export {
   type AvatarSessionConstruction,
   type SoulBindingConstruction,
 } from "./contractSeam.js";
+// ---------------------------------------------------------------------------
+// W8C: arena adapter seam, research registries, evaluation adapter, mock
+// adapter, gap projections, arena benchmark
+// ---------------------------------------------------------------------------
+
+export {
+  GAP_DETECTION_SEED_PROFILES,
+  createGapDetectionRegistry,
+} from "./technology/gapDetectionSeedProfiles.js";
+
+export {
+  RETRY_BACKOFF_SEED_PROFILES,
+  createArenaRegistry,
+  createRetryBackoffRegistry,
+} from "./technology/retryBackoffSeedProfiles.js";
+
+export {
+  ARENA_ADAPTER_UNSUPPORTED_CODE,
+  ARENA_AUTHORIZATION_REQUIRED_CODE,
+  ARENA_RESULT_TYPES,
+  ARENA_STRATEGY_LADDERS,
+  ArenaAuthorizationRequiredError,
+  InvalidRetryLadderError,
+  NEUTRAL_BACKOFF_CLASSES,
+  NEUTRAL_CAPABILITY_GAP_CATEGORIES,
+  RETRY_LADDER_INVALID_CODE,
+  UnsupportedArenaRequestError,
+  aggregateContentDigest,
+  assertArenaInvocationSupported,
+  decodeArenaExpertResult,
+  encodeArenaExpertResult,
+  intendedFindingFor,
+  intendedRecoveryAt,
+  intendedResultTypeFor,
+  intendedRunStatusAt,
+  intendedStrategyAt,
+  neutralArenaEvidenceRef,
+  neutralArenaRunId,
+  neutralArenaSeamVersion,
+  notMeasuredArenaEffortFields,
+  sha256Hex as sha256HexArena,
+  unsupportedArenaInvocationAspects,
+  type ArenaAdapter,
+  type ArenaAdapterProfile,
+  type ArenaEffortFields,
+  type ArenaExpertResultEntry,
+  type NeutralArenaAuthorizationContext,
+  type NeutralArenaBackoffClass,
+  type NeutralArenaGapRecord,
+  type NeutralArenaInvocation,
+  type NeutralArenaLearningPermission,
+  type NeutralArenaOutput,
+  type NeutralArenaProviderDescriptor,
+  type NeutralArenaRetryLadder,
+  type NeutralArenaRunRecord,
+  type NeutralArenaRunStatus,
+  type NeutralAttemptedStrategy,
+  type NeutralCapabilityGapCategory,
+  type NeutralEscalationEligibility,
+} from "./arena/arenaAdapterSeam.js";
+
+export {
+  ARENA_RESEARCH_DATE,
+  DEFAULT_MAX_MAINTENANCE_AGE_DAYS,
+  arenaRetryCandidateIdsForClass,
+  assessArenaGapDetectorProductionEligibility,
+  assessArenaRetryProductionEligibility,
+  deriveArenaGapDetectorProfiles,
+  deriveArenaRetryCandidateProfiles,
+  gapDetectorShortlistByCategory,
+  rankArenaRetryProductionEligible,
+  type ArenaCandidateEligibilityAssessment,
+  type ArenaEligibilityOptions,
+  type ArenaEvaluationCriteria,
+  type ArenaGapDetectorCandidateProfile,
+  type ArenaGapDetectorShortlistRow,
+  type ArenaRetryCandidateProfile,
+} from "./arena/arenaEvaluation.js";
+
+export {
+  createMockArenaAdapter,
+  mockArenaGenerator,
+  type MockArenaConfig,
+} from "./arena/mockArenaAdapter.js";
+
+export {
+  P_RETRY_EVALUATION_ADAPTER_ID,
+  createPRetryBackoffArenaEvaluationAdapter,
+  pRetryEvaluationGenerator,
+  type PRetryArenaAdapterFacts,
+} from "./arena/pRetryEvaluationAdapter.js";
+
+export {
+  ARENA_KNOWLEDGE_DOMAINS,
+  ARENA_TOOL_CAPABILITIES,
+  GAP_PROJECTION_INVALID_CODE,
+  GapProjectionInvalidError,
+  buildKnowledgeGapProjection,
+  buildToolGapProjection,
+  type NeutralKnowledgeGapProjection,
+  type NeutralToolGapProjection,
+} from "./arena/gapProjections.js";
+
+export {
+  ARENA_BENCHMARK_FIXTURES,
+  ARENA_FIXTURE_SET_VERSION,
+  GOLDEN_ARENA_REPORT_RUN_ID,
+  fixtureCategory,
+  fixtureScenario as fixtureArenaScenario,
+  synthesizeArenaScenario,
+  type ArenaBenchmarkFixture,
+  type ArenaScenario,
+  type SyntheticArenaGapSpec,
+} from "./arena/arenaFixtures.js";
+
+export {
+  ARENA_FIDELITY_WEIGHTS,
+  SCORER_ARENA_VERSION,
+  intendedExpertResultDigest,
+  intendedExpertResultFor,
+  intendedRunLadderFor,
+  scoreArenaInvocation,
+  type ArenaFidelityParts,
+  type IntendedArenaRunEntry,
+} from "./arena/arenaScorer.js";
+
+export {
+  ARENA_BENCH_SUBMITTED_AT,
+  runArenaBenchmark,
+  runStandardArenaBenchmark,
+  type ArenaBenchmarkRunReport,
+  type CandidateArenaResult,
+  type FixtureArenaScore,
+} from "./arena/arenaRunner.js";
+
+export {
+  MOCK_ARENA_CANDIDATES,
+  createStandardArenaCandidates,
+  type ArenaCandidateSpec,
+} from "./arena/arenaCandidates.js";
+
+export {
+  arenaThroughAdapter,
+  mapArenaBackoffClass,
+  mapArenaEscalationStatus,
+  mapArenaLearningPermission,
+  mapArenaRunStatus,
+  mapCapabilityGapCategory,
+  mapEscalationEligibility,
+  toArenaEffortObservations,
+  toFrozenArenaProviderDescriptor,
+  toFrozenArenaRetryPolicy,
+  toFrozenArenaRun,
+  toFrozenCapabilityGap,
+  toFrozenEscalationAuthorization,
+  toFrozenKnowledgeGapProjection,
+  toFrozenToolGapProjection,
+  type CapabilityGapConstruction,
+} from "./contractSeam.js";
 
 // ---------------------------------------------------------------------------
 // Test-suite entry for the station command
