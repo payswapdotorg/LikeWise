@@ -1030,6 +1030,7 @@ const enUS: Record<string, string> = {
   "you.editing.tabTitle": "Editing",
   "you.learning.tabTitle": "Learning",
   "you.avatar.tabTitle": "Avatar",
+  "you.escalation.tabTitle": "Escalation",
   "whiteboard.title": "Whiteboard",
   "whiteboard.defaultName": "Whiteboard",
   "whiteboard.nameLabel": "Whiteboard name",

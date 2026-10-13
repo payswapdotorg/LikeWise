@@ -41,6 +41,7 @@ import {
   openEditingStudioSidePane,
   openLearningStudioSidePane,
   openAvatarStudioSidePane,
+  openEscalationStudioSidePane,
   openBrowserSidePane,
   openOrActivateBrowserSidePaneByUrl,
   findBrowserSidePaneTabByUrl,
@@ -891,6 +892,20 @@ export function useAppPanels(options: {
     });
   }, [commitOpenedSidePaneState, revealSidePaneForCurrentOwner, workspaceAbsPath]);
 
+  // YOU Escalation surface（W8B 注册点）：幂等打开/聚焦 native Escalation tab。
+  const handleOpenEscalationStudio = useCallback(() => {
+    revealSidePaneForCurrentOwner();
+    commitOpenedSidePaneState((current) => {
+      const next = openEscalationStudioSidePane(current, {
+        workspaceKey: activeWorkspaceKeyRef.current,
+      });
+      logger.info(
+        `[App] 打开右侧面板 mode=escalation workspace=${workspaceAbsPath} tabs=${next.tabs.length}`,
+      );
+      return next;
+    });
+  }, [commitOpenedSidePaneState, revealSidePaneForCurrentOwner, workspaceAbsPath]);
+
   const handleOpenTerminalTab = useCallback(() => {
     if (isOfficeMode) return;
     revealSidePaneForCurrentOwner();
@@ -1699,6 +1714,7 @@ export function useAppPanels(options: {
     handleOpenEditingStudio,
     handleOpenLearningStudio,
     handleOpenAvatarStudio,
+    handleOpenEscalationStudio,
     handleOpenTerminalTab,
     handleOpenModelTrajectory,
     handleOpenSubagentSession,

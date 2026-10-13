@@ -12,6 +12,7 @@ import {
   FileDiffIcon,
   FilePenLineIcon,
   GraduationCapIcon,
+  LifeBuoyIcon,
   MapIcon,
   MessageSquareTextIcon,
   ListTreeIcon,
@@ -373,6 +374,13 @@ export function SidePaneTabIcon({ tab }: { tab: WorkspaceSidePaneTab }) {
     return <BotIcon className="size-3.5" />;
   }
 
+  // YOU Escalation surface（W8B）：与 Solution/Capture/Twin/Performance/Editing/
+  // Learning/Avatar 同级的 workspace 表面，固定救生圈（life buoy）图标——Arena 是
+  // 人类能力的逃生舱（ARCHITECTURE §15）。
+  if (tab.type === "escalation") {
+    return <LifeBuoyIcon className="size-3.5" />;
+  }
+
   if (tab.type === "terminal" || tab.type === "bash-output") {
     return <SquareTerminalIcon className="size-3.5" />;
   }
@@ -614,6 +622,11 @@ export function getSidePaneTabTitle(
   // YOU Avatar surface（W7B）：标题走中央文案表（you.avatar.tabTitle）。
   if (tab.type === "avatar") {
     return formatMessage({ id: "you.avatar.tabTitle" });
+  }
+
+  // YOU Escalation surface（W8B）：标题走中央文案表（you.escalation.tabTitle）。
+  if (tab.type === "escalation") {
+    return formatMessage({ id: "you.escalation.tabTitle" });
   }
 
   if (tab.type === "terminal" || tab.type === "bash-output") {

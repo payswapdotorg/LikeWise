@@ -57,6 +57,7 @@ import { PerformanceStudioSurface } from "@/you/PerformanceStudioSurface.js";
 import { EditingStudioSurface } from "@/you/EditingStudioSurface.js";
 import { LearningStudioSurface } from "@/you/LearningStudioSurface.js";
 import { AvatarStudioSurface } from "@/you/AvatarStudioSurface.js";
+import { EscalationStudioSurface } from "@/you/EscalationStudioSurface.js";
 import {
   getSidePaneTabTitle,
   SidePaneTabDragOverlay,
@@ -105,6 +106,7 @@ import {
   FilePenLineIcon,
   GraduationCapIcon,
   GlobeIcon,
+  LifeBuoyIcon,
   MessageSquareTextIcon,
   PersonStandingIcon,
   PlusIcon,
@@ -334,6 +336,7 @@ export function AnimatedSidePanePanel({
   onOpenEditingStudio,
   onOpenLearningStudio,
   onOpenAvatarStudio,
+  onOpenEscalationStudio,
   onOpenTerminalTab,
   onOpenReviewTab,
   onOpenSelectionSideConversation,
@@ -413,6 +416,8 @@ export function AnimatedSidePanePanel({
   onOpenLearningStudio: () => void;
   /** YOU Avatar surface（W7B）：幂等打开/聚焦 Avatar tab。 */
   onOpenAvatarStudio: () => void;
+  /** YOU Escalation surface（W8B）：幂等打开/聚焦 Escalation tab。 */
+  onOpenEscalationStudio: () => void;
   onOpenTerminalTab: () => void;
   onOpenReviewTab: () => void;
   onOpenSelectionSideConversation: () => void;
@@ -490,6 +495,7 @@ export function AnimatedSidePanePanel({
   const hasEditingTab = tabs.some((tab) => tab.type === "editing");
   const hasLearningTab = tabs.some((tab) => tab.type === "learning");
   const hasAvatarTab = tabs.some((tab) => tab.type === "avatar");
+  const hasEscalationTab = tabs.some((tab) => tab.type === "escalation");
   const canOpenSelectionSideConversation = shouldOfferSelectionSideConversation({
     activeTaskId,
   });
@@ -876,6 +882,17 @@ export function AnimatedSidePanePanel({
             <span>{intl.formatMessage({ id: "you.avatar.tabTitle" })}</span>
           </DropdownMenuItem>
         ) : null}
+        {!hasEscalationTab ? (
+          <DropdownMenuItem
+            data-side-pane-add-item="escalation"
+            onSelect={() => {
+              onOpenEscalationStudio();
+            }}
+          >
+            <LifeBuoyIcon className="size-4" />
+            <span>{intl.formatMessage({ id: "you.escalation.tabTitle" })}</span>
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -952,6 +969,12 @@ export function AnimatedSidePanePanel({
       icon: BotIcon,
       onOpen: onOpenAvatarStudio,
     },
+    escalation: {
+      id: "escalation",
+      label: intl.formatMessage({ id: "you.escalation.tabTitle" }),
+      icon: LifeBuoyIcon,
+      onOpen: onOpenEscalationStudio,
+    },
   };
   const openTabLauncherItems: OpenTabLauncherItem[] = resolveOpenTabLauncherItemIds({
     canOpenSelectionSideConversation,
@@ -964,6 +987,7 @@ export function AnimatedSidePanePanel({
     hasEditingTab,
     hasLearningTab,
     hasAvatarTab,
+    hasEscalationTab,
     supportsEmbeddedBrowser,
   })
     .filter((itemId) => !isOfficeMode || (itemId !== "terminal" && itemId !== "review"))
@@ -1060,6 +1084,7 @@ export function AnimatedSidePanePanel({
         editingTitle: intl.formatMessage({ id: "you.editing.tabTitle" }),
         learningTitle: intl.formatMessage({ id: "you.learning.tabTitle" }),
         avatarTitle: intl.formatMessage({ id: "you.avatar.tabTitle" }),
+        escalationTitle: intl.formatMessage({ id: "you.escalation.tabTitle" }),
         terminalTitle: intl.formatMessage({ id: "terminal.title" }),
         subagentTypeLabel: intl.formatMessage({ id: "sidePane.subagent" }),
         subagentDirectoryTitle: intl.formatMessage({
@@ -1483,6 +1508,13 @@ export function AnimatedSidePanePanel({
                           />
                         ) : tab.type === "avatar" ? (
                           <AvatarStudioSurface
+                            key={tab.id}
+                            tab={tab}
+                            workspaceKey={workspaceKey}
+                            isActive={isVisible && tab.id === visibleActiveTabId}
+                          />
+                        ) : tab.type === "escalation" ? (
+                          <EscalationStudioSurface
                             key={tab.id}
                             tab={tab}
                             workspaceKey={workspaceKey}

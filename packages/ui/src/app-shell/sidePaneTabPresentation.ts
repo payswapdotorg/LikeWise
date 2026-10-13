@@ -16,6 +16,7 @@ export interface SidePaneTabPresentationLabels {
   editingTitle: string;
   learningTitle: string;
   avatarTitle: string;
+  escalationTitle: string;
   terminalTitle: string;
   subagentTypeLabel: string;
   subagentDirectoryTitle: string;
@@ -99,6 +100,10 @@ export function getSidePaneTabSearchHint(tab: WorkspaceSidePaneTab): string {
   if (tab.type === "avatar") {
     return "you avatar body soul possession embodiment ladder listening reading typing thinking tool_use speaking interrupted idle unavailable session suspend resume close reassign realtime channel stream latency simulated";
   }
+  // YOU Escalation surface（W8B）：搜索面覆盖缺口/授权门/阶梯/run/provider/许可标注。
+  if (tab.type === "escalation") {
+    return "you escalation arena capability gap tool editor model skill knowledge data expert authorization gate scope expiry learning permission none aggregate full ladder requested authorized in-progress delivered applied rejected cancelled run retry backoff provider expert result changeset artifact guidance typed payload withdrawal gap projection simulated";
+  }
   if (tab.type === "terminal" || tab.type === "bash-output")
     return `${tab.title} terminal shell command`;
   return tab.source.path ?? tab.source.title;
@@ -124,6 +129,7 @@ export function getLocalizedSidePaneTabTitle(
       "you.editing.tabTitle": labels.editingTitle,
       "you.learning.tabTitle": labels.learningTitle,
       "you.avatar.tabTitle": labels.avatarTitle,
+      "you.escalation.tabTitle": labels.escalationTitle,
       "terminal.title": labels.terminalTitle,
       "sidePane.subagent": labels.subagentTypeLabel,
       "sidePane.subagentDirectory": labels.subagentDirectoryTitle,
@@ -166,6 +172,7 @@ export function getSidePaneTabTypeLabel(
   if (tab.type === "editing") return labels.editingTitle;
   if (tab.type === "learning") return labels.learningTitle;
   if (tab.type === "avatar") return labels.avatarTitle;
+  if (tab.type === "escalation") return labels.escalationTitle;
   if (tab.type === "terminal" || tab.type === "bash-output") return labels.terminalTitle;
   return labels.codeViewerTitle;
 }
