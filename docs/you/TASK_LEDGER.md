@@ -1268,3 +1268,33 @@ Workers never mark their own work DONE; they submit evidence to TL.
   report fields remain template-echo only — branch + station battery
   are the deliverable truth.
 - Merged as PR #34 (merge commit 8d5a5b9) by the station TL.
+
+### W8C merge record (2026-10-13)
+
+- EMISSION-HARVEST path: the worker (this station's lane, chat 4d3639d7,
+  admitted 15:28Z post workspace-gate cure) delivered the full report
+  IN-CHAT (block-252, 219K chars: 22 FILE blocks + the acceptance walk)
+  with the branch committed locally in its pod @ 5e08f895 — no push (no
+  credentials to the worker per push protocol; the report's END OF REPORT
+  line delegates the relay push to the station).
+- Station harvest (this station): extract_w8c_emission.py reconstructed
+  the tree from the report's FILE blocks — 19 new files verbatim + 3
+  modified files per the report's own instructions (contractSeam.ts
+  rebuilt to EXACTLY 1815 lines as claimed; src/index.ts insert-after-
+  anchor; root index.ts full content). Relay-pushed as dcc8395 (22
+  files, +4419/−2).
+- Station verification (independent, canonical): you-lab tsc --noEmit
+  exit 0; you-lab battery **417/417** twice (determinism — exact parity
+  with the worker's report claim); root lint 0 errors / 70 warnings
+  (exact baseline — contractSeam carries the W8C `eslint-disable
+  max-lines` header per the W7B seam precedent); surface: all changes
+  inside packages/you-lab/** (the frozen W8C surface); research
+  truth-law: seven gap-detection + four retry/backoff REAL approaches
+  with SPDX + source URL + maintenance evidence, unverified claims
+  disclosed in provenance.
+- Merged as PR #35 (merge commit 854f5d4) by the station TL (workers
+  never merge their own PRs; the emission relay push is the disclosed
+  station-side push path).
+- Operational note: the lane survived 5 chat deaths + turn-death cycles
+  through the capacity-window grind (kick loops); the final 1.4M-char
+  burst (17:0xZ window) produced the complete deliverable.
