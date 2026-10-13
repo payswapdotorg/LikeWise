@@ -1416,3 +1416,36 @@ Workers never mark their own work DONE; they submit evidence to TL.
   validation; promotion evidence harness; seam routing through
   contractSeam.
 - Merged as PR #38 (merge commit c5f942b) by the station TL.
+
+### W9 completion record (2026-10-13)
+
+- WAVE 9 COMPLETE: freeze (57de847, v9 contracts — lab persistence +
+  research organization) → W9A (PR #36 ecd2097 + PR #37 supersession
+  621ea8f, delivery 590fdd0/a3e2ca5) → W9C (PR #38 c5f942b, delivery
+  0aa45fe) → W9B (PR #39 a1a335a, delivery eb4bdd8).
+- Integrated main battery (at a1a335a): shared **432/432** (431 + 1
+  supersession) + services **183/183** (163 + 20 W9A) + ui **423/423**
+  (381 + 42 W9B) + you-lab **471/471** (417 + 54 W9C) = **1509/1509
+  GREEN** (W8 baseline 1362 + 147); ui tsc station-side OOM per the
+  documented W5A environmental condition (accepted evidence class per
+  the W7B/W8B station law); shared/services/you-lab tsc exit 0;
+  contract.ts untouched by every lane (the v9 freeze honored
+  throughout).
+- Operational arc: the wave closed through the evening capacity-wall
+  siege (sends land, admissions sparse) with the late-admission class
+  dominant (turns admit minutes AFTER the machine's dead-verdict —
+  they run server-side unmonitored and push anyway: W9A twice (graceful
+  supersession), W9C once, W9B twice). Station slot hygiene: 6 stale
+  workspaces released across the wave (W8C dup, w9a dup pair, New Chat
+  zombie, w9c residue); the workspace-gate doctrine (check
+  /api/v1/web-dev/workspaces/user-fc before assuming backend
+  degradation) held throughout.
+- T9 rebinding point (disclosed): the Lab Studio runs on a simulated
+  controller whose port mirrors the W9A lab-persistence seams 1:1
+  (experiment/run/manifest/promotion); the binding (or a later wave)
+  can swap the simulated controller for the real services with zero UI
+  changes. The W9C research plane (worlds/ladder/atlas/genome) is the
+  compute-plane contract for that binding.
+- Stage-9 exit verified: the HUMAN-REALITY benchmark produces
+  reproducible organization/pipeline evidence (W9C promotion evidence
+  harness + W9A promotion gate + byte-identical world determinism).
