@@ -1449,3 +1449,29 @@ Workers never mark their own work DONE; they submit evidence to TL.
 - Stage-9 exit verified: the HUMAN-REALITY benchmark produces
   reproducible organization/pipeline evidence (W9C promotion evidence
   harness + W9A promotion gate + byte-identical world determinism).
+
+### W10 contract freeze + dispatch record (2026-10-13)
+
+- Frozen by the TL (this station) at the T9->W10 transition. Contract
+  freeze commit: THIS COMMIT. Machine authority:
+  `packages/shared/src/you/contract.ts` v10 (ADDITIVE —
+  RateLimitAction, RateLimitPolicy, ImportSecurityVerdict,
+  RetentionEnforcementRecord, DrRestoreRecord, ProviderMatrixEntry,
+  CostLatencyBudget, ProductionEligibilityRecord; events
+  rate-limit-enforced / import-quarantined / retention-enforced /
+  dr-restore-recorded / production-eligibility-decided; error codes
+  YOU_RATE_LIMIT_EXCEEDED / YOU_IMPORT_QUARANTINED /
+  YOU_RETENTION_ENFORCEMENT_INVALID / YOU_DR_RESTORE_INVALID /
+  YOU_PROVIDER_MATRIX_INVALID / YOU_PRODUCTION_ELIGIBILITY_INVALID).
+- Docs: CONTRACTS.md "Wave-10 contract freeze (v10)" (the RATE LIMIT
+  LAW + IMPORT SECURITY LAW + RETENTION LAW + DR LAW + ECOSYSTEM GATE
+  LAW + PRODUCTION ELIGIBILITY LAW); WORK_ORDERS.md W10A/W10B/W10C
+  expanded to full binding orders.
+- Wave-10 lanes: W10A Platform Hardening (`you/w10a-platform`), W10B
+  Product Hardening (`you/w10b-product`), W10C Ecosystem Hardening
+  (`you/w10c-ecosystem`); branches pre-cut at the freeze.
+- Verified at freeze: shared tsc exit 0; shared battery 432/432
+  unchanged (additive-only).
+- Context: W9 completed 1509/1509 green (completion record 3014fb3);
+  T9 binding point disclosed (the Lab Studio simulated controller
+  mirrors the W9A seams 1:1).

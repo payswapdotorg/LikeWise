@@ -489,7 +489,12 @@ export type SolutionEventType =
   | "lab-evidence-published"
   | "lab-promotion-decided"
   | "failure-atlas-entry-recorded"
-  | "pipeline-genome-node-recorded";
+  | "pipeline-genome-node-recorded"
+  | "rate-limit-enforced"
+  | "import-quarantined"
+  | "retention-enforced"
+  | "dr-restore-recorded"
+  | "production-eligibility-decided";
 
 export interface SolutionEvent {
   readonly id: OpaqueId;
@@ -547,7 +552,13 @@ export type YouErrorCode =
   | "YOU_LAB_EVIDENCE_MANIFEST_INVALID"
   | "YOU_LAB_PROMOTION_INVALID"
   | "YOU_LAB_WORLD_INVALID"
-  | "YOU_SEARCH_LADDER_INVALID";
+  | "YOU_SEARCH_LADDER_INVALID"
+  | "YOU_RATE_LIMIT_EXCEEDED"
+  | "YOU_IMPORT_QUARANTINED"
+  | "YOU_RETENTION_ENFORCEMENT_INVALID"
+  | "YOU_DR_RESTORE_INVALID"
+  | "YOU_PROVIDER_MATRIX_INVALID"
+  | "YOU_PRODUCTION_ELIGIBILITY_INVALID";
 
 // ---------------------------------------------------------------------------
 // Evidence / Capture / Consent — frozen v2 (wave 2, TL freeze at T1->W2)
@@ -1606,5 +1617,120 @@ export interface SearchLadderStep {
   readonly exploredNodes: number;
   readonly bestScore: number;
   readonly cumulativeBudget: number;
+  readonly simulated: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Platform / Product / Ecosystem Hardening — frozen v10 (wave 10, TL freeze
+// at T9->W10)
+//
+// Authority: docs/you/CONTRACTS.md "Wave-10 contract freeze (v10)".
+// Dispatched by: docs/you/WORK_ORDERS.md (W10A / W10B / W10C).
+// Additive only: no existing shape changes (the no-drift rule).
+// ---------------------------------------------------------------------------
+
+/**
+ * The action a rate limiter takes when a budget is exhausted. Deny
+ * is fail-closed; the defer class is for queueable work only.
+ */
+export type RateLimitAction =
+  | "deny"
+  | "defer"
+  | "shed";
+
+/**
+ * A platform rate limit policy. RATE LIMIT LAW: limits are enforced
+ * BEFORE the effect; every enforcement appends an immutable record;
+ * throttling is never silent.
+ */
+export interface RateLimitPolicy {
+  readonly id: OpaqueId;
+  readonly scope: string;
+  readonly windowS: number;
+  readonly burst: number;
+  readonly action: RateLimitAction;
+  readonly simulated: boolean;
+}
+
+/**
+ * The verdict of an import security scan. IMPORT SECURITY LAW:
+ * unscanned imports never enter evidence; quarantine is fail-closed
+ * and reversible only through an explicit release record.
+ */
+export interface ImportSecurityVerdict {
+  readonly id: OpaqueId;
+  readonly artifactRef: OpaqueId;
+  readonly scanClass: string;
+  readonly verdict: "clean" | "quarantined" | "rejected";
+  readonly quarantinedAt: string | null;
+  readonly simulated: boolean;
+}
+
+/**
+ * One retention enforcement pass. RETENTION LAW: enforcement records
+ * are immutable and auditable; deletion honors the consent laws
+ * (a retention class never overrides an active consent).
+ */
+export interface RetentionEnforcementRecord {
+  readonly id: OpaqueId;
+  readonly retentionClass: string;
+  readonly subjectRef: OpaqueId;
+  readonly enforcedAt: string;
+  readonly simulated: boolean;
+}
+
+/**
+ * One disaster-recovery restore. DR LAW: a restore verifies content
+ * hashes BEFORE activation; the verified flag is never asserted
+ * without the check evidence.
+ */
+export interface DrRestoreRecord {
+  readonly id: OpaqueId;
+  readonly snapshotRef: OpaqueId;
+  readonly restoredAt: string;
+  readonly verified: boolean;
+  readonly simulated: boolean;
+}
+
+/**
+ * One provider-matrix entry: the ecosystem gate for providers,
+ * regions, styles and export classes. ECOSYSTEM GATE LAW: every
+ * ecosystem addition enters through the matrix behind a fail-closed
+ * adapter; unknown matrix refs are typed errors.
+ */
+export interface ProviderMatrixEntry {
+  readonly id: OpaqueId;
+  readonly providerKind: string;
+  readonly region: string;
+  readonly capabilityClasses: readonly string[];
+  readonly eligible: boolean;
+  readonly simulated: boolean;
+}
+
+/**
+ * A cost/latency budget guard. Cost and latency budgets enforce
+ * fail-closed (the W10C research plane owns the breaker classes).
+ */
+export interface CostLatencyBudget {
+  readonly id: OpaqueId;
+  readonly scope: string;
+  readonly costBudget: number;
+  readonly latencyBudgetS: number;
+  readonly breakerClass: string;
+  readonly simulated: boolean;
+}
+
+/**
+ * The production eligibility decision for a subject (provider, lane,
+ * or artifact class). PRODUCTION ELIGIBILITY LAW: eligibility requires
+ * rollback evidence; the decision is immutable; a reversal is a new
+ * record.
+ */
+export interface ProductionEligibilityRecord {
+  readonly id: OpaqueId;
+  readonly subjectRef: OpaqueId;
+  readonly eligible: boolean;
+  readonly rollbackEvidenceRef: OpaqueId;
+  readonly decidedAt: string;
   readonly simulated: boolean;
 }

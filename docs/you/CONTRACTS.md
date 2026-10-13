@@ -660,3 +660,52 @@ W8C.
 - PROVIDER NEUTRALITY (carried): the lab compute plane stays behind
   adapter seams (the W4C/W6C/W7C/W8C precedent); no lab service
   mutates YOU state outside its own authority.
+
+## Wave-10 contract freeze (v10)
+
+- Frozen by the TL at the T9->W10 transition (the W9 completion record
+  3014fb3 disclosed the T9 binding point; this freeze opens wave 10).
+  Machine authority: `packages/shared/src/you/contract.ts` v10
+  (ADDITIVE — RateLimitAction, RateLimitPolicy, ImportSecurityVerdict,
+  RetentionEnforcementRecord, DrRestoreRecord, ProviderMatrixEntry,
+  CostLatencyBudget, ProductionEligibilityRecord; events
+  rate-limit-enforced / import-quarantined / retention-enforced /
+  dr-restore-recorded / production-eligibility-decided; error codes
+  YOU_RATE_LIMIT_EXCEEDED / YOU_IMPORT_QUARANTINED /
+  YOU_RETENTION_ENFORCEMENT_INVALID / YOU_DR_RESTORE_INVALID /
+  YOU_PROVIDER_MATRIX_INVALID / YOU_PRODUCTION_ELIGIBILITY_INVALID).
+- Wave-10 lanes: W10A Platform Hardening (`you/w10a-platform`), W10B
+  Product Hardening (`you/w10b-product`), W10C Ecosystem Hardening
+  (`you/w10c-ecosystem`); branches pre-cut at the freeze.
+- Wave-10 consumption: Worker A implements the platform hardening
+  authority (rate-limit policies + enforcement records, import
+  security verdicts + quarantine, retention enforcement, DR restore
+  verification). Worker B builds the hardening UX on Worker A's seams
+  (limit notices, import statuses, retention controls, DR status, the
+  release readiness surfaces; the W1B-W9B controller pattern;
+  simulated controller until T10 binding). Worker C hardens the
+  ecosystem plane inside `packages/you-lab` (provider matrix registry,
+  cost/latency budget guards with breaker classes, production
+  eligibility + rollback evidence, the stage-10 ecosystem additions —
+  try-on / VRM-GLB / AR / telepresence / customer compute / regional
+  providers / styles — researched REAL approaches behind fail-closed
+  adapter seams).
+- RATE LIMIT LAW: limits enforce BEFORE the effect; every enforcement
+  appends an immutable record; throttling is never silent
+  (YOU_RATE_LIMIT_EXCEEDED).
+- IMPORT SECURITY LAW: unscanned imports never enter evidence;
+  quarantine is fail-closed and reversible only through an explicit
+  release record (YOU_IMPORT_QUARANTINED).
+- RETENTION LAW: enforcement records are immutable and auditable; a
+  retention class NEVER overrides an active consent (the wave-2
+  consent laws hold; YOU_RETENTION_ENFORCEMENT_INVALID).
+- DR LAW: a restore verifies content hashes BEFORE activation; the
+  verified flag is never asserted without check evidence
+  (YOU_DR_RESTORE_INVALID).
+- ECOSYSTEM GATE LAW: every ecosystem addition (provider, region,
+  style, export class) enters through the ProviderMatrix behind
+  fail-closed adapters; unknown matrix refs are typed errors
+  (YOU_PROVIDER_MATRIX_INVALID).
+- PRODUCTION ELIGIBILITY LAW: eligibility requires rollback evidence;
+  decisions are immutable; a reversal is a new record
+  (YOU_PRODUCTION_ELIGIBILITY_INVALID).

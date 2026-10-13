@@ -1199,15 +1199,116 @@ Acceptance:
 
 ## W10A — Platform Hardening
 
+Branch: `you/w10a-platform`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch (the W10 contract-freeze commit on main).
+
 Objective:
-security, reliability, rate limits, import security, data retention, DR.
+The platform hardening authority: rate-limit policies + enforcement
+records, import security verdicts + quarantine, retention
+enforcement, DR restore verification on the frozen v10 contracts.
+
+Frozen write surface (wave 10):
+- `packages/shared/src/you/**` — EXCEPT `you/contract.ts` is TL-frozen;
+- `packages/services/src/you/**`.
+
+Zero edits to any other existing file; no new dependencies.
+
+Acceptance:
+- RateLimitPolicy machinery: typed policies (scope/window/burst/
+  action); enforcement BEFORE effect; append-only enforcement records;
+  typed `YOU_RATE_LIMIT_EXCEEDED`; never-silent throttling (the RATE
+  LIMIT LAW);
+- ImportSecurityVerdict: scan classes, clean/quarantined/rejected
+  verdicts; fail-closed quarantine, release only via explicit records
+  (the IMPORT SECURITY LAW); typed `YOU_IMPORT_QUARANTINED`;
+- RetentionEnforcementRecord: immutable auditable passes; retention
+  NEVER overrides an active consent (the wave-2 consent laws);
+  typed `YOU_RETENTION_ENFORCEMENT_INVALID`;
+- DrRestoreRecord: content-hash verification BEFORE activation; the
+  verified flag never asserted without check evidence (the DR LAW);
+  typed `YOU_DR_RESTORE_INVALID`;
+- deterministic fixtures: seeded scenarios (policy enforced -> import
+  scanned -> quarantine -> release -> retention pass -> DR restore
+  verified; refusal paths: limit exceeded, unscanned import,
+  consent-protected retention, unverifiable restore) — injected
+  clock/rng, byte-identical replay, `simulated: true`;
+- event ledger integration: rate-limit-enforced / import-quarantined /
+  retention-enforced / dr-restore-recorded;
+- tests (node:test) covering the enforcement gates, the quarantine
+  lifecycle, retention-vs-consent, restore verification, error
+  taxonomy.
 
 ## W10B — Product Hardening
 
+Branch: `you/w10b-product`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch.
+
 Objective:
-full E2E, accessibility, responsive behavior, release UX.
+The hardening UX on the W10A service seams: limit notices, import
+statuses, retention controls, DR status, release readiness.
+
+Frozen write surface (wave 10):
+- `packages/ui/src/you/**` + the disclosed registration-only seams (the
+  same pre-expanded seam list as W2B-W9B).
+
+Zero edits to any other existing file; no new dependencies.
+
+Acceptance:
+- limit-notice surface: rate-limit states (deny/defer/shed with window
+  and retry guidance) from controller projections — zero business
+  logic in the UI (W1B-W9B controller pattern; simulated controller
+  until T10 binding);
+- import-status surface: scan classes and verdicts (clean / quarantined
+  with release actions as projected intents / rejected);
+- retention-control surface: retention classes with consent-protected
+  indicators (the consent laws displayed);
+- DR status surface: restore records with verification states;
+- release-readiness surface: ProductionEligibilityRecord panels
+  (eligible/blocked, rollback evidence links);
+- loading/error/empty states for every region; the v10 typed error
+  codes (YOU_RATE_LIMIT_EXCEEDED / YOU_IMPORT_QUARANTINED /
+  YOU_RETENTION_ENFORCEMENT_INVALID / YOU_DR_RESTORE_INVALID /
+  YOU_PROVIDER_MATRIX_INVALID / YOU_PRODUCTION_ELIGIBILITY_INVALID)
+  as typed error panels;
+- i18n: en-US + zh-CN strings for every visible label;
+- dedicated UX tests under the you subtree (node:test).
 
 ## W10C — Ecosystem Hardening
 
+Branch: `you/w10c-ecosystem`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch.
+
 Objective:
-provider matrix, cost/latency, production eligibility and rollback evidence.
+The ecosystem hardening plane: provider matrix registry, cost/latency
+budget guards, production eligibility + rollback evidence, and the
+stage-10 ecosystem additions researched behind fail-closed adapter
+seams.
+
+Frozen write surface (wave 10):
+- `packages/you-lab/**` ONLY. Zero edits outside.
+
+Acceptance:
+- ProviderMatrixEntry registry: the ecosystem gate (providers,
+  regions, styles, export classes); fail-closed on unknown refs;
+  typed `YOU_PROVIDER_MATRIX_INVALID` (the ECOSYSTEM GATE LAW);
+- CostLatencyBudget guards: budget descriptors with breaker classes
+  (the researched circuit-breaker/hedged/jittered/token-bucket classes
+  from W8C carried forward); fail-closed enforcement;
+- ProductionEligibilityRecord: eligibility decisions requiring
+  rollback evidence; immutable records, reversals as new records (the
+  PRODUCTION ELIGIBILITY LAW); typed
+  `YOU_PRODUCTION_ELIGIBILITY_INVALID`;
+- stage-10 ecosystem research: REAL approaches with license (SPDX +
+  source URL), maintenance evidence, compatibility notes, provenance
+  for the ecosystem classes (virtual try-on, game/VRM/GLB exports,
+  AR, realtime telepresence, customer-owned compute, additional
+  regional providers, additional styles); `unverified: true` where not
+  verified (truth law — never invent);
+- deterministic mock adapters behind the seams (seed-derived, no
+  network); fail-closed evaluation adapters (refuse construction when
+  the registry derivation shifts — the W6C/W7C/W8C pattern);
+- seam mapping onto frozen v10 contracts (the contractSeam.ts
+  consolidation; only the seam module touches contract types);
+- tests (node:test) covering matrix integrity, budget determinism,
+  eligibility refusal paths, adapter determinism (byte-identical
+  replay from seed), golden scores, seam mapping validity.
