@@ -1497,3 +1497,31 @@ Workers never mark their own work DONE; they submit evidence to TL.
   ECOSYSTEM GATE LAW fail-closed on unknown matrix refs;
   PRODUCTION ELIGIBILITY LAW rollback-evidence-required (test-pinned).
   Merged as PR #41 (821ab82).
+
+### W10 completion record (2026-10-14)
+
+- WAVE 10 COMPLETE: freeze (8bdc05e, v10 contracts — platform/product/
+  ecosystem hardening) → W10A (PR #40, bae5fcd, delivery f6cfac9) →
+  W10C (PR #41, 821ab82, delivery 72a6cb5) → W10B (PR #42, 52fee00,
+  delivery 22e75cb). Wave duration: 90 minutes (00:00Z freeze → 01:30Z
+  complete — the midnight capacity window admitted all three turns
+  within 10 minutes of the machine arming; the fastest wave of the
+  project).
+- Integrated main battery (at 52fee00): shared **467/467** (432 + 35
+  W10A) + services **211/211** (183 + 28 W10A) + ui **467/467** (423 +
+  44 W10B) + you-lab **525/525** (471 + 54 W10C) = **1670/1670 GREEN**
+  (W9 baseline 1509 + 161); ui tsc station-side OOM per the documented
+  environmental law (accepted evidence class); shared/services/you-lab
+  tsc exit 0; contract.ts untouched by every lane (the v10 freeze
+  honored throughout).
+- T10 rebinding point (disclosed): the Hardening Studio runs on a
+  simulated controller whose port mirrors the W10A platform-hardening
+  seams 1:1 (rate limits, import security, retention, DR restore);
+  the binding (or a later wave) swaps the simulated controller for the
+  real services with zero UI changes.
+- Stage-10/11 coverage: the hardening laws (rate limit, import
+  security, retention, DR, ecosystem gate, production eligibility) are
+  now contract-frozen, implemented, and test-pinned; the stage-10
+  ecosystem classes (try-on / VRM-GLB / AR / telepresence / customer
+  compute / regional providers / styles) are researched REAL behind
+  fail-closed seams (W10C).
