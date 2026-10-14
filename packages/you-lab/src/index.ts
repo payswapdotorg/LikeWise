@@ -1374,6 +1374,78 @@ export {
   toFrozenIncidentRunbookEntry,
 } from "./contractSeam.js";
 
+export {
+  GATE_EVIDENCE_BUNDLE_VERSION,
+  RELEASE_EVIDENCE_INVALID_CODE,
+  ReleaseEvidenceInvalidError,
+  assertBundleContentAddressed,
+  buildEvidenceBundle,
+  buildStandardGateEvidenceBundle,
+  bundleRecordIds,
+  evidenceBundleId,
+  gateEvidenceBundleVersion,
+  journeyRecordContentDigest,
+  runGateEvidenceJourneys,
+  type EvidenceBundleManifestEntry,
+  type NeutralEvidenceBundle,
+} from "./e2e/evidenceBundle.js";
+
+export {
+  LAUNCH_GATE_CHECKED_AT,
+  LAUNCH_GATE_INVALID_CODE,
+  LaunchGateInvalidError,
+  assertLaunchGateChecklistLaw,
+  checklistRecordId,
+  deriveLaunchGateChecklist,
+  gatePasses,
+  journeyCoversStep,
+  summarizeLaunchGate,
+  type LaunchGateChecklistOptions,
+  type LaunchGateSummary,
+  type NeutralLaunchGateChecklistPoint,
+  type NeutralLaunchGateChecklistRecord,
+} from "./e2e/gateChecklist.js";
+
+export {
+  GOLDEN_GATE_BUNDLE_ID,
+  GOLDEN_GATE_CHECKLIST_ID,
+  GOLDEN_GATE_DECLARATION_ID,
+  GOLDEN_GATE_OPERATOR,
+  GOLDEN_GATE_RUN_VERSION,
+  GOLDEN_GATE_SIGNOFF_ID,
+  OPERATOR_SIGNOFF_INVALID_CODE,
+  OPERATOR_SIGNOFF_SIGNED_AT,
+  RELEASE_DECLARATION_INVALID_CODE,
+  RELEASE_DECLARED_AT,
+  RELEASE_ELIGIBILITY_DECIDED_AT,
+  RELEASE_ELIGIBILITY_SUBJECT,
+  RELEASE_ROLLBACK_EVIDENCE_REF,
+  OperatorSignoffInvalidError,
+  ReleaseDeclarationInvalidError,
+  assertRollbackEvidenceBacked,
+  createReleaseDeclarationRegistry,
+  createStandardReleaseEligibilityLedger,
+  deriveReleaseRollbackEvidence,
+  operatorSignoffId,
+  recordOperatorSignoff,
+  releaseDeclarationId,
+  runGoldenGateRun,
+  type GoldenGateRunOutcome,
+  type NeutralOperatorSignoffRecord,
+  type NeutralReleaseDeclarationRecord,
+  type NeutralReleaseRollbackEvidence,
+  type OperatorSignoffOptions,
+  type ReleaseDeclarationInput,
+  type ReleaseDeclarationRegistry,
+} from "./e2e/releaseGate.js";
+
+export {
+  toFrozenLaunchGateChecklistPoint,
+  toFrozenLaunchGateChecklistRecord,
+  toFrozenOperatorSignoffRecord,
+  toFrozenReleaseDeclarationRecord,
+} from "./contractSeam.js";
+
 // ---------------------------------------------------------------------------
 // Test-suite entry for the station command
 //
@@ -1455,6 +1527,10 @@ if (isTestRunnerDirectoryEntry()) {
   await import("./e2e/incidentRunbook.test.js");
   await import("./e2e/conformanceAudit.test.js");
   await import("./e2e/e2eSeam.test.js");
+  await import("./e2e/evidenceBundle.test.js");
+  await import("./e2e/gateChecklist.test.js");
+  await import("./e2e/releaseGate.test.js");
+  await import("./e2e/gateSeam.test.js");
   await import("./contractSeam.test.js");
   await import("./consumer-sim.test.js");
 }

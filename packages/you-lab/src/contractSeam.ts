@@ -1,5 +1,5 @@
-/* eslint-disable max-lines -- the single seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7+v8+v9+v10+v11 is consolidated BY DESIGN: exactly one module maps every neutral you-lab shape onto the frozen contracts (the only-module law asserted by tests), so the full W1C/W2C/W3C/W4C/W5C/W6C/W7C/W8C/W9C/W10C/W11C mapping surface intentionally lives in this one file. */
-// SINGLE seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7+v8+v9+v10+v11
+/* eslint-disable max-lines -- the single seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7+v8+v9+v10+v11+v12 is consolidated BY DESIGN: exactly one module maps every neutral you-lab shape onto the frozen contracts (the only-module law asserted by tests), so the full W1C/W2C/W3C/W4C/W5C/W6C/W7C/W8C/W9C/W10C/W11C/W12C mapping surface intentionally lives in this one file. */
+// SINGLE seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7+v8+v9+v10+v11+v12
 // (packages/shared/src/you/contract.ts).
 //
 // SEAM NOTE (W1C sandbox): importing "@zcode/shared" from packages/you-lab
@@ -107,6 +107,9 @@ import type {
   E2eJourneyRecord as FrozenE2eJourneyRecord,
   IncidentRunbookEntry as FrozenIncidentRunbookEntry,
   ConformanceAuditRecord as FrozenConformanceAuditRecord,
+  LaunchGateChecklistRecord as FrozenLaunchGateChecklistRecord,
+  OperatorSignoffRecord as FrozenOperatorSignoffRecord,
+  ReleaseDeclarationRecord as FrozenReleaseDeclarationRecord,
 } from "../../shared/src/you/contract.js";
 import type { CandidateOperation, EditorArtifact, NeutralEntity } from "./adapters/editorAdapterSeam.js";
 import type { CaptureObservation, NeutralCaptureModality } from "./capture/captureAdapterSeam.js";
@@ -202,6 +205,14 @@ import type { CandidateEcosystemResult } from "./ecosystem/ecosystemRunner.js";
 import type { NeutralE2eJourneyRecord } from "./e2e/journeyHarness.js";
 import type { NeutralIncidentRunbookEntry } from "./e2e/incidentRunbook.js";
 import type { NeutralConformanceAuditRecord } from "./e2e/conformanceAudit.js";
+import type {
+  NeutralLaunchGateChecklistPoint,
+  NeutralLaunchGateChecklistRecord,
+} from "./e2e/gateChecklist.js";
+import type {
+  NeutralOperatorSignoffRecord,
+  NeutralReleaseDeclarationRecord,
+} from "./e2e/releaseGate.js";
 import {
   INCIDENT_CLASS_NAMES,
   JOURNEY_STEP_IDS,
@@ -2495,6 +2506,160 @@ export function toFrozenConformanceAuditRecord(record: NeutralConformanceAuditRe
     scopeRef: record.scopeRef,
     checksTotal: record.checksTotal,
     checksPassed: record.checksPassed,
+    simulated: record.simulated,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// W12C: frozen v12 launch-gate mappings (the LAUNCH GATE / OPERATOR
+// SIGNOFF / RELEASE DECLARATION laws enforced fail-closed at the frozen
+// boundary)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a frozen v12 LaunchGateChecklistPoint from a neutral point
+ * (validated 1:1 mapping). LAUNCH GATE LAW fail-closed at the point
+ * boundary: a point passes ONLY with a journey-evidence reference
+ * (never a bare assertion), and a cited point is a passed point (the
+ * ref is the point's passing evidence).
+ */
+export function toFrozenLaunchGateChecklistPoint(point: NeutralLaunchGateChecklistPoint): FrozenLaunchGateChecklistRecord["points"][number] {
+  if (point.point < 1 || point.point > LAUNCH_GATE_JOURNEY_LENGTH || !Number.isInteger(point.point)) {
+    throw new Error(
+      `toFrozenLaunchGateChecklistPoint: point ${point.point} is outside the 20-point launch-gate table`,
+    );
+  }
+  if (point.description.length === 0) {
+    throw new Error(`toFrozenLaunchGateChecklistPoint: point ${point.point} carries an empty description`);
+  }
+  if (point.passed && point.journeyEvidenceRef === null) {
+    throw new Error(
+      `toFrozenLaunchGateChecklistPoint: point ${point.point} passes with no journey evidence — never a bare assertion (the LAUNCH GATE LAW)`,
+    );
+  }
+  if (!point.passed && point.journeyEvidenceRef !== null) {
+    throw new Error(
+      `toFrozenLaunchGateChecklistPoint: point ${point.point} cites journey evidence but does not pass on it (the ref is the point's passing evidence)`,
+    );
+  }
+  if (point.journeyEvidenceRef !== null && point.journeyEvidenceRef.length === 0) {
+    throw new Error(`toFrozenLaunchGateChecklistPoint: point ${point.point} carries an empty journeyEvidenceRef`);
+  }
+  return {
+    point: point.point,
+    description: point.description,
+    journeyEvidenceRef: point.journeyEvidenceRef,
+    passed: point.passed,
+  };
+}
+
+/**
+ * Build a frozen v12 LaunchGateChecklistRecord from a neutral checklist
+ * (validated 1:1 mapping). LAUNCH GATE LAW fail-closed at the frozen
+ * boundary: the checklist is the 20-point table in exact order (the
+ * gate passes ONLY when all 20 points pass — a 19-point or reordered
+ * table is not the launch gate), every point maps through the point law
+ * checks above, and an unlabelled checklist is a truth-law fabrication.
+ */
+export function toFrozenLaunchGateChecklistRecord(record: NeutralLaunchGateChecklistRecord): FrozenLaunchGateChecklistRecord {
+  if (record.id.length === 0) throw new Error("toFrozenLaunchGateChecklistRecord: empty id");
+  if (record.checkedAt.length === 0) {
+    throw new Error("toFrozenLaunchGateChecklistRecord: empty checkedAt (a checklist names its check instant)");
+  }
+  if (record.points.length !== LAUNCH_GATE_JOURNEY_LENGTH) {
+    throw new Error(
+      `toFrozenLaunchGateChecklistRecord: the launch gate is the ${LAUNCH_GATE_JOURNEY_LENGTH}-point checklist (got ${record.points.length}) — the gate passes ONLY when all ${LAUNCH_GATE_JOURNEY_LENGTH} points pass`,
+    );
+  }
+  record.points.forEach((point, i) => {
+    if (point.point !== i + 1) {
+      throw new Error(
+        `toFrozenLaunchGateChecklistRecord: point at position ${i + 1} carries number ${point.point} (the authored table order)`,
+      );
+    }
+  });
+  if (record.simulated !== true) {
+    throw new Error(
+      "toFrozenLaunchGateChecklistRecord: simulated must be true at this seam (the you-lab gate derivation is fixture-mode only; an unlabelled checklist is a truth-law violation)",
+    );
+  }
+  return {
+    id: record.id,
+    points: record.points.map((point) => toFrozenLaunchGateChecklistPoint(point)),
+    checkedAt: record.checkedAt,
+    simulated: record.simulated,
+  };
+}
+
+/**
+ * Build a frozen v12 OperatorSignoffRecord from a neutral signoff
+ * (validated 1:1 mapping). OPERATOR SIGNOFF LAW fail-closed at the
+ * frozen boundary: the signoff names its checklist, its operator and
+ * its instant (empty fields are never mapped), and an unlabelled
+ * signoff is a truth-law fabrication.
+ */
+export function toFrozenOperatorSignoffRecord(record: NeutralOperatorSignoffRecord): FrozenOperatorSignoffRecord {
+  if (record.id.length === 0) throw new Error("toFrozenOperatorSignoffRecord: empty id");
+  if (record.checklistRef.length === 0) {
+    throw new Error("toFrozenOperatorSignoffRecord: empty checklistRef (a signoff references its checklist)");
+  }
+  if (record.signedBy.length === 0) {
+    throw new Error("toFrozenOperatorSignoffRecord: empty signedBy (a signoff names its operator)");
+  }
+  if (record.signedAt.length === 0) {
+    throw new Error("toFrozenOperatorSignoffRecord: empty signedAt (a signoff names its instant)");
+  }
+  if (record.simulated !== true) {
+    throw new Error(
+      "toFrozenOperatorSignoffRecord: simulated must be true at this seam (the you-lab signoff fixtures are fixture-mode only; an unlabelled signoff is a truth-law violation)",
+    );
+  }
+  return {
+    id: record.id,
+    checklistRef: record.checklistRef,
+    signedBy: record.signedBy,
+    signedAt: record.signedAt,
+    simulated: record.simulated,
+  };
+}
+
+/**
+ * Build a frozen v12 ReleaseDeclarationRecord from a neutral declaration
+ * (validated 1:1 mapping). RELEASE DECLARATION LAW fail-closed at the
+ * frozen boundary: the declaration carries the full evidence bundle
+ * reference AND the rollback evidence reference (an empty ref is the
+ * law's refusal — never mapped), and an unlabelled declaration is a
+ * truth-law fabrication.
+ */
+export function toFrozenReleaseDeclarationRecord(record: NeutralReleaseDeclarationRecord): FrozenReleaseDeclarationRecord {
+  if (record.id.length === 0) throw new Error("toFrozenReleaseDeclarationRecord: empty id");
+  if (record.signoffRef.length === 0) {
+    throw new Error("toFrozenReleaseDeclarationRecord: empty signoffRef (a declaration references its signoff)");
+  }
+  if (record.evidenceBundleRef.length === 0) {
+    throw new Error(
+      "toFrozenReleaseDeclarationRecord: empty evidenceBundleRef — the declaration carries the full evidence bundle (the RELEASE DECLARATION LAW)",
+    );
+  }
+  if (record.rollbackEvidenceRef.length === 0) {
+    throw new Error(
+      "toFrozenReleaseDeclarationRecord: empty rollbackEvidenceRef — the declaration carries rollback evidence (the RELEASE DECLARATION LAW)",
+    );
+  }
+  if (record.declaredAt.length === 0) {
+    throw new Error("toFrozenReleaseDeclarationRecord: empty declaredAt (a declaration names its instant)");
+  }
+  if (record.simulated !== true) {
+    throw new Error(
+      "toFrozenReleaseDeclarationRecord: simulated must be true at this seam (the you-lab declaration fixtures are fixture-mode only; an unlabelled declaration is a truth-law violation)",
+    );
+  }
+  return {
+    id: record.id,
+    signoffRef: record.signoffRef,
+    evidenceBundleRef: record.evidenceBundleRef,
+    rollbackEvidenceRef: record.rollbackEvidenceRef,
+    declaredAt: record.declaredAt,
     simulated: record.simulated,
   };
 }
