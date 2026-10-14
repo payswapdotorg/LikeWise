@@ -1604,3 +1604,49 @@ Workers never mark their own work DONE; they submit evidence to TL.
   W12 binds the gate; the stage-12 exit (the 20-point journey verified
   end-to-end + the operator's sign-off + the release declaration) is
   the project's finish line.
+
+### W12 completion record — THE LAUNCH GATE (2026-10-14)
+
+- WAVE 12 COMPLETE: freeze (cfeb093, v12 launch-gate contracts) →
+  W12C (PR #46, b1135dc, delivery ae69229) → W12B (PR #47, 92d73ec,
+  delivery ab73a13) → W12A (PR #48, e727cd9, delivery d70989a).
+  Wave duration: ~75 minutes.
+- Integrated main battery (at e727cd9): shared **519/519** (490 + 29
+  W12A) + services **245/245** (226 + 19 W12A) + ui **553/553** (512 +
+  41 W12B) + you-lab **583/583** (559 + 24 W12C) = **1900/1900
+  GREEN**; shared/services/you-lab tsc exit 0; contract.ts untouched
+  by every lane (the v12 freeze honored throughout).
+
+### PROJECT COMPLETION RECORD — THE ROADMAP IS COMPLETE (2026-10-14)
+
+- The full wave ladder is landed: W1 (core/studio/lab foundation) →
+  W2 (evidence/capture) → W3 (twin/reconstruction) → W4
+  (performance/render) → W5 (editing) → W6 (learning) → W7 (agent
+  embodiment) → W8 (arena) → W9 (labs productionization) → W10
+  (platform/product/ecosystem hardening) → W11 (hardening
+  verification) → W12 (THE LAUNCH GATE).
+- The stage-12 exit is realized: the 20-point launch-gate journey
+  (workspace → intent → Solution → inspect → feedback → evidence →
+  Twin → improve → Performance → render → edit → import/export →
+  version accept → learn-with-permission → repeat → capability gap →
+  Arena escalation → expert result → provenance/consent →
+  injected-failure recovery) is implemented end-to-end in the
+  deterministic compute plane: the journey table test-pinned IN EXACT
+  ORDER (W11C), failure injection at every step with recovery paths
+  (W11C), the checklist derived from journey evidence only
+  (W12C+W12A — the LAUNCH GATE LAW), the operator signoff and release
+  declaration with evidence bundle + rollback evidence (W12A), the
+  release UX (W12B).
+- Final battery: **1900/1900 GREEN** (shared 519 / services 245 / ui
+  553 / you-lab 583); every wave's freeze honored (contract.ts
+  untouched by workers throughout the project); the evidence-class
+  laws (truth, determinism, fail-closed, consent, authorization,
+  append-only) all test-pinned.
+- Operational arc of the final three waves (W10 90 min / W11 60 min /
+  W12 75 min): the midnight capacity windows + the workspace-gate
+  doctrine + the hardened dispatch machine delivered three complete
+  waves in a single night.
+- The operator's launch-gate sign-off (the human step): the gate
+  machinery is complete and deterministic; the operator reviews the
+  20-point checklist evidence and signs. YOU-000's bootstrap promise —
+  a fresh developer walks the full journey — is now machinery.
