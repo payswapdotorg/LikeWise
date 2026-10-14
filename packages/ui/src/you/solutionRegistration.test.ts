@@ -75,11 +75,12 @@ test("launcher offers solution only when the tab is not open", () => {
     "escalation",
     "lab",
     "hardening",
+    "conformance",
   ]);
 
   assert.deepEqual(
     resolveOpenTabLauncherItemIds({ ...base, hasSolutionTab: true }),
-    ["review", "terminal", "browser", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab", "hardening"],
+    ["review", "terminal", "browser", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab", "hardening", "conformance"],
   );
 
   // 既有行为不受影响：developer tools / review / 无浏览器环境。
@@ -91,7 +92,7 @@ test("launcher offers solution only when the tab is not open", () => {
       hasCaptureTab: false,
       supportsEmbeddedBrowser: false,
     }),
-    ["terminal", "developer-tools", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab", "hardening"],
+    ["terminal", "developer-tools", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab", "hardening", "conformance"],
   );
 
   assert.deepEqual(
@@ -117,6 +118,7 @@ test("launcher offers solution only when the tab is not open", () => {
       "escalation",
       "lab",
       "hardening",
+      "conformance",
     ],
   );
 });

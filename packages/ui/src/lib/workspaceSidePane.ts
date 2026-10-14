@@ -12,6 +12,7 @@ import { resolveAvatarTabState } from "@/you/avatarTabRegistration.js";
 import { resolveEscalationTabState } from "@/you/escalationTabRegistration.js";
 import { resolveLabTabState } from "@/you/labTabRegistration.js";
 import { resolveHardeningTabState } from "@/you/hardeningTabRegistration.js";
+import { resolveConformanceTabState } from "@/you/conformanceTabRegistration.js";
 
 export interface BrowserSidePaneTab {
   id: string;
@@ -227,6 +228,20 @@ export interface LabStudioSidePaneTab {
 export interface HardeningStudioSidePaneTab {
   id: "hardening";
   type: "hardening";
+  ownerTaskId?: string | null;
+  workspaceKey?: string | null;
+  openedAt?: number;
+}
+
+/**
+ * YOU Conformance surface tab（W11B）——与 Solution/Capture/Twin/Performance/Editing/
+ * Learning/Avatar/Escalation/Lab/Hardening 同级的 native workspace 表面。固定单例
+ * id：一个 workspace 一个 Conformance tab（重复打开幂等地聚焦既有 tab）；内容与
+ * 视图状态由 `packages/ui/src/you/**` 子树自持（conformance 系列模块）。
+ */
+export interface ConformanceStudioSidePaneTab {
+  id: "conformance";
+  type: "conformance";
   ownerTaskId?: string | null;
   workspaceKey?: string | null;
   openedAt?: number;
@@ -679,6 +694,7 @@ export type WorkspaceSidePaneTab =
   | EscalationStudioSidePaneTab
   | LabStudioSidePaneTab
   | HardeningStudioSidePaneTab
+  | ConformanceStudioSidePaneTab
   | TerminalSidePaneTab
   | BrowserUseSidePaneTab
   | SubagentSessionSidePaneTab
@@ -1232,6 +1248,8 @@ const WORKSPACE_GLOBAL_SIDE_PANE_TAB_TYPES = new Set<WorkspaceSidePaneTab["type"
   "lab",
   // Hardening 同为 workspace 级表面（W10B，同 ADR-002 语义）。
   "hardening",
+  // Conformance 同为 workspace 级表面（W11B，同 ADR-002 语义）。
+  "conformance",
 ]);
 
 function isWorkspaceGlobalSidePaneTab(tab: WorkspaceSidePaneTab): boolean {
@@ -1891,6 +1909,19 @@ export function openHardeningStudioSidePane(
   },
 ): WorkspaceSidePaneState {
   return resolveHardeningTabState(current, options);
+}
+
+/**
+ * 打开（或幂等聚焦）YOU Conformance 表面 tab（W11B 注册点）。
+ * 纯转移逻辑在 `@/you/conformanceTabRegistration.js`（you 子树自含，可被 tsx 直接加载）。
+ */
+export function openConformanceStudioSidePane(
+  current: WorkspaceSidePaneState | null,
+  options: {
+    workspaceKey?: string | null;
+  },
+): WorkspaceSidePaneState {
+  return resolveConformanceTabState(current, options);
 }
 
 export function openTerminalSidePane(

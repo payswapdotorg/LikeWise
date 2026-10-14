@@ -103,11 +103,12 @@ test("launcher offers learning only when the tab is not open (learning is LAST, 
     "escalation",
     "lab",
     "hardening",
+    "conformance",
   ]);
 
   assert.deepEqual(
     resolveOpenTabLauncherItemIds({ ...base, hasLearningTab: true }),
-    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "avatar", "escalation", "lab", "hardening"],
+    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "avatar", "escalation", "lab", "hardening", "conformance"],
   );
 
   // 既有行为不受影响：developer tools / review / 无浏览器环境 / 缺省参数向后兼容。
@@ -119,7 +120,7 @@ test("launcher offers learning only when the tab is not open (learning is LAST, 
       hasCaptureTab: false,
       supportsEmbeddedBrowser: false,
     }),
-    ["terminal", "developer-tools", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab", "hardening"],
+    ["terminal", "developer-tools", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab", "hardening", "conformance"],
   );
 
   // 未传 hasLearningTab 时缺省 false（既有调用点零行为变化，learning 入口照常出现）。
@@ -130,7 +131,7 @@ test("launcher offers learning only when the tab is not open (learning is LAST, 
       hasSolutionTab: false,
       hasCaptureTab: false,
     }),
-    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab", "hardening"],
+    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab", "hardening", "conformance"],
   );
 
   assert.deepEqual(
@@ -157,6 +158,7 @@ test("launcher offers learning only when the tab is not open (learning is LAST, 
       "escalation",
       "lab",
       "hardening",
+      "conformance",
     ],
   );
 });

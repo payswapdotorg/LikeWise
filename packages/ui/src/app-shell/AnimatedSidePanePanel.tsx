@@ -60,6 +60,7 @@ import { AvatarStudioSurface } from "@/you/AvatarStudioSurface.js";
 import { EscalationStudioSurface } from "@/you/EscalationStudioSurface.js";
 import { LabStudioSurface } from "@/you/LabStudioSurface.js";
 import { HardeningStudioSurface } from "@/you/HardeningStudioSurface.js";
+import { ConformanceStudioSurface } from "@/you/ConformanceStudioSurface.js";
 import {
   getSidePaneTabTitle,
   SidePaneTabDragOverlay,
@@ -111,6 +112,7 @@ import {
   LifeBuoyIcon,
   MicroscopeIcon,
   ShieldCheckIcon,
+  ClipboardCheckIcon,
   MessageSquareTextIcon,
   PersonStandingIcon,
   PlusIcon,
@@ -343,6 +345,7 @@ export function AnimatedSidePanePanel({
   onOpenEscalationStudio,
   onOpenLabStudio,
   onOpenHardeningStudio,
+  onOpenConformanceStudio,
   onOpenTerminalTab,
   onOpenReviewTab,
   onOpenSelectionSideConversation,
@@ -428,6 +431,8 @@ export function AnimatedSidePanePanel({
   onOpenLabStudio: () => void;
   /** YOU Hardening surface（W10B）：幂等打开/聚焦 Hardening tab。 */
   onOpenHardeningStudio: () => void;
+  /** YOU Conformance surface（W11B）：幂等打开/聚焦 Conformance tab。 */
+  onOpenConformanceStudio: () => void;
   onOpenTerminalTab: () => void;
   onOpenReviewTab: () => void;
   onOpenSelectionSideConversation: () => void;
@@ -508,6 +513,7 @@ export function AnimatedSidePanePanel({
   const hasEscalationTab = tabs.some((tab) => tab.type === "escalation");
   const hasLabTab = tabs.some((tab) => tab.type === "lab");
   const hasHardeningTab = tabs.some((tab) => tab.type === "hardening");
+  const hasConformanceTab = tabs.some((tab) => tab.type === "conformance");
   const canOpenSelectionSideConversation = shouldOfferSelectionSideConversation({
     activeTaskId,
   });
@@ -927,6 +933,17 @@ export function AnimatedSidePanePanel({
             <span>{intl.formatMessage({ id: "you.hardening.tabTitle" })}</span>
           </DropdownMenuItem>
         ) : null}
+        {!hasConformanceTab ? (
+          <DropdownMenuItem
+            data-side-pane-add-item="conformance"
+            onSelect={() => {
+              onOpenConformanceStudio();
+            }}
+          >
+            <ClipboardCheckIcon className="size-4" />
+            <span>{intl.formatMessage({ id: "you.conformance.tabTitle" })}</span>
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -1021,6 +1038,12 @@ export function AnimatedSidePanePanel({
       icon: ShieldCheckIcon,
       onOpen: onOpenHardeningStudio,
     },
+    conformance: {
+      id: "conformance",
+      label: intl.formatMessage({ id: "you.conformance.tabTitle" }),
+      icon: ClipboardCheckIcon,
+      onOpen: onOpenConformanceStudio,
+    },
   };
   const openTabLauncherItems: OpenTabLauncherItem[] = resolveOpenTabLauncherItemIds({
     canOpenSelectionSideConversation,
@@ -1036,6 +1059,7 @@ export function AnimatedSidePanePanel({
     hasEscalationTab,
     hasLabTab,
     hasHardeningTab,
+    hasConformanceTab,
     supportsEmbeddedBrowser,
   })
     .filter((itemId) => !isOfficeMode || (itemId !== "terminal" && itemId !== "review"))
@@ -1135,6 +1159,7 @@ export function AnimatedSidePanePanel({
         escalationTitle: intl.formatMessage({ id: "you.escalation.tabTitle" }),
         labTitle: intl.formatMessage({ id: "you.lab.tabTitle" }),
         hardeningTitle: intl.formatMessage({ id: "you.hardening.tabTitle" }),
+        conformanceTitle: intl.formatMessage({ id: "you.conformance.tabTitle" }),
         terminalTitle: intl.formatMessage({ id: "terminal.title" }),
         subagentTypeLabel: intl.formatMessage({ id: "sidePane.subagent" }),
         subagentDirectoryTitle: intl.formatMessage({
@@ -1579,6 +1604,13 @@ export function AnimatedSidePanePanel({
                           />
                         ) : tab.type === "hardening" ? (
                           <HardeningStudioSurface
+                            key={tab.id}
+                            tab={tab}
+                            workspaceKey={workspaceKey}
+                            isActive={isVisible && tab.id === visibleActiveTabId}
+                          />
+                        ) : tab.type === "conformance" ? (
+                          <ConformanceStudioSurface
                             key={tab.id}
                             tab={tab}
                             workspaceKey={workspaceKey}
