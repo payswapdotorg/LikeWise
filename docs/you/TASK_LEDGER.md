@@ -1549,3 +1549,34 @@ Workers never mark their own work DONE; they submit evidence to TL.
   unchanged (additive-only).
 - Context: W10 completed 1670/1670 green in 90 minutes (completion
   record 08c7327); T10 binding point disclosed.
+
+### W11 completion record (2026-10-14)
+
+- WAVE 11 COMPLETE: freeze (3edc2e2, v11 contracts — hardening
+  verification) → W11A (PR #43, f087f02, delivery 2b63041) → W11C
+  (PR #44, a076f92, delivery f9aaea9) → W11B (PR #45, b093088,
+  delivery 13736b6). Wave duration: ~60 minutes (the midnight window
+  held; all three turns admitted within 15 minutes of arming).
+- Integrated main battery (at b093088): shared **490/490** (467 + 23
+  W11A) + services **226/226** (211 + 15 W11A) + ui **512/512** (467 +
+  45 W11B) + you-lab **559/559** (525 + 34 W11C) = **1787/1787 GREEN**
+  (W10 baseline 1670 + 117); shared/services/you-lab tsc exit 0; ui
+  tsc station-side OOM per the documented environmental law; the
+  sanctioned seam set respected (W11B's 11 files identical);
+  contract.ts untouched (the v11 freeze honored).
+- Law verification: SECURITY REVIEW LAW (findings verbatim, acceptance
+  separate — test-pinned); LOAD TEST LAW (never-invented metrics);
+  CONFORMANCE LAW (counts verbatim); JOURNEY LAW — the 20-point
+  launch-gate journey table is test-pinned IN EXACT ORDER
+  (journeySteps.test.ts), with failure injection at every step and
+  measured durationMs; RUNBOOK LAW (exercised-by-injection or
+  explicitly unexercised).
+- T11 rebinding point (disclosed): the Conformance Studio runs on a
+  simulated controller mirroring the W11A security-authority seams
+  1:1; the W11C journey harness is the deterministic compute-plane
+  contract for the launch gate.
+- NEXT: W12 — THE LAUNCH GATE. The stage-12 exit is the 20-point
+  journey verified end-to-end (the W11C harness now covers it
+  deterministically; W12 binds the gate: launch-gate acceptance
+  records, the operator's final 20-point sign-off, the release
+  declaration).
