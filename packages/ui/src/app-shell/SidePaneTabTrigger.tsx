@@ -16,6 +16,7 @@ import {
   MicroscopeIcon,
   ShieldCheckIcon,
   ClipboardCheckIcon,
+  RocketIcon,
   MapIcon,
   MessageSquareTextIcon,
   ListTreeIcon,
@@ -406,6 +407,13 @@ export function SidePaneTabIcon({ tab }: { tab: WorkspaceSidePaneTab }) {
     return <ClipboardCheckIcon className="size-3.5" />;
   }
 
+  // YOU Release surface（W12B）：与 Solution/…/Conformance 同级的 workspace 表面，
+  // 固定火箭（rocket）图标——Release 是 launch-gate 平面（20 点 checklist / 操作者
+  // 签署 / 发布声明）。
+  if (tab.type === "release") {
+    return <RocketIcon className="size-3.5" />;
+  }
+
   if (tab.type === "terminal" || tab.type === "bash-output") {
     return <SquareTerminalIcon className="size-3.5" />;
   }
@@ -667,6 +675,11 @@ export function getSidePaneTabTitle(
   // YOU Conformance surface（W11B）：标题走中央文案表（you.conformance.tabTitle）。
   if (tab.type === "conformance") {
     return formatMessage({ id: "you.conformance.tabTitle" });
+  }
+
+  // YOU Release surface（W12B）：标题走中央文案表（you.release.tabTitle）。
+  if (tab.type === "release") {
+    return formatMessage({ id: "you.release.tabTitle" });
   }
 
   if (tab.type === "terminal" || tab.type === "bash-output") {

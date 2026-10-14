@@ -102,11 +102,12 @@ test("launcher offers performance only when the tab is not open", () => {
     "lab",
     "hardening",
     "conformance",
+    "release",
   ]);
 
   assert.deepEqual(
     resolveOpenTabLauncherItemIds({ ...base, hasPerformanceTab: true }),
-    ["review", "terminal", "browser", "solution", "capture", "twin", "editing", "learning", "avatar", "escalation", "lab", "hardening", "conformance"],
+    ["review", "terminal", "browser", "solution", "capture", "twin", "editing", "learning", "avatar", "escalation", "lab", "hardening", "conformance", "release"],
   );
 
   // 既有行为不受影响：developer tools / review / 无浏览器环境 / 缺省参数向后兼容。
@@ -118,7 +119,7 @@ test("launcher offers performance only when the tab is not open", () => {
       hasCaptureTab: false,
       supportsEmbeddedBrowser: false,
     }),
-    ["terminal", "developer-tools", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab", "hardening", "conformance"],
+    ["terminal", "developer-tools", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab", "hardening", "conformance", "release"],
   );
 
   // 未传 hasPerformanceTab 时缺省 false（既有调用点零行为变化，performance 入口照常出现）。
@@ -129,7 +130,7 @@ test("launcher offers performance only when the tab is not open", () => {
       hasSolutionTab: false,
       hasCaptureTab: false,
     }),
-    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab", "hardening", "conformance"],
+    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab", "hardening", "conformance", "release"],
   );
 
   assert.deepEqual(
@@ -157,6 +158,7 @@ test("launcher offers performance only when the tab is not open", () => {
       "lab",
       "hardening",
       "conformance",
+      "release",
     ],
   );
 });

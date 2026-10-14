@@ -954,6 +954,7 @@ const zhCN: Record<string, string> = {
   "you.lab.tabTitle": "实验室",
   "you.hardening.tabTitle": "加固",
   "you.conformance.tabTitle": "一致性",
+  "you.release.tabTitle": "发布",
   "whiteboard.title": "画板",
   "whiteboard.defaultName": "画板",
   "whiteboard.nameLabel": "画板名称",

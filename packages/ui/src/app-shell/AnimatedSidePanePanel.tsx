@@ -61,6 +61,7 @@ import { EscalationStudioSurface } from "@/you/EscalationStudioSurface.js";
 import { LabStudioSurface } from "@/you/LabStudioSurface.js";
 import { HardeningStudioSurface } from "@/you/HardeningStudioSurface.js";
 import { ConformanceStudioSurface } from "@/you/ConformanceStudioSurface.js";
+import { ReleaseStudioSurface } from "@/you/ReleaseStudioSurface.js";
 import {
   getSidePaneTabTitle,
   SidePaneTabDragOverlay,
@@ -113,6 +114,7 @@ import {
   MicroscopeIcon,
   ShieldCheckIcon,
   ClipboardCheckIcon,
+  RocketIcon,
   MessageSquareTextIcon,
   PersonStandingIcon,
   PlusIcon,
@@ -346,6 +348,7 @@ export function AnimatedSidePanePanel({
   onOpenLabStudio,
   onOpenHardeningStudio,
   onOpenConformanceStudio,
+  onOpenReleaseStudio,
   onOpenTerminalTab,
   onOpenReviewTab,
   onOpenSelectionSideConversation,
@@ -433,6 +436,8 @@ export function AnimatedSidePanePanel({
   onOpenHardeningStudio: () => void;
   /** YOU Conformance surface（W11B）：幂等打开/聚焦 Conformance tab。 */
   onOpenConformanceStudio: () => void;
+  /** YOU Release surface（W12B）：幂等打开/聚焦 Release tab。 */
+  onOpenReleaseStudio: () => void;
   onOpenTerminalTab: () => void;
   onOpenReviewTab: () => void;
   onOpenSelectionSideConversation: () => void;
@@ -514,6 +519,7 @@ export function AnimatedSidePanePanel({
   const hasLabTab = tabs.some((tab) => tab.type === "lab");
   const hasHardeningTab = tabs.some((tab) => tab.type === "hardening");
   const hasConformanceTab = tabs.some((tab) => tab.type === "conformance");
+  const hasReleaseTab = tabs.some((tab) => tab.type === "release");
   const canOpenSelectionSideConversation = shouldOfferSelectionSideConversation({
     activeTaskId,
   });
@@ -944,6 +950,17 @@ export function AnimatedSidePanePanel({
             <span>{intl.formatMessage({ id: "you.conformance.tabTitle" })}</span>
           </DropdownMenuItem>
         ) : null}
+        {!hasReleaseTab ? (
+          <DropdownMenuItem
+            data-side-pane-add-item="release"
+            onSelect={() => {
+              onOpenReleaseStudio();
+            }}
+          >
+            <RocketIcon className="size-4" />
+            <span>{intl.formatMessage({ id: "you.release.tabTitle" })}</span>
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -1044,6 +1061,12 @@ export function AnimatedSidePanePanel({
       icon: ClipboardCheckIcon,
       onOpen: onOpenConformanceStudio,
     },
+    release: {
+      id: "release",
+      label: intl.formatMessage({ id: "you.release.tabTitle" }),
+      icon: RocketIcon,
+      onOpen: onOpenReleaseStudio,
+    },
   };
   const openTabLauncherItems: OpenTabLauncherItem[] = resolveOpenTabLauncherItemIds({
     canOpenSelectionSideConversation,
@@ -1060,6 +1083,7 @@ export function AnimatedSidePanePanel({
     hasLabTab,
     hasHardeningTab,
     hasConformanceTab,
+    hasReleaseTab,
     supportsEmbeddedBrowser,
   })
     .filter((itemId) => !isOfficeMode || (itemId !== "terminal" && itemId !== "review"))
@@ -1160,6 +1184,7 @@ export function AnimatedSidePanePanel({
         labTitle: intl.formatMessage({ id: "you.lab.tabTitle" }),
         hardeningTitle: intl.formatMessage({ id: "you.hardening.tabTitle" }),
         conformanceTitle: intl.formatMessage({ id: "you.conformance.tabTitle" }),
+        releaseTitle: intl.formatMessage({ id: "you.release.tabTitle" }),
         terminalTitle: intl.formatMessage({ id: "terminal.title" }),
         subagentTypeLabel: intl.formatMessage({ id: "sidePane.subagent" }),
         subagentDirectoryTitle: intl.formatMessage({
@@ -1611,6 +1636,13 @@ export function AnimatedSidePanePanel({
                           />
                         ) : tab.type === "conformance" ? (
                           <ConformanceStudioSurface
+                            key={tab.id}
+                            tab={tab}
+                            workspaceKey={workspaceKey}
+                            isActive={isVisible && tab.id === visibleActiveTabId}
+                          />
+                        ) : tab.type === "release" ? (
+                          <ReleaseStudioSurface
                             key={tab.id}
                             tab={tab}
                             workspaceKey={workspaceKey}

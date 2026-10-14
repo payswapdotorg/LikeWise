@@ -120,6 +120,7 @@ test("launcher offers hardening only when the tab is not open (hardening is LAST
     "lab",
     "hardening",
     "conformance",
+    "release",
   ]);
 
   assert.deepEqual(
@@ -138,6 +139,7 @@ test("launcher offers hardening only when the tab is not open (hardening is LAST
       "escalation",
       "lab",
       "conformance",
+      "release",
     ],
   );
 
@@ -164,6 +166,7 @@ test("launcher offers hardening only when the tab is not open (hardening is LAST
       "lab",
       "hardening",
       "conformance",
+      "release",
     ],
   );
 
@@ -190,6 +193,7 @@ test("launcher offers hardening only when the tab is not open (hardening is LAST
       "lab",
       "hardening",
       "conformance",
+      "release",
     ],
   );
 
@@ -218,6 +222,7 @@ test("launcher offers hardening only when the tab is not open (hardening is LAST
       "lab",
       "hardening",
       "conformance",
+      "release",
     ],
   );
 });

@@ -45,6 +45,7 @@ import {
   openLabStudioSidePane,
   openHardeningStudioSidePane,
   openConformanceStudioSidePane,
+  openReleaseStudioSidePane,
   openBrowserSidePane,
   openOrActivateBrowserSidePaneByUrl,
   findBrowserSidePaneTabByUrl,
@@ -951,6 +952,20 @@ export function useAppPanels(options: {
     });
   }, [commitOpenedSidePaneState, revealSidePaneForCurrentOwner, workspaceAbsPath]);
 
+  // YOU Release surface（W12B 注册点）：幂等打开/聚焦 native Release tab。
+  const handleOpenReleaseStudio = useCallback(() => {
+    revealSidePaneForCurrentOwner();
+    commitOpenedSidePaneState((current) => {
+      const next = openReleaseStudioSidePane(current, {
+        workspaceKey: activeWorkspaceKeyRef.current,
+      });
+      logger.info(
+        `[App] 打开右侧面板 mode=release workspace=${workspaceAbsPath} tabs=${next.tabs.length}`,
+      );
+      return next;
+    });
+  }, [commitOpenedSidePaneState, revealSidePaneForCurrentOwner, workspaceAbsPath]);
+
   const handleOpenTerminalTab = useCallback(() => {
     if (isOfficeMode) return;
     revealSidePaneForCurrentOwner();
@@ -1763,6 +1778,7 @@ export function useAppPanels(options: {
     handleOpenLabStudio,
     handleOpenHardeningStudio,
     handleOpenConformanceStudio,
+    handleOpenReleaseStudio,
     handleOpenTerminalTab,
     handleOpenModelTrajectory,
     handleOpenSubagentSession,
