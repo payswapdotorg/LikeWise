@@ -14,7 +14,8 @@ export type OpenTabLauncherItemId =
   | "learning"
   | "avatar"
   | "escalation"
-  | "lab";
+  | "lab"
+  | "hardening";
 
 export function resolveOpenTabLauncherItemIds({
   developerToolsEnabled,
@@ -28,6 +29,7 @@ export function resolveOpenTabLauncherItemIds({
   hasAvatarTab = false,
   hasEscalationTab = false,
   hasLabTab = false,
+  hasHardeningTab = false,
   canOpenSelectionSideConversation = false,
   supportsEmbeddedBrowser = true,
 }: {
@@ -51,6 +53,8 @@ export function resolveOpenTabLauncherItemIds({
   hasEscalationTab?: boolean;
   /** YOU Lab tab 已开时不再提供入口（W9B，同幂等聚焦语义）。缺省 false。 */
   hasLabTab?: boolean;
+  /** YOU Hardening tab 已开时不再提供入口（W10B，同幂等聚焦语义）。缺省 false。 */
+  hasHardeningTab?: boolean;
   canOpenSelectionSideConversation?: boolean;
   supportsEmbeddedBrowser?: boolean;
 }): OpenTabLauncherItemId[] {
@@ -108,6 +112,10 @@ export function resolveOpenTabLauncherItemIds({
 
   if (!hasLabTab) {
     itemIds.push("lab");
+  }
+
+  if (!hasHardeningTab) {
+    itemIds.push("hardening");
   }
 
   return itemIds;

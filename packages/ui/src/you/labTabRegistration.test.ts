@@ -95,7 +95,7 @@ test("the tab stamps workspace ownership for workspace isolation", () => {
   assert.equal("workspaceKey" in createLabSidePaneTab({}), false);
 });
 
-test("launcher offers lab only when the tab is not open (lab is LAST, after escalation)", () => {
+test("launcher offers lab only when the tab is not open (lab sits after escalation; W10B hardening is LAST)", () => {
   const base = {
     developerToolsEnabled: false,
     hasReviewTab: false,
@@ -116,11 +116,12 @@ test("launcher offers lab only when the tab is not open (lab is LAST, after esca
     "avatar",
     "escalation",
     "lab",
+    "hardening",
   ]);
 
   assert.deepEqual(
     resolveOpenTabLauncherItemIds({ ...base, hasLabTab: true }),
-    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation"],
+    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "hardening"],
   );
 
   // 既有行为不受影响：developer tools / review / 无浏览器环境 / 缺省参数向后兼容。
@@ -132,7 +133,7 @@ test("launcher offers lab only when the tab is not open (lab is LAST, after esca
       hasCaptureTab: false,
       supportsEmbeddedBrowser: false,
     }),
-    ["terminal", "developer-tools", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab"],
+    ["terminal", "developer-tools", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab", "hardening"],
   );
 
   // 未传 hasLabTab 时缺省 false（既有调用点零行为变化，lab 入口照常出现）。
@@ -143,7 +144,7 @@ test("launcher offers lab only when the tab is not open (lab is LAST, after esca
       hasSolutionTab: false,
       hasCaptureTab: false,
     }),
-    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab"],
+    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab", "hardening"],
   );
 
   assert.deepEqual(
@@ -169,6 +170,7 @@ test("launcher offers lab only when the tab is not open (lab is LAST, after esca
       "avatar",
       "escalation",
       "lab",
+      "hardening",
     ],
   );
 });

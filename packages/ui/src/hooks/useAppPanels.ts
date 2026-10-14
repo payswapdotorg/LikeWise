@@ -43,6 +43,7 @@ import {
   openAvatarStudioSidePane,
   openEscalationStudioSidePane,
   openLabStudioSidePane,
+  openHardeningStudioSidePane,
   openBrowserSidePane,
   openOrActivateBrowserSidePaneByUrl,
   findBrowserSidePaneTabByUrl,
@@ -921,6 +922,20 @@ export function useAppPanels(options: {
     });
   }, [commitOpenedSidePaneState, revealSidePaneForCurrentOwner, workspaceAbsPath]);
 
+  // YOU Hardening surface（W10B 注册点）：幂等打开/聚焦 native Hardening tab。
+  const handleOpenHardeningStudio = useCallback(() => {
+    revealSidePaneForCurrentOwner();
+    commitOpenedSidePaneState((current) => {
+      const next = openHardeningStudioSidePane(current, {
+        workspaceKey: activeWorkspaceKeyRef.current,
+      });
+      logger.info(
+        `[App] 打开右侧面板 mode=hardening workspace=${workspaceAbsPath} tabs=${next.tabs.length}`,
+      );
+      return next;
+    });
+  }, [commitOpenedSidePaneState, revealSidePaneForCurrentOwner, workspaceAbsPath]);
+
   const handleOpenTerminalTab = useCallback(() => {
     if (isOfficeMode) return;
     revealSidePaneForCurrentOwner();
@@ -1731,6 +1746,7 @@ export function useAppPanels(options: {
     handleOpenAvatarStudio,
     handleOpenEscalationStudio,
     handleOpenLabStudio,
+    handleOpenHardeningStudio,
     handleOpenTerminalTab,
     handleOpenModelTrajectory,
     handleOpenSubagentSession,

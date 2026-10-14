@@ -14,6 +14,7 @@ import {
   GraduationCapIcon,
   LifeBuoyIcon,
   MicroscopeIcon,
+  ShieldCheckIcon,
   MapIcon,
   MessageSquareTextIcon,
   ListTreeIcon,
@@ -390,6 +391,13 @@ export function SidePaneTabIcon({ tab }: { tab: WorkspaceSidePaneTab }) {
     return <MicroscopeIcon className="size-3.5" />;
   }
 
+  // YOU Hardening surface（W10B）：与 Solution/…/Lab 同级的 workspace 表面，固定
+  // 盾牌勾选（shield-check）图标——Hardening 是产品加固平面（限流/导入/留存/容灾/
+  // 发布就绪）。
+  if (tab.type === "hardening") {
+    return <ShieldCheckIcon className="size-3.5" />;
+  }
+
   if (tab.type === "terminal" || tab.type === "bash-output") {
     return <SquareTerminalIcon className="size-3.5" />;
   }
@@ -641,6 +649,11 @@ export function getSidePaneTabTitle(
   // YOU Lab surface（W9B）：标题走中央文案表（you.lab.tabTitle）。
   if (tab.type === "lab") {
     return formatMessage({ id: "you.lab.tabTitle" });
+  }
+
+  // YOU Hardening surface（W10B）：标题走中央文案表（you.hardening.tabTitle）。
+  if (tab.type === "hardening") {
+    return formatMessage({ id: "you.hardening.tabTitle" });
   }
 
   if (tab.type === "terminal" || tab.type === "bash-output") {

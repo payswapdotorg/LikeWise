@@ -255,6 +255,8 @@ export interface WorkspaceShellLayoutProps extends Omit<AppProps, "baseFeedbackS
   handleOpenEscalationStudio: () => void;
   /** YOU Lab surface（W9B）：幂等打开/聚焦 native Lab tab。 */
   handleOpenLabStudio: () => void;
+  /** YOU Hardening surface（W10B）：幂等打开/聚焦 native Hardening tab。 */
+  handleOpenHardeningStudio: () => void;
   handleOpenTerminalTab: () => void;
   handleToggleGit: () => void;
   handleOpenGitReview: (sourceId?: GitChangeSourceId) => void;

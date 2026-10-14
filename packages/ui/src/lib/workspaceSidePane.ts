@@ -11,6 +11,7 @@ import { resolveLearningTabState } from "@/you/learningTabRegistration.js";
 import { resolveAvatarTabState } from "@/you/avatarTabRegistration.js";
 import { resolveEscalationTabState } from "@/you/escalationTabRegistration.js";
 import { resolveLabTabState } from "@/you/labTabRegistration.js";
+import { resolveHardeningTabState } from "@/you/hardeningTabRegistration.js";
 
 export interface BrowserSidePaneTab {
   id: string;
@@ -212,6 +213,20 @@ export interface EscalationStudioSidePaneTab {
 export interface LabStudioSidePaneTab {
   id: "lab";
   type: "lab";
+  ownerTaskId?: string | null;
+  workspaceKey?: string | null;
+  openedAt?: number;
+}
+
+/**
+ * YOU Hardening surface tab（W10B）——与 Solution/Capture/Twin/Performance/Editing/
+ * Learning/Avatar/Escalation/Lab 同级的 native workspace 表面。固定单例 id：一个
+ * workspace 一个 Hardening tab（重复打开幂等地聚焦既有 tab）；内容与视图状态由
+ * `packages/ui/src/you/**` 子树自持（hardening 系列模块）。
+ */
+export interface HardeningStudioSidePaneTab {
+  id: "hardening";
+  type: "hardening";
   ownerTaskId?: string | null;
   workspaceKey?: string | null;
   openedAt?: number;
@@ -663,6 +678,7 @@ export type WorkspaceSidePaneTab =
   | AvatarStudioSidePaneTab
   | EscalationStudioSidePaneTab
   | LabStudioSidePaneTab
+  | HardeningStudioSidePaneTab
   | TerminalSidePaneTab
   | BrowserUseSidePaneTab
   | SubagentSessionSidePaneTab
@@ -1214,6 +1230,8 @@ const WORKSPACE_GLOBAL_SIDE_PANE_TAB_TYPES = new Set<WorkspaceSidePaneTab["type"
   "escalation",
   // Lab 同为 workspace 级表面（W9B，同 ADR-002 语义）。
   "lab",
+  // Hardening 同为 workspace 级表面（W10B，同 ADR-002 语义）。
+  "hardening",
 ]);
 
 function isWorkspaceGlobalSidePaneTab(tab: WorkspaceSidePaneTab): boolean {
@@ -1860,6 +1878,19 @@ export function openLabStudioSidePane(
   },
 ): WorkspaceSidePaneState {
   return resolveLabTabState(current, options);
+}
+
+/**
+ * 打开（或幂等聚焦）YOU Hardening 表面 tab（W10B 注册点）。
+ * 纯转移逻辑在 `@/you/hardeningTabRegistration.js`（you 子树自含，可被 tsx 直接加载）。
+ */
+export function openHardeningStudioSidePane(
+  current: WorkspaceSidePaneState | null,
+  options: {
+    workspaceKey?: string | null;
+  },
+): WorkspaceSidePaneState {
+  return resolveHardeningTabState(current, options);
 }
 
 export function openTerminalSidePane(

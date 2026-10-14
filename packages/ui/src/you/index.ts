@@ -71,3 +71,10 @@ import "./labStudioStore.test.js";
 import "./labStudioProjection.test.js";
 import "./labSimulatedController.test.js";
 import "./labStudioDemo.test.js";
+// W10B — Hardening Studio 逻辑测试。
+import "./hardeningTabRegistration.test.js";
+import "./hardeningMessages.test.js";
+import "./hardeningStudioStore.test.js";
+import "./hardeningStudioProjection.test.js";
+import "./hardeningSimulatedController.test.js";
+import "./hardeningStudioDemo.test.js";

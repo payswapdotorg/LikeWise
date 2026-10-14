@@ -59,6 +59,7 @@ import { LearningStudioSurface } from "@/you/LearningStudioSurface.js";
 import { AvatarStudioSurface } from "@/you/AvatarStudioSurface.js";
 import { EscalationStudioSurface } from "@/you/EscalationStudioSurface.js";
 import { LabStudioSurface } from "@/you/LabStudioSurface.js";
+import { HardeningStudioSurface } from "@/you/HardeningStudioSurface.js";
 import {
   getSidePaneTabTitle,
   SidePaneTabDragOverlay,
@@ -109,6 +110,7 @@ import {
   GlobeIcon,
   LifeBuoyIcon,
   MicroscopeIcon,
+  ShieldCheckIcon,
   MessageSquareTextIcon,
   PersonStandingIcon,
   PlusIcon,
@@ -340,6 +342,7 @@ export function AnimatedSidePanePanel({
   onOpenAvatarStudio,
   onOpenEscalationStudio,
   onOpenLabStudio,
+  onOpenHardeningStudio,
   onOpenTerminalTab,
   onOpenReviewTab,
   onOpenSelectionSideConversation,
@@ -423,6 +426,8 @@ export function AnimatedSidePanePanel({
   onOpenEscalationStudio: () => void;
   /** YOU Lab surface（W9B）：幂等打开/聚焦 Lab tab。 */
   onOpenLabStudio: () => void;
+  /** YOU Hardening surface（W10B）：幂等打开/聚焦 Hardening tab。 */
+  onOpenHardeningStudio: () => void;
   onOpenTerminalTab: () => void;
   onOpenReviewTab: () => void;
   onOpenSelectionSideConversation: () => void;
@@ -502,6 +507,7 @@ export function AnimatedSidePanePanel({
   const hasAvatarTab = tabs.some((tab) => tab.type === "avatar");
   const hasEscalationTab = tabs.some((tab) => tab.type === "escalation");
   const hasLabTab = tabs.some((tab) => tab.type === "lab");
+  const hasHardeningTab = tabs.some((tab) => tab.type === "hardening");
   const canOpenSelectionSideConversation = shouldOfferSelectionSideConversation({
     activeTaskId,
   });
@@ -910,6 +916,17 @@ export function AnimatedSidePanePanel({
             <span>{intl.formatMessage({ id: "you.lab.tabTitle" })}</span>
           </DropdownMenuItem>
         ) : null}
+        {!hasHardeningTab ? (
+          <DropdownMenuItem
+            data-side-pane-add-item="hardening"
+            onSelect={() => {
+              onOpenHardeningStudio();
+            }}
+          >
+            <ShieldCheckIcon className="size-4" />
+            <span>{intl.formatMessage({ id: "you.hardening.tabTitle" })}</span>
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -998,6 +1015,12 @@ export function AnimatedSidePanePanel({
       icon: MicroscopeIcon,
       onOpen: onOpenLabStudio,
     },
+    hardening: {
+      id: "hardening",
+      label: intl.formatMessage({ id: "you.hardening.tabTitle" }),
+      icon: ShieldCheckIcon,
+      onOpen: onOpenHardeningStudio,
+    },
   };
   const openTabLauncherItems: OpenTabLauncherItem[] = resolveOpenTabLauncherItemIds({
     canOpenSelectionSideConversation,
@@ -1012,6 +1035,7 @@ export function AnimatedSidePanePanel({
     hasAvatarTab,
     hasEscalationTab,
     hasLabTab,
+    hasHardeningTab,
     supportsEmbeddedBrowser,
   })
     .filter((itemId) => !isOfficeMode || (itemId !== "terminal" && itemId !== "review"))
@@ -1110,6 +1134,7 @@ export function AnimatedSidePanePanel({
         avatarTitle: intl.formatMessage({ id: "you.avatar.tabTitle" }),
         escalationTitle: intl.formatMessage({ id: "you.escalation.tabTitle" }),
         labTitle: intl.formatMessage({ id: "you.lab.tabTitle" }),
+        hardeningTitle: intl.formatMessage({ id: "you.hardening.tabTitle" }),
         terminalTitle: intl.formatMessage({ id: "terminal.title" }),
         subagentTypeLabel: intl.formatMessage({ id: "sidePane.subagent" }),
         subagentDirectoryTitle: intl.formatMessage({
@@ -1547,6 +1572,13 @@ export function AnimatedSidePanePanel({
                           />
                         ) : tab.type === "lab" ? (
                           <LabStudioSurface
+                            key={tab.id}
+                            tab={tab}
+                            workspaceKey={workspaceKey}
+                            isActive={isVisible && tab.id === visibleActiveTabId}
+                          />
+                        ) : tab.type === "hardening" ? (
+                          <HardeningStudioSurface
                             key={tab.id}
                             tab={tab}
                             workspaceKey={workspaceKey}
