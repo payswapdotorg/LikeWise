@@ -1,5 +1,5 @@
-/* eslint-disable max-lines -- the single seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7+v8+v9 is consolidated BY DESIGN: exactly one module maps every neutral you-lab shape onto the frozen contracts (the only-module law asserted by tests), so the full W1C/W2C/W3C/W4C/W5C/W6C/W7C/W8C/W9C mapping surface intentionally lives in this one file. */
-// SINGLE seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7+v8+v9
+/* eslint-disable max-lines -- the single seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7+v8+v9+v10 is consolidated BY DESIGN: exactly one module maps every neutral you-lab shape onto the frozen contracts (the only-module law asserted by tests), so the full W1C/W2C/W3C/W4C/W5C/W6C/W7C/W8C/W9C/W10C mapping surface intentionally lives in this one file. */
+// SINGLE seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7+v8+v9+v10
 // (packages/shared/src/you/contract.ts).
 // (packages/shared/src/you/contract.ts).
 //
@@ -102,6 +102,9 @@ import type {
   LabWorldDescriptor as FrozenLabWorldDescriptor,
   PipelineGenomeNode as FrozenPipelineGenomeNode,
   SearchLadderStep as FrozenSearchLadderStep,
+  ProviderMatrixEntry as FrozenProviderMatrixEntry,
+  CostLatencyBudget as FrozenCostLatencyBudget,
+  ProductionEligibilityRecord as FrozenProductionEligibilityRecord,
 } from "../../shared/src/you/contract.js";
 import type { CandidateOperation, EditorArtifact, NeutralEntity } from "./adapters/editorAdapterSeam.js";
 import type { CaptureObservation, NeutralCaptureModality } from "./capture/captureAdapterSeam.js";
@@ -183,6 +186,17 @@ import type {
   PromotionEvidenceReport,
 } from "./research/promotionEvidence.js";
 import type { NeutralLabWorldDescriptor } from "./research/worlds.js";
+import type {
+  NeutralCostLatencyBudget,
+  NeutralProviderMatrixEntry,
+  NeutralEcosystemOutput,
+  NeutralEcosystemRequest,
+  EcosystemAdapter,
+  EcosystemRegion,
+  ProviderMatrixRegistry,
+} from "./ecosystem/providerMatrixSeam.js";
+import type { ProductionEligibilityLedger, NeutralProductionEligibilityRecord } from "./ecosystem/eligibilityLedger.js";
+import type { CandidateEcosystemResult } from "./ecosystem/ecosystemRunner.js";
 import { canonicalJson } from "./determinism.js";
 import { sha256Hex } from "./arena/arenaAdapterSeam.js";
 
@@ -2146,4 +2160,188 @@ export function labResearchThroughHarness(report: PromotionEvidenceReport): Froz
       })
     : null;
   return { experiment, worlds, runs, manifests, ladderSteps, genomeNodes, atlasEntries, promotion };
+}
+
+// ---------------------------------------------------------------------------
+// W10C: seam mapping onto the frozen v10 ecosystem hardening contracts
+// (ProviderMatrixEntry / CostLatencyBudget /
+// ProductionEligibilityRecord). The neutral W10C shapes in
+// ecosystem/providerMatrixSeam.ts, ecosystem/budgetGuardSeam.ts and
+// ecosystem/eligibilityLedger.ts are structurally aligned with the frozen
+// v10 shapes, so this mapping is 1:1 and never redeclares or mutates
+// contract semantics. The region/breaker-class mappings also happen here —
+// the ONLY place neutral ecosystem shapes meet the frozen v10 literals.
+// ECOSYSTEM GATE LAW: the matrix entry construction validates the authored
+// region vocabulary and non-empty capability classes (an unknown ref never
+// maps — the neutral seam already refused it; this seam refuses to map a
+// malformed row). PRODUCTION ELIGIBILITY LAW: the eligibility record
+// construction refuses an empty rollbackEvidenceRef (the law's rollback
+// evidence requirement enforced at the frozen boundary too). TRUTH LAW:
+// fixture ecosystem rows, budgets and decisions stay `simulated: true`
+// (the W10+ compute-plane boundary).
+// ---------------------------------------------------------------------------
+
+/**
+ * Map a neutral ecosystem region onto the frozen v10
+ * ProviderMatrixEntry.region (an opaque string whose registry authority is
+ * the W10C lane — the authored vocabulary is validated here, the ONLY
+ * gate; extension requires a W10C registry update plus this seam table).
+ */
+export function mapEcosystemRegion(region: EcosystemRegion): string {
+  if (region.length === 0) {
+    throw new Error("mapEcosystemRegion: empty region (truth law — refusing to map an unaddressed region)");
+  }
+  if (region === "global" || region === "cn" || region === "kr" || region === "in") {
+    return region;
+  }
+  throw new Error(`mapEcosystemRegion: neutral region "${region}" is outside the W10C authored region vocabulary (global/cn/kr/in — no jp region is minted: no Japan-market provider was verified in the 2026-10-14 research pass)`);
+}
+
+/** Build a frozen v10 ProviderMatrixEntry from a neutral matrix row (validated 1:1 mapping). */
+export function toFrozenProviderMatrixEntry(entry: NeutralProviderMatrixEntry): FrozenProviderMatrixEntry {
+  if (entry.id.length === 0) throw new Error("toFrozenProviderMatrixEntry: empty id");
+  if (entry.providerKind.length === 0) throw new Error("toFrozenProviderMatrixEntry: empty providerKind (a row names its provider)");
+  const region = mapEcosystemRegion(entry.region);
+  if (entry.capabilityClasses.length === 0) {
+    throw new Error("toFrozenProviderMatrixEntry: empty capabilityClasses (a row gates at least one class or slot)");
+  }
+  for (const clazz of entry.capabilityClasses) {
+    if (clazz.length === 0) {
+      throw new Error(`toFrozenProviderMatrixEntry: empty capability class on row ${entry.id}`);
+    }
+  }
+  return {
+    id: entry.id,
+    providerKind: entry.providerKind,
+    region,
+    capabilityClasses: [...entry.capabilityClasses],
+    eligible: entry.eligible,
+    simulated: entry.simulated,
+  };
+}
+
+/** Build a frozen v10 CostLatencyBudget from a neutral budget descriptor (validated 1:1 mapping). */
+export function toFrozenCostLatencyBudget(budget: NeutralCostLatencyBudget): FrozenCostLatencyBudget {
+  if (budget.id.length === 0) throw new Error("toFrozenCostLatencyBudget: empty id");
+  if (budget.scope.length === 0) throw new Error("toFrozenCostLatencyBudget: empty scope (a budget names its scope)");
+  if (!Number.isFinite(budget.costBudget) || budget.costBudget <= 0) {
+    throw new Error(`toFrozenCostLatencyBudget: costBudget ${budget.costBudget} must be a finite number > 0`);
+  }
+  if (!Number.isFinite(budget.latencyBudgetS) || budget.latencyBudgetS <= 0) {
+    throw new Error(`toFrozenCostLatencyBudget: latencyBudgetS ${budget.latencyBudgetS} must be a finite number > 0`);
+  }
+  return {
+    id: budget.id,
+    scope: budget.scope,
+    costBudget: budget.costBudget,
+    latencyBudgetS: budget.latencyBudgetS,
+    breakerClass: mapArenaBackoffClass(budget.breakerClass),
+    simulated: budget.simulated,
+  };
+}
+
+/**
+ * Build a frozen v10 ProductionEligibilityRecord from a neutral ledger
+ * record (validated 1:1 mapping). PRODUCTION ELIGIBILITY LAW at the
+ * frozen boundary: an empty rollbackEvidenceRef is refused — eligibility
+ * NEVER maps without rollback evidence.
+ */
+export function toFrozenProductionEligibilityRecord(record: NeutralProductionEligibilityRecord): FrozenProductionEligibilityRecord {
+  if (record.id.length === 0) throw new Error("toFrozenProductionEligibilityRecord: empty id");
+  if (record.subjectRef.length === 0) throw new Error("toFrozenProductionEligibilityRecord: empty subjectRef (a decision names its subject)");
+  if (record.rollbackEvidenceRef.length === 0) {
+    throw new Error("toFrozenProductionEligibilityRecord: empty rollbackEvidenceRef — YOU_PRODUCTION_ELIGIBILITY_INVALID (the PRODUCTION ELIGIBILITY LAW requires rollback evidence on every decision)");
+  }
+  if (record.decidedAt.length === 0) throw new Error("toFrozenProductionEligibilityRecord: empty decidedAt");
+  return {
+    id: record.id,
+    subjectRef: record.subjectRef,
+    eligible: record.eligible,
+    rollbackEvidenceRef: record.rollbackEvidenceRef,
+    decidedAt: record.decidedAt,
+    simulated: record.simulated,
+  };
+}
+
+/** The full frozen v10 mapping of one ecosystem path through an adapter. */
+export interface FrozenEcosystemPath {
+  readonly matrixEntry: FrozenProviderMatrixEntry;
+  readonly budget: FrozenCostLatencyBudget;
+  /** The latest ledger decision for the resolved provider subject (null when none was decided). */
+  readonly eligibility: FrozenProductionEligibilityRecord | null;
+  readonly output: NeutralEcosystemOutput;
+}
+
+/**
+ * Full W10C path: fulfill the ecosystem request through the adapter and
+ * construct the frozen v10 shapes (neutral refs + budget -> adapter
+ * .fulfill() through the fail-closed gate -> frozen ProviderMatrixEntry +
+ * CostLatencyBudget + the subject's latest ProductionEligibilityRecord).
+ * IDENTITY LAW: the output must thread the request identity and the
+ * resolved matrix row identity — an adapter minting fulfillments for
+ * another request/row is refused. Pure orchestration — no business logic;
+ * the adapter remains the only ecosystem provider and the matrix
+ * derivation (registry authority) remains the gate.
+ */
+export function ecosystemThroughAdapter(
+  adapter: EcosystemAdapter,
+  request: NeutralEcosystemRequest,
+  matrix: ProviderMatrixRegistry,
+  ledger: ProductionEligibilityLedger,
+): FrozenEcosystemPath {
+  const entry = matrix.resolve(request.providerKind, request.region);
+  if (!entry) {
+    throw new Error(`ecosystemThroughAdapter: no matrix row for provider '${request.providerKind}' in region '${request.region}' (the ecosystem gate refuses unknown refs before the adapter runs)`);
+  }
+  const output = adapter.fulfill(request, matrix, ledger);
+  if (output.requestId !== request.requestId) {
+    throw new Error(`ecosystemThroughAdapter: output requestId "${output.requestId}" diverges from the request (identity law — adapters never mint request identity)`);
+  }
+  if (output.matrixEntryId !== entry.id) {
+    throw new Error(`ecosystemThroughAdapter: output matrixEntryId "${output.matrixEntryId}" diverges from the resolved row (identity law — adapters never mint matrix rows)`);
+  }
+  const latestDecision = ledger.latestDecisionFor(entry.providerKind);
+  return {
+    matrixEntry: toFrozenProviderMatrixEntry(entry),
+    budget: toFrozenCostLatencyBudget(request.budget),
+    eligibility: latestDecision === null ? null : toFrozenProductionEligibilityRecord(latestDecision),
+    output,
+  };
+}
+
+/** Honest effort observations for an ecosystem benchmark result (structured not-measured markers). */
+export function toEcosystemEffortObservations(
+  result: CandidateEcosystemResult,
+): Readonly<Record<string, string | number | boolean>> {
+  const out: Record<string, string | number | boolean> = {
+    fixtureCount: result.fixtureScores.length,
+    simulated: true,
+  };
+  appendMetricField(out, "ecosystemEffort", result.effort);
+  appendMetricField(out, "latencyMs", result.latency);
+  appendMetricField(out, "costUnits", result.cost);
+  return out;
+}
+
+/** Matrix-summary observations over a derived provider matrix (honest registry-derived provenance). */
+export function toProviderMatrixObservations(
+  matrix: ProviderMatrixRegistry,
+): Readonly<Record<string, string | number | boolean>> {
+  const entries = matrix.entries;
+  const byRegion = new Map<string, number>();
+  let eligible = 0;
+  for (const entry of entries) {
+    byRegion.set(entry.region, (byRegion.get(entry.region) ?? 0) + 1);
+    if (entry.eligible) eligible += 1;
+  }
+  const out: Record<string, string | number | boolean> = {
+    entryCount: entries.length,
+    eligibleCount: eligible,
+    ineligibleCount: entries.length - eligible,
+    simulated: true,
+  };
+  for (const region of [...byRegion.keys()].sort()) {
+    out[`region.${region}.entries`] = byRegion.get(region) ?? 0;
+  }
+  return out;
 }

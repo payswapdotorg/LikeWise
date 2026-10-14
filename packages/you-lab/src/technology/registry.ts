@@ -30,8 +30,13 @@ export interface LicenseClaim {
 // standards-track protocol documents rather than software (WHIP is
 // RFC 9725); the signal cites the RFC publication date per the RFC itself
 // (month precision when the RFC text states no day — never an invented day).
+// W10C: "provider-docs-portal" added additively for closed regional-provider
+// candidates researched only through published documentation
+// (docs/you/PROVIDER_ECOSYSTEM.md closed-provider rule); the signal cites the
+// observed liveness of the provider's documentation portal on the research
+// date — portal liveness is NOT a software release and never claims one.
 
-export type MaintenanceSignalKind = "npm-publish" | "github-release" | "pypi-upload" | "github-commit" | "gitlab-release" | "ietf-rfc";
+export type MaintenanceSignalKind = "npm-publish" | "github-release" | "pypi-upload" | "github-commit" | "gitlab-release" | "ietf-rfc" | "provider-docs-portal";
 
 export interface MaintenanceSignal {
   readonly kind: MaintenanceSignalKind;
