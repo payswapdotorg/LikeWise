@@ -1278,6 +1278,103 @@ export {
 } from "./contractSeam.js";
 
 // ---------------------------------------------------------------------------
+// W11C: E2E runbook — the deterministic 20-point launch-gate journey
+// harness, failure injection, the incident runbook machinery, the
+// journey scorer, the conformance audit builders, and the frozen v11
+// seam mapping (E2eJourneyRecord / IncidentRunbookEntry /
+// ConformanceAuditRecord).
+// ---------------------------------------------------------------------------
+
+export {
+  E2E_JOURNEY_INVALID_CODE,
+  E2eJourneyInvalidError,
+  INCIDENT_CLASSES,
+  INCIDENT_CLASS_NAMES,
+  JOURNEY_DRILL_STEP_ID,
+  JOURNEY_STEPS,
+  JOURNEY_STEP_IDS,
+  LAUNCH_GATE_JOURNEY_LENGTH,
+  UNEXERCISABLE_INCIDENT_CLASSES,
+  assertKnownJourneyStep,
+  incidentClassForStep,
+  incidentClassSpec,
+  journeyStepById,
+  journeyStepIndex,
+  type IncidentClassSpec,
+  type JourneyStepSpec,
+} from "./e2e/journeySteps.js";
+
+export {
+  JOURNEY_FIXTURE_SET_VERSION,
+  JOURNEY_RUN_SUBMITTED_AT,
+  GOLDEN_JOURNEY_FIXTURES,
+  journeyRecordId,
+  recoveryDurationMs,
+  runGoldenJourneys,
+  runJourney,
+  stepDurationMs,
+  toJourneyRunObservations,
+  type JourneyFixture,
+  type JourneyInjectionMode,
+  type JourneyInjectionSpec,
+  type JourneySpec,
+  type JourneyStepRecord,
+  type JourneyStepStatus,
+  type NeutralE2eJourneyRecord,
+  type NeutralJourneyOutcome,
+} from "./e2e/journeyHarness.js";
+
+export {
+  RUNBOOK_INVALID_CODE,
+  RunbookInvalidError,
+  INCIDENT_RUNBOOK_TEXTS,
+  assertExerciseClaimBacked,
+  buildIncidentRunbook,
+  buildIncidentRunbookEntry,
+  incidentRunbookEntryId,
+  incidentRunbookVersion,
+  runbookExerciseEvidence,
+  summarizeRunbookLaw,
+  type IncidentRunbookTexts,
+  type NeutralIncidentRunbookEntry,
+  type RunbookLawSummary,
+} from "./e2e/incidentRunbook.js";
+
+export {
+  INJECTION_JOURNEY_FIXTURES,
+  TERMINAL_JOURNEY_FIXTURES,
+  runInjectionCoverageJourneys,
+  runLaunchGateJourneySuite,
+  runTerminalJourneys,
+  summarizeInjectionCoverage,
+  type InjectionCoverageSummary,
+  type LaunchGateJourneySuite,
+} from "./e2e/failureInjection.js";
+
+export {
+  SCORER_JOURNEY_VERSION,
+  scoreJourneyRun,
+  type JourneyFidelityParts,
+} from "./e2e/journeyScorer.js";
+
+export {
+  CONFORMANCE_AUDIT_INVALID_CODE,
+  ConformanceAuditInvalidError,
+  LAUNCH_GATE_CONFORMANCE_STANDARD,
+  buildLaunchGateConformanceAudit,
+  conformanceAuditRecordId,
+  type ConformanceAuditDetail,
+  type ConformanceCheckResult,
+  type NeutralConformanceAuditRecord,
+} from "./e2e/conformanceAudit.js";
+
+export {
+  toFrozenConformanceAuditRecord,
+  toFrozenE2eJourneyRecord,
+  toFrozenIncidentRunbookEntry,
+} from "./contractSeam.js";
+
+// ---------------------------------------------------------------------------
 // Test-suite entry for the station command
 //
 // `pnpm exec tsx --test packages/you-lab/src` passes the DIRECTORY to the
@@ -1352,6 +1449,12 @@ if (isTestRunnerDirectoryEntry()) {
   await import("./ecosystem/ecosystemEvaluation.test.js");
   await import("./ecosystem/ecosystemBenchmark.test.js");
   await import("./ecosystem/ecosystemSeam.test.js");
+  await import("./e2e/journeySteps.test.js");
+  await import("./e2e/journeyHarness.test.js");
+  await import("./e2e/failureInjection.test.js");
+  await import("./e2e/incidentRunbook.test.js");
+  await import("./e2e/conformanceAudit.test.js");
+  await import("./e2e/e2eSeam.test.js");
   await import("./contractSeam.test.js");
   await import("./consumer-sim.test.js");
 }

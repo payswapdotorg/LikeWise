@@ -1,6 +1,5 @@
-/* eslint-disable max-lines -- the single seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7+v8+v9+v10 is consolidated BY DESIGN: exactly one module maps every neutral you-lab shape onto the frozen contracts (the only-module law asserted by tests), so the full W1C/W2C/W3C/W4C/W5C/W6C/W7C/W8C/W9C/W10C mapping surface intentionally lives in this one file. */
-// SINGLE seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7+v8+v9+v10
-// (packages/shared/src/you/contract.ts).
+/* eslint-disable max-lines -- the single seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7+v8+v9+v10+v11 is consolidated BY DESIGN: exactly one module maps every neutral you-lab shape onto the frozen contracts (the only-module law asserted by tests), so the full W1C/W2C/W3C/W4C/W5C/W6C/W7C/W8C/W9C/W10C/W11C mapping surface intentionally lives in this one file. */
+// SINGLE seam to the frozen YOU contract v1+v2+v3+v4+v5+v6+v7+v8+v9+v10+v11
 // (packages/shared/src/you/contract.ts).
 //
 // SEAM NOTE (W1C sandbox): importing "@zcode/shared" from packages/you-lab
@@ -105,6 +104,9 @@ import type {
   ProviderMatrixEntry as FrozenProviderMatrixEntry,
   CostLatencyBudget as FrozenCostLatencyBudget,
   ProductionEligibilityRecord as FrozenProductionEligibilityRecord,
+  E2eJourneyRecord as FrozenE2eJourneyRecord,
+  IncidentRunbookEntry as FrozenIncidentRunbookEntry,
+  ConformanceAuditRecord as FrozenConformanceAuditRecord,
 } from "../../shared/src/you/contract.js";
 import type { CandidateOperation, EditorArtifact, NeutralEntity } from "./adapters/editorAdapterSeam.js";
 import type { CaptureObservation, NeutralCaptureModality } from "./capture/captureAdapterSeam.js";
@@ -197,6 +199,15 @@ import type {
 } from "./ecosystem/providerMatrixSeam.js";
 import type { ProductionEligibilityLedger, NeutralProductionEligibilityRecord } from "./ecosystem/eligibilityLedger.js";
 import type { CandidateEcosystemResult } from "./ecosystem/ecosystemRunner.js";
+import type { NeutralE2eJourneyRecord } from "./e2e/journeyHarness.js";
+import type { NeutralIncidentRunbookEntry } from "./e2e/incidentRunbook.js";
+import type { NeutralConformanceAuditRecord } from "./e2e/conformanceAudit.js";
+import {
+  INCIDENT_CLASS_NAMES,
+  JOURNEY_STEP_IDS,
+  LAUNCH_GATE_JOURNEY_LENGTH,
+  journeyStepIndex,
+} from "./e2e/journeySteps.js";
 import { canonicalJson } from "./determinism.js";
 import { sha256Hex } from "./arena/arenaAdapterSeam.js";
 
@@ -2344,4 +2355,146 @@ export function toProviderMatrixObservations(
     out[`region.${region}.entries`] = byRegion.get(region) ?? 0;
   }
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// W11C: frozen v11 E2E journey / incident runbook / conformance audit
+// mappings (the JOURNEY LAW / RUNBOOK LAW / CONFORMANCE LAW enforced
+// fail-closed at the frozen boundary)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a frozen v11 E2eJourneyRecord from a neutral harness record
+ * (validated 1:1 mapping). JOURNEY LAW fail-closed at the frozen
+ * boundary: the record must name a KNOWN failed step when non-null; a
+ * successful journey (failedStep null) must complete all 20 points —
+ * never a silent partial success; the completed prefix must reach the
+ * failed step's position; and the you-lab harness is fixture-mode only,
+ * so simulated must be true (an unlabelled run is a truth-law
+ * fabrication at this seam).
+ */
+export function toFrozenE2eJourneyRecord(record: NeutralE2eJourneyRecord): FrozenE2eJourneyRecord {
+  if (record.id.length === 0) throw new Error("toFrozenE2eJourneyRecord: empty id");
+  if (record.journeyId.length === 0) throw new Error("toFrozenE2eJourneyRecord: empty journeyId");
+  if (
+    !Number.isInteger(record.stepsCompleted) ||
+    record.stepsCompleted < 0 ||
+    record.stepsCompleted > LAUNCH_GATE_JOURNEY_LENGTH
+  ) {
+    throw new Error(
+      `toFrozenE2eJourneyRecord: stepsCompleted ${record.stepsCompleted} must be an integer in [0, ${LAUNCH_GATE_JOURNEY_LENGTH}] (the 20-point launch-gate path)`,
+    );
+  }
+  if (record.failedStep !== null) {
+    if (record.failedStep.length === 0) {
+      throw new Error("toFrozenE2eJourneyRecord: failedStep is an empty string (null when the journey succeeded)");
+    }
+    if (!JOURNEY_STEP_IDS.includes(record.failedStep)) {
+      throw new Error(
+        `toFrozenE2eJourneyRecord: failedStep '${record.failedStep}' is outside the frozen 20-point launch-gate vocabulary (the harness never emits it)`,
+      );
+    }
+    const failedIndex = journeyStepIndex(record.failedStep);
+    if (record.stepsCompleted < failedIndex - 1) {
+      throw new Error(
+        `toFrozenE2eJourneyRecord: stepsCompleted ${record.stepsCompleted} is below the failed step's honest prefix (${failedIndex - 1} steps precede '${record.failedStep}')`,
+      );
+    }
+  } else if (record.stepsCompleted !== LAUNCH_GATE_JOURNEY_LENGTH) {
+    throw new Error(
+      `toFrozenE2eJourneyRecord: a successful journey (failedStep null) must complete all ${LAUNCH_GATE_JOURNEY_LENGTH} points (got ${record.stepsCompleted}) — never a silent partial success`,
+    );
+  }
+  if (!Number.isFinite(record.durationMs) || record.durationMs < 0) {
+    throw new Error(
+      `toFrozenE2eJourneyRecord: durationMs ${record.durationMs} must be a finite non-negative number (the measured-duration clause)`,
+    );
+  }
+  if (record.simulated !== true) {
+    throw new Error(
+      "toFrozenE2eJourneyRecord: simulated must be true at this seam (the you-lab journey harness is fixture-mode only; an unlabelled run is a truth-law violation — the JOURNEY LAW's simulated-runs-stay-labeled clause)",
+    );
+  }
+  return {
+    id: record.id,
+    journeyId: record.journeyId,
+    stepsCompleted: record.stepsCompleted,
+    failedStep: record.failedStep,
+    durationMs: record.durationMs,
+    simulated: record.simulated,
+  };
+}
+
+/**
+ * Build a frozen v11 IncidentRunbookEntry from a neutral entry
+ * (validated 1:1 mapping). RUNBOOK LAW fail-closed at the frozen
+ * boundary: the incident class must be inside the W11C authored
+ * vocabulary, every detection/containment/recovery text must be
+ * non-empty, and simulated must be true (the exercise flag itself is
+ * derived from journey evidence in you-lab, never asserted here).
+ */
+export function toFrozenIncidentRunbookEntry(entry: NeutralIncidentRunbookEntry): FrozenIncidentRunbookEntry {
+  if (entry.id.length === 0) throw new Error("toFrozenIncidentRunbookEntry: empty id");
+  if (entry.incidentClass.length === 0) {
+    throw new Error("toFrozenIncidentRunbookEntry: empty incidentClass (a runbook entry names its incident class)");
+  }
+  if (!INCIDENT_CLASS_NAMES.includes(entry.incidentClass)) {
+    throw new Error(
+      `toFrozenIncidentRunbookEntry: incidentClass '${entry.incidentClass}' is outside the W11C authored incident vocabulary (extension requires a W11C table update)`,
+    );
+  }
+  if (entry.detection.length === 0) throw new Error(`toFrozenIncidentRunbookEntry: entry '${entry.id}': empty detection text`);
+  if (entry.containment.length === 0) throw new Error(`toFrozenIncidentRunbookEntry: entry '${entry.id}': empty containment text`);
+  if (entry.recovery.length === 0) throw new Error(`toFrozenIncidentRunbookEntry: entry '${entry.id}': empty recovery text`);
+  if (entry.simulated !== true) {
+    throw new Error(
+      "toFrozenIncidentRunbookEntry: simulated must be true at this seam (the you-lab runbook is fixture-mode only; an unlabelled entry is a truth-law violation)",
+    );
+  }
+  return {
+    id: entry.id,
+    incidentClass: entry.incidentClass,
+    detection: entry.detection,
+    containment: entry.containment,
+    recovery: entry.recovery,
+    exercised: entry.exercised,
+    simulated: entry.simulated,
+  };
+}
+
+/**
+ * Build a frozen v11 ConformanceAuditRecord from a neutral audit record
+ * (validated 1:1 mapping). CONFORMANCE LAW fail-closed at the frozen
+ * boundary: checksTotal must be a positive integer (an audit with zero
+ * checks is a pass without the counts — refused), checksPassed must be
+ * an integer in [0, checksTotal] (verbatim counts, never a summary
+ * beyond the total), and simulated must be true.
+ */
+export function toFrozenConformanceAuditRecord(record: NeutralConformanceAuditRecord): FrozenConformanceAuditRecord {
+  if (record.id.length === 0) throw new Error("toFrozenConformanceAuditRecord: empty id");
+  if (record.standard.length === 0) throw new Error("toFrozenConformanceAuditRecord: empty standard (an audit names its standard)");
+  if (record.scopeRef.length === 0) throw new Error("toFrozenConformanceAuditRecord: empty scopeRef (an audit names its scope)");
+  if (!Number.isInteger(record.checksTotal) || record.checksTotal <= 0) {
+    throw new Error(
+      `toFrozenConformanceAuditRecord: checksTotal ${record.checksTotal} must be a positive integer — the CONFORMANCE LAW refuses a pass without the counts`,
+    );
+  }
+  if (!Number.isInteger(record.checksPassed) || record.checksPassed < 0 || record.checksPassed > record.checksTotal) {
+    throw new Error(
+      `toFrozenConformanceAuditRecord: checksPassed ${record.checksPassed} must be an integer in [0, checksTotal=${record.checksTotal}] (verbatim counts, never a summary beyond the total)`,
+    );
+  }
+  if (record.simulated !== true) {
+    throw new Error(
+      "toFrozenConformanceAuditRecord: simulated must be true at this seam (the you-lab audit builders are fixture-mode only; an unlabelled audit is a truth-law violation)",
+    );
+  }
+  return {
+    id: record.id,
+    standard: record.standard,
+    scopeRef: record.scopeRef,
+    checksTotal: record.checksTotal,
+    checksPassed: record.checksPassed,
+    simulated: record.simulated,
+  };
 }
