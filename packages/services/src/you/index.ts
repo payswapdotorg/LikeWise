@@ -21,3 +21,5 @@ import "./arenaService.test.js";
 import "./arenaFixtureScenario.test.js";
 import "./labService.test.js";
 import "./labFixtureScenario.test.js";
+import "./platformService.test.js";
+import "./platformFixtureScenario.test.js";

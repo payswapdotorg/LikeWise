@@ -62,3 +62,8 @@ import "./labExperiment.test.js";
 import "./labEvidence.test.js";
 import "./labPromotion.test.js";
 import "./labLedger.test.js";
+import "./rateLimitPolicy.test.js";
+import "./importSecurity.test.js";
+import "./retentionEnforcement.test.js";
+import "./drRestore.test.js";
+import "./platformLedger.test.js";
