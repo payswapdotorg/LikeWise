@@ -1113,6 +1113,171 @@ export {
 } from "./contractSeam.js";
 
 // ---------------------------------------------------------------------------
+// W10C: ecosystem hardening — the ProviderMatrix ecosystem gate
+// (registry-derived, fail-closed on unknown refs), cost/latency budget
+// guards with the W8C breaker classes carried forward, the
+// production-eligibility ledger (rollback evidence, immutable records,
+// reversals as new records), the stage-10 ecosystem research registry, the
+// registry-derived candidate evaluation, deterministic mock + fail-closed
+// model-viewer evaluation adapters, the ecosystem benchmark, and the frozen
+// v10 seam mapping (ProviderMatrixEntry / CostLatencyBudget /
+// ProductionEligibilityRecord).
+// ---------------------------------------------------------------------------
+
+export {
+  ECOSYSTEM_SEED_PROFILES,
+  createEcosystemRegistry,
+  createStage10EcosystemRegistry,
+} from "./technology/ecosystemSeedProfiles.js";
+
+export {
+  DEFAULT_MAX_MAINTENANCE_AGE_DAYS as PROVIDER_MATRIX_DEFAULT_MAX_MAINTENANCE_AGE_DAYS,
+  ECOSYSTEM_BREAKER_CLASSES,
+  ECOSYSTEM_CAPABILITY_SLOTS,
+  ECOSYSTEM_EXPORT_CLASSES,
+  ECOSYSTEM_REGIONS,
+  ECOSYSTEM_RESEARCH_DATE,
+  ECOSYSTEM_STYLE_CLASSES,
+  MATRIX_CLASS_PREFIXES,
+  PROVIDER_MATRIX_INVALID_CODE,
+  PROVIDER_MATRIX_ROW_SPECS,
+  ProviderMatrixInvalidError,
+  aggregateEcosystemDigest,
+  assertEcosystemRequestSupported,
+  deriveProviderMatrix,
+  encodeEcosystemFulfillment,
+  intendedBreakerQualityAt,
+  intendedFulfillmentFidelityAt,
+  neutralEcosystemSeamVersion,
+  notMeasuredEcosystemEffortFields,
+  providerMatrixEntryId,
+  sha256Hex as sha256HexEcosystem,
+  validateProviderMatrixIntegrity,
+  type BudgetGuardDecision,
+  type EcosystemAdapter,
+  type EcosystemAdapterProfile,
+  type EcosystemCapabilitySlot,
+  type EcosystemEffortFields,
+  type EcosystemExportClass,
+  type EcosystemRegion,
+  type EcosystemStyleClass,
+  type NeutralEcosystemOutput,
+  type NeutralEcosystemRequest,
+  type NeutralProviderMatrixEntry,
+  type ProviderMatrixIntegrityReport,
+  type ProviderMatrixRegistry,
+  type ProviderMatrixRowSpec,
+} from "./ecosystem/providerMatrixSeam.js";
+
+export {
+  BUDGET_DESCRIPTOR_INVALID_CODE,
+  BUDGET_EXCEEDED_CODE,
+  BudgetDescriptorInvalidError,
+  BudgetExceededError,
+  assertValidCostLatencyBudget,
+  budgetDecisionId,
+  budgetGuardId,
+  budgetGuardSeamVersion,
+  enforceCostLatencyBudget,
+  evaluateCostLatencyBudget,
+  intendedBudgetHeadroomAt,
+  type BudgetEnforcementContext,
+  type NeutralCostLatencyBudget,
+} from "./ecosystem/budgetGuardSeam.js";
+
+export {
+  PRODUCTION_ELIGIBILITY_INVALID_CODE,
+  ProductionEligibilityInvalidError,
+  assertRecordIntact,
+  createProductionEligibilityLedger,
+  createRollbackEvidenceRegistry,
+  eligibilityLedgerVersion,
+  eligibilityRecordId,
+  type EligibilityDecisionInput,
+  type NeutralProductionEligibilityRecord,
+  type ProductionEligibilityLedger,
+  type RollbackEvidenceRegistry,
+} from "./ecosystem/eligibilityLedger.js";
+
+export {
+  DEFAULT_MAX_MAINTENANCE_AGE_DAYS as ECOSYSTEM_DEFAULT_MAX_MAINTENANCE_AGE_DAYS,
+  W10C_CANDIDATE_TECHNOLOGY_IDS,
+  assessEcosystemProductionEligibility,
+  deriveEcosystemCandidateProfiles,
+  ecosystemCandidateIdsForSlot,
+  ecosystemShortlistBySlot,
+  rankEcosystemProductionEligible,
+  type EcosystemCandidateEligibilityAssessment,
+  type EcosystemCandidateProfile,
+  type EcosystemClassShortlistRow,
+  type EcosystemEligibilityOptions,
+  type EcosystemEvaluationCriteria,
+  type EcosystemLicensingCriteria,
+} from "./ecosystem/ecosystemEvaluation.js";
+
+export {
+  createMockEcosystemAdapter,
+  mockEcosystemGenerator,
+  type MockEcosystemConfig,
+} from "./ecosystem/mockEcosystemAdapter.js";
+
+export {
+  MODEL_VIEWER_EVALUATION_ADAPTER_ID,
+  createModelViewerArEvaluationAdapter,
+  modelViewerEvaluationGenerator,
+  type ModelViewerEcosystemAdapterFacts,
+} from "./ecosystem/modelViewerArEvaluationAdapter.js";
+
+export {
+  ECOSYSTEM_BENCH_EVIDENCE_REFS,
+  ECOSYSTEM_BENCH_SUBMITTED_AT,
+  ECOSYSTEM_BENCHMARK_FIXTURES,
+  ECOSYSTEM_FIXTURE_SET_VERSION,
+  GOLDEN_ECOSYSTEM_REPORT_RUN_ID,
+  createStandardEcosystemLedger,
+  fixtureRequest as fixtureEcosystemRequest,
+  synthesizeEcosystemRequest,
+  type EcosystemBenchmarkFixture,
+  type EcosystemRequestContext,
+  type SyntheticEcosystemRequestSpec,
+} from "./ecosystem/ecosystemFixtures.js";
+
+export {
+  ECOSYSTEM_FIDELITY_WEIGHTS,
+  SCORER_ECOSYSTEM_VERSION,
+  intendedPayloadDigestFor,
+  intendedPayloadMapFor,
+  scoreEcosystemFulfillment,
+  type EcosystemFidelityParts,
+} from "./ecosystem/ecosystemScorer.js";
+
+export {
+  runEcosystemBenchmark,
+  runStandardEcosystemBenchmark,
+  fixtureIntendedPayloadDigest,
+  type CandidateEcosystemResult,
+  type EcosystemBenchmarkRunReport,
+  type FixtureEcosystemScore,
+} from "./ecosystem/ecosystemRunner.js";
+
+export {
+  MOCK_ECOSYSTEM_CANDIDATES,
+  createStandardEcosystemCandidates,
+  type EcosystemCandidateSpec,
+} from "./ecosystem/ecosystemCandidates.js";
+
+export {
+  ecosystemThroughAdapter,
+  mapEcosystemRegion,
+  toEcosystemEffortObservations,
+  toFrozenCostLatencyBudget,
+  toFrozenProductionEligibilityRecord,
+  toFrozenProviderMatrixEntry,
+  toProviderMatrixObservations,
+  type FrozenEcosystemPath,
+} from "./contractSeam.js";
+
+// ---------------------------------------------------------------------------
 // Test-suite entry for the station command
 //
 // `pnpm exec tsx --test packages/you-lab/src` passes the DIRECTORY to the
@@ -1181,6 +1346,12 @@ if (isTestRunnerDirectoryEntry()) {
   await import("./soul/soulBenchmark.test.js");
   await import("./soul/soulSeam.test.js");
   await import("./realtime/realtimeAdapterSeam.test.js");
+  await import("./ecosystem/providerMatrixSeam.test.js");
+  await import("./ecosystem/budgetGuardSeam.test.js");
+  await import("./ecosystem/eligibilityLedger.test.js");
+  await import("./ecosystem/ecosystemEvaluation.test.js");
+  await import("./ecosystem/ecosystemBenchmark.test.js");
+  await import("./ecosystem/ecosystemSeam.test.js");
   await import("./contractSeam.test.js");
   await import("./consumer-sim.test.js");
 }
