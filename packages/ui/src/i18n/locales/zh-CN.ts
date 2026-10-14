@@ -952,6 +952,7 @@ const zhCN: Record<string, string> = {
   "you.avatar.tabTitle": "虚拟形象工作室",
   "you.escalation.tabTitle": "升级工作室",
   "you.lab.tabTitle": "实验室",
+  "you.hardening.tabTitle": "加固",
   "whiteboard.title": "画板",
   "whiteboard.defaultName": "画板",
   "whiteboard.nameLabel": "画板名称",

@@ -114,11 +114,12 @@ test("launcher offers escalation only when the tab is not open (escalation is LA
     "avatar",
     "escalation",
     "lab",
+    "hardening",
   ]);
 
   assert.deepEqual(
     resolveOpenTabLauncherItemIds({ ...base, hasEscalationTab: true }),
-    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "lab"],
+    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "lab", "hardening"],
   );
 
   // 既有行为不受影响：developer tools / review / 无浏览器环境 / 缺省参数向后兼容。
@@ -130,7 +131,7 @@ test("launcher offers escalation only when the tab is not open (escalation is LA
       hasCaptureTab: false,
       supportsEmbeddedBrowser: false,
     }),
-    ["terminal", "developer-tools", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab"],
+    ["terminal", "developer-tools", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab", "hardening"],
   );
 
   // 未传 hasEscalationTab 时缺省 false（既有调用点零行为变化，escalation 入口照常出现）。
@@ -141,7 +142,7 @@ test("launcher offers escalation only when the tab is not open (escalation is LA
       hasSolutionTab: false,
       hasCaptureTab: false,
     }),
-    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab"],
+    ["review", "terminal", "browser", "solution", "capture", "twin", "performance", "editing", "learning", "avatar", "escalation", "lab", "hardening"],
   );
 
   assert.deepEqual(
@@ -167,6 +168,7 @@ test("launcher offers escalation only when the tab is not open (escalation is LA
       "avatar",
       "escalation",
       "lab",
+      "hardening",
     ],
   );
 });

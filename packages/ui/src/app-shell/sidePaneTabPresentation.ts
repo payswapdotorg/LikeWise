@@ -18,6 +18,7 @@ export interface SidePaneTabPresentationLabels {
   avatarTitle: string;
   escalationTitle: string;
   labTitle: string;
+  hardeningTitle: string;
   terminalTitle: string;
   subagentTypeLabel: string;
   subagentDirectoryTitle: string;
@@ -109,6 +110,11 @@ export function getSidePaneTabSearchHint(tab: WorkspaceSidePaneTab): string {
   if (tab.type === "lab") {
     return "you lab experiment three-arm comparison generalist baseline hand-designed searched run ladder submitted running succeeded failed retired evidence manifest content-addressed artifact hash verification verified unverified mismatch promotion gate winner objective score baseline reversal supersedes search ladder budget exhaustion terminal world seed deterministic actors ground truth constraints objective intent simulated";
   }
+  // YOU Hardening surface（W10B）：搜索面覆盖限流通知/导入状态/留存控制/容灾状态/
+  // 发布就绪标注。
+  if (tab.type === "hardening") {
+    return "you hardening rate limit policy scope window burst deny defer shed enforcement retry guidance notice import security scan class verdict clean quarantined rejected release record quarantine reversible retention class consent granted withdrawn expired denied protected subject enforcement immutable auditable dr restore snapshot content hash verified check evidence corruption activation production eligibility provider matrix region capabilities rollback evidence drill eligible blocked decision reversal supersedes simulated";
+  }
   if (tab.type === "terminal" || tab.type === "bash-output")
     return `${tab.title} terminal shell command`;
   return tab.source.path ?? tab.source.title;
@@ -136,6 +142,7 @@ export function getLocalizedSidePaneTabTitle(
       "you.avatar.tabTitle": labels.avatarTitle,
       "you.escalation.tabTitle": labels.escalationTitle,
       "you.lab.tabTitle": labels.labTitle,
+      "you.hardening.tabTitle": labels.hardeningTitle,
       "terminal.title": labels.terminalTitle,
       "sidePane.subagent": labels.subagentTypeLabel,
       "sidePane.subagentDirectory": labels.subagentDirectoryTitle,
@@ -180,6 +187,7 @@ export function getSidePaneTabTypeLabel(
   if (tab.type === "avatar") return labels.avatarTitle;
   if (tab.type === "escalation") return labels.escalationTitle;
   if (tab.type === "lab") return labels.labTitle;
+  if (tab.type === "hardening") return labels.hardeningTitle;
   if (tab.type === "terminal" || tab.type === "bash-output") return labels.terminalTitle;
   return labels.codeViewerTitle;
 }
