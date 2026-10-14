@@ -23,3 +23,5 @@ import "./labService.test.js";
 import "./labFixtureScenario.test.js";
 import "./platformService.test.js";
 import "./platformFixtureScenario.test.js";
+import "./securityService.test.js";
+import "./securityFixtureScenario.test.js";

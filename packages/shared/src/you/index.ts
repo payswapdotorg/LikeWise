@@ -67,3 +67,7 @@ import "./importSecurity.test.js";
 import "./retentionEnforcement.test.js";
 import "./drRestore.test.js";
 import "./platformLedger.test.js";
+import "./threatModel.test.js";
+import "./securityReview.test.js";
+import "./loadTest.test.js";
+import "./securityLedger.test.js";
