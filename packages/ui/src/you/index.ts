@@ -85,3 +85,10 @@ import "./conformanceStudioStore.test.js";
 import "./conformanceStudioProjection.test.js";
 import "./conformanceSimulatedController.test.js";
 import "./conformanceStudioDemo.test.js";
+// W12B — Release Studio 逻辑测试。
+import "./releaseTabRegistration.test.js";
+import "./releaseMessages.test.js";
+import "./releaseStudioStore.test.js";
+import "./releaseStudioProjection.test.js";
+import "./releaseSimulatedController.test.js";
+import "./releaseStudioDemo.test.js";

@@ -122,6 +122,7 @@ test("launcher offers conformance only when the tab is not open (conformance is 
     "lab",
     "hardening",
     "conformance",
+    "release",
   ]);
 
   assert.deepEqual(
@@ -140,6 +141,7 @@ test("launcher offers conformance only when the tab is not open (conformance is 
       "escalation",
       "lab",
       "hardening",
+      "release",
     ],
   );
 
@@ -166,6 +168,7 @@ test("launcher offers conformance only when the tab is not open (conformance is 
       "lab",
       "hardening",
       "conformance",
+      "release",
     ],
   );
 
@@ -192,6 +195,7 @@ test("launcher offers conformance only when the tab is not open (conformance is 
       "lab",
       "hardening",
       "conformance",
+      "release",
     ],
   );
 
@@ -210,6 +214,7 @@ test("launcher offers conformance only when the tab is not open (conformance is 
       hasLabTab: true,
       hasHardeningTab: true,
       hasConformanceTab: true,
+      hasReleaseTab: true,
     }),
     ["review", "terminal", "browser"],
   );

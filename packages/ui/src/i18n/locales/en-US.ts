@@ -1034,6 +1034,7 @@ const enUS: Record<string, string> = {
   "you.lab.tabTitle": "Lab",
   "you.hardening.tabTitle": "Hardening",
   "you.conformance.tabTitle": "Conformance",
+  "you.release.tabTitle": "Release",
   "whiteboard.title": "Whiteboard",
   "whiteboard.defaultName": "Whiteboard",
   "whiteboard.nameLabel": "Whiteboard name",

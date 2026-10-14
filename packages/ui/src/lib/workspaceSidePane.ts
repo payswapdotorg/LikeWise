@@ -13,6 +13,7 @@ import { resolveEscalationTabState } from "@/you/escalationTabRegistration.js";
 import { resolveLabTabState } from "@/you/labTabRegistration.js";
 import { resolveHardeningTabState } from "@/you/hardeningTabRegistration.js";
 import { resolveConformanceTabState } from "@/you/conformanceTabRegistration.js";
+import { resolveReleaseTabState } from "@/you/releaseTabRegistration.js";
 
 export interface BrowserSidePaneTab {
   id: string;
@@ -242,6 +243,20 @@ export interface HardeningStudioSidePaneTab {
 export interface ConformanceStudioSidePaneTab {
   id: "conformance";
   type: "conformance";
+  ownerTaskId?: string | null;
+  workspaceKey?: string | null;
+  openedAt?: number;
+}
+
+/**
+ * YOU Release surface tab（W12B）——与 Solution/Capture/Twin/Performance/Editing/
+ * Learning/Avatar/Escalation/Lab/Hardening/Conformance 同级的 native workspace
+ * 表面。固定单例 id：一个 workspace 一个 Release tab（重复打开幂等地聚焦既有
+ * tab）；内容与视图状态由 `packages/ui/src/you/**` 子树自持（release 系列模块）。
+ */
+export interface ReleaseStudioSidePaneTab {
+  id: "release";
+  type: "release";
   ownerTaskId?: string | null;
   workspaceKey?: string | null;
   openedAt?: number;
@@ -695,6 +710,7 @@ export type WorkspaceSidePaneTab =
   | LabStudioSidePaneTab
   | HardeningStudioSidePaneTab
   | ConformanceStudioSidePaneTab
+  | ReleaseStudioSidePaneTab
   | TerminalSidePaneTab
   | BrowserUseSidePaneTab
   | SubagentSessionSidePaneTab
@@ -1250,6 +1266,8 @@ const WORKSPACE_GLOBAL_SIDE_PANE_TAB_TYPES = new Set<WorkspaceSidePaneTab["type"
   "hardening",
   // Conformance 同为 workspace 级表面（W11B，同 ADR-002 语义）。
   "conformance",
+  // Release 同为 workspace 级表面（W12B，同 ADR-002 语义）。
+  "release",
 ]);
 
 function isWorkspaceGlobalSidePaneTab(tab: WorkspaceSidePaneTab): boolean {
@@ -1922,6 +1940,19 @@ export function openConformanceStudioSidePane(
   },
 ): WorkspaceSidePaneState {
   return resolveConformanceTabState(current, options);
+}
+
+/**
+ * 打开（或幂等聚焦）YOU Release 表面 tab（W12B 注册点）。
+ * 纯转移逻辑在 `@/you/releaseTabRegistration.js`（you 子树自含，可被 tsx 直接加载）。
+ */
+export function openReleaseStudioSidePane(
+  current: WorkspaceSidePaneState | null,
+  options: {
+    workspaceKey?: string | null;
+  },
+): WorkspaceSidePaneState {
+  return resolveReleaseTabState(current, options);
 }
 
 export function openTerminalSidePane(
