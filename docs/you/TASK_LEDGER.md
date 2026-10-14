@@ -1475,3 +1475,25 @@ Workers never mark their own work DONE; they submit evidence to TL.
 - Context: W9 completed 1509/1509 green (completion record 3014fb3);
   T9 binding point disclosed (the Lab Studio simulated controller
   mirrors the W9A seams 1:1).
+
+### W10A + W10C merge records (2026-10-14)
+
+- W10A Platform Hardening: harvested from `you/w10a-platform` @ f6cfac9
+  (canary admitted 00:0xZ in the midnight window). 24 files, +4714/-0
+  (shared: rateLimitPolicy, importSecurity, retentionEnforcement,
+  drRestore + tests; services: hardening flows + service + fixture
+  scenario + tests; index registrations). Station verification:
+  shared tsc 0 + **467/467** (432 + 35); services tsc -b 0 +
+  **211/211** (183 + 28). Laws: RATE LIMIT LAW never-silent typed;
+  retention composes with the wave-2 consent authority; THE DR LAW
+  test-pinned (the verified flag never asserted without check
+  evidence). Merged as PR #40 (bae5fcd).
+- W10C Ecosystem Hardening: harvested from `you/w10c-ecosystem` @
+  72a6cb5 (turn admitted 00:09Z). 20 files, +5102/-3 (you-lab
+  ecosystem/: providerMatrix, budgetGuard, eligibilityLedger,
+  ecosystem benchmark/seam + tests + fixtures; contractSeam v9->v10
+  extension — the sanctioned only-module seam pattern). Station
+  verification: you-lab tsc 0 + **525/525** (471 + 54). Laws:
+  ECOSYSTEM GATE LAW fail-closed on unknown matrix refs;
+  PRODUCTION ELIGIBILITY LAW rollback-evidence-required (test-pinned).
+  Merged as PR #41 (821ab82).
