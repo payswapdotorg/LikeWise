@@ -1312,3 +1312,109 @@ Acceptance:
 - tests (node:test) covering matrix integrity, budget determinism,
   eligibility refusal paths, adapter determinism (byte-identical
   replay from seed), golden scores, seam mapping validity.
+
+## W11A — Security Authority
+
+Branch: `you/w11a-security`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch (the W11 contract-freeze commit on main).
+
+Objective:
+The hardening-verification authority: threat-model entries, security
+review records, load-test reports on the frozen v11 contracts.
+
+Frozen write surface (wave 11):
+- `packages/shared/src/you/**` — EXCEPT `you/contract.ts` is TL-frozen;
+- `packages/services/src/you/**`.
+
+Zero edits to any other existing file; no new dependencies.
+
+Acceptance:
+- ThreatModelEntry persistence: immutable entries (threatClass,
+  vector, mitigationRef, residual stated honestly — never zeroed by
+  assertion); typed `YOU_SECURITY_REVIEW_INVALID`;
+- SecurityReviewRecord: findings recorded verbatim; acceptance as a
+  separate immutable decision referencing the finding set (the
+  SECURITY REVIEW LAW);
+- LoadTestReport: measured or simulated-labeled peak/p99 — never
+  invented; regressions listed verbatim (the LOAD TEST LAW); typed
+  `YOU_LOAD_TEST_INVALID`;
+- deterministic fixtures: seeded scenarios (threat modeled -> review
+  recorded -> findings accepted -> load test run -> regression listed;
+  refusal paths: acceptance without findings, invented metrics,
+  malformed report) — injected clock/rng, byte-identical replay,
+  `simulated: true`;
+- event ledger integration: security-review-recorded /
+  load-test-recorded;
+- tests (node:test) covering the review lifecycle, the metrics truth
+  law, error taxonomy.
+
+## W11B — Conformance UX
+
+Branch: `you/w11b-conformance`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch.
+
+Objective:
+The conformance surfaces on the W11A service seams: security review
+status, load test reports, conformance audits, journey reports, the
+incident runbook display.
+
+Frozen write surface (wave 11):
+- `packages/ui/src/you/**` + the disclosed registration-only seams (the
+  same pre-expanded seam list as W2B-W10B).
+
+Zero edits to any other existing file; no new dependencies.
+
+Acceptance:
+- review surface: security review records (findings, acceptance state)
+  from controller projections — zero business logic in the UI
+  (W1B-W10B controller pattern; simulated controller until T11
+  binding);
+- load-test surface: reports with peak/p99 and regression lists
+  (simulated-labeled indicators);
+- conformance surface: audits with checks-total/checks-passed verbatim
+  (the CONFORMANCE LAW displayed — never a bare pass);
+- journey surface: E2E journey records (steps completed, failed step,
+  duration) — the launch-gate 20-point journey display;
+- runbook surface: incident entries with detection/containment/
+  recovery + exercised/unexercised states;
+- loading/error/empty states for every region; the v11 typed error
+  codes as typed error panels;
+- i18n: en-US + zh-CN strings for every visible label;
+- dedicated UX tests under the you subtree (node:test).
+
+## W11C — E2E Runbook
+
+Branch: `you/w11c-e2e`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch.
+
+Objective:
+The deterministic E2E journey harness and the incident runbook
+machinery: golden journeys, failure injection, runbook exercising.
+
+Frozen write surface (wave 11):
+- `packages/you-lab/**` ONLY. Zero edits outside.
+
+Acceptance:
+- E2E journey harness: deterministic golden journeys (seed-derived,
+  no network) covering the 20-point launch-gate journey (workspace
+  creation -> intent -> Solution -> inspect -> feedback -> evidence ->
+  Twin -> improve -> Performance -> render -> edit -> import/export ->
+  version accept -> learn with permission -> repeat -> capability gap
+  -> Arena escalation -> expert result -> provenance/consent ->
+  injected-failure recovery); typed `YOU_E2E_JOURNEY_INVALID`;
+- failure injection: deterministic injected failures at each journey
+  step (the recovery paths exercised); journey records with failedStep
+  + measured durationMs (the JOURNEY LAW);
+- IncidentRunbookEntry machinery: detection/containment/recovery per
+  incident class; every entry exercised by at least one injected-
+  failure journey or explicitly marked unexercised (the RUNBOOK LAW);
+  typed `YOU_RUNBOOK_INVALID`;
+- conformance audit builders: checks-total/checks-passed verbatim from
+  the harness runs (the CONFORMANCE LAW); typed
+  `YOU_CONFORMANCE_AUDIT_INVALID`;
+- seam mapping onto frozen v11 contracts (the contractSeam.ts
+  consolidation; only the seam module touches contract types);
+- tests (node:test) covering journey determinism (byte-identical
+  replay from seed), failure-injection coverage (every step has a
+  recovery path), runbook exercising, golden journey scores, seam
+  mapping validity.

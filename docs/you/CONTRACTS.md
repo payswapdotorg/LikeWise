@@ -709,3 +709,31 @@ W8C.
 - PRODUCTION ELIGIBILITY LAW: eligibility requires rollback evidence;
   decisions are immutable; a reversal is a new record
   (YOU_PRODUCTION_ELIGIBILITY_INVALID).
+
+## Wave-11 contract freeze (v11)
+
+- Frozen by the TL at the T10->W11 transition (the W10 completion
+  record 08c7327 disclosed the T10 binding point; this freeze opens
+  wave 11 — the hardening-verification wave before the launch gate).
+  Machine authority: `packages/shared/src/you/contract.ts` v11
+  (ADDITIVE — ThreatModelEntry, SecurityReviewRecord, LoadTestReport,
+  ConformanceAuditRecord, E2eJourneyRecord, IncidentRunbookEntry;
+  events security-review-recorded / load-test-recorded /
+  conformance-audited / e2e-journey-recorded / runbook-entry-recorded;
+  error codes YOU_SECURITY_REVIEW_INVALID / YOU_LOAD_TEST_INVALID /
+  YOU_CONFORMANCE_AUDIT_INVALID / YOU_E2E_JOURNEY_INVALID /
+  YOU_RUNBOOK_INVALID).
+- Wave-11 lanes: W11A Security Authority (`you/w11a-security`), W11B
+  Conformance UX (`you/w11b-conformance`), W11C E2E Runbook
+  (`you/w11c-e2e`); branches pre-cut at the freeze.
+- SECURITY REVIEW LAW: findings recorded verbatim; acceptance is a
+  separate immutable decision referencing the finding set.
+- LOAD TEST LAW: peak/p99 measured or simulated-labeled — never
+  invented; regressions listed, never summarized away.
+- CONFORMANCE LAW: checks-total and checks-passed stated verbatim —
+  never a pass without the counts.
+- JOURNEY LAW: the 20-point launch-gate journey records every step
+  (completed or failed-at) with measured duration; simulated runs
+  stay labeled.
+- RUNBOOK LAW: every incident runbook entry is exercised by at least
+  one failure-injection journey or explicitly marked unexercised.

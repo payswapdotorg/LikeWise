@@ -494,7 +494,12 @@ export type SolutionEventType =
   | "import-quarantined"
   | "retention-enforced"
   | "dr-restore-recorded"
-  | "production-eligibility-decided";
+  | "production-eligibility-decided"
+  | "security-review-recorded"
+  | "load-test-recorded"
+  | "conformance-audited"
+  | "e2e-journey-recorded"
+  | "runbook-entry-recorded";
 
 export interface SolutionEvent {
   readonly id: OpaqueId;
@@ -558,7 +563,12 @@ export type YouErrorCode =
   | "YOU_RETENTION_ENFORCEMENT_INVALID"
   | "YOU_DR_RESTORE_INVALID"
   | "YOU_PROVIDER_MATRIX_INVALID"
-  | "YOU_PRODUCTION_ELIGIBILITY_INVALID";
+  | "YOU_PRODUCTION_ELIGIBILITY_INVALID"
+  | "YOU_SECURITY_REVIEW_INVALID"
+  | "YOU_LOAD_TEST_INVALID"
+  | "YOU_CONFORMANCE_AUDIT_INVALID"
+  | "YOU_E2E_JOURNEY_INVALID"
+  | "YOU_RUNBOOK_INVALID";
 
 // ---------------------------------------------------------------------------
 // Evidence / Capture / Consent — frozen v2 (wave 2, TL freeze at T1->W2)
@@ -1732,5 +1742,98 @@ export interface ProductionEligibilityRecord {
   readonly eligible: boolean;
   readonly rollbackEvidenceRef: OpaqueId;
   readonly decidedAt: string;
+  readonly simulated: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Hardening Verification — frozen v11 (wave 11, TL freeze at T10->W11)
+//
+// Authority: docs/you/CONTRACTS.md "Wave-11 contract freeze (v11)".
+// Dispatched by: docs/you/WORK_ORDERS.md (W11A / W11B / W11C).
+// Additive only: no existing shape changes (the no-drift rule).
+// ---------------------------------------------------------------------------
+
+/**
+ * One threat-model entry: a threat class with its vector and
+ * mitigation state. Entries are immutable observations; residual risk
+ * is stated honestly, never zeroed by assertion.
+ */
+export interface ThreatModelEntry {
+  readonly id: OpaqueId;
+  readonly threatClass: string;
+  readonly vector: string;
+  readonly mitigationRef: OpaqueId | null;
+  readonly residual: string;
+  readonly simulated: boolean;
+}
+
+/**
+ * One security review pass over a scope. SECURITY REVIEW LAW: a
+ * review records findings verbatim; acceptance is a separate
+ * immutable decision referencing the finding set.
+ */
+export interface SecurityReviewRecord {
+  readonly id: OpaqueId;
+  readonly scopeRef: OpaqueId;
+  readonly reviewedAt: string;
+  readonly findingsCount: number;
+  readonly accepted: boolean;
+  readonly simulated: boolean;
+}
+
+/**
+ * One load-test report. LOAD TEST LAW: peak/p99 numbers are measured
+// or simulated-labeled — never invented; regressions are listed, never
+ * summarized away.
+ */
+export interface LoadTestReport {
+  readonly id: OpaqueId;
+  readonly scenarioRef: OpaqueId;
+  readonly peakRps: number;
+  readonly p99Ms: number;
+  readonly regressions: readonly string[];
+  readonly simulated: boolean;
+}
+
+/**
+ * One conformance audit (accessibility standard, responsive
+ * behavior). CONFORMANCE LAW: the record states checks-total and
+ * checks-passed verbatim — never a pass without the counts.
+ */
+export interface ConformanceAuditRecord {
+  readonly id: OpaqueId;
+  readonly standard: string;
+  readonly scopeRef: OpaqueId;
+  readonly checksTotal: number;
+  readonly checksPassed: number;
+  readonly simulated: boolean;
+}
+
+/**
+ * One product E2E journey run. The launch gate's 20-point journey
+ * records land here: steps completed, the failed step (null on
+ * success), measured duration.
+ */
+export interface E2eJourneyRecord {
+  readonly id: OpaqueId;
+  readonly journeyId: string;
+  readonly stepsCompleted: number;
+  readonly failedStep: string | null;
+  readonly durationMs: number;
+  readonly simulated: boolean;
+}
+
+/**
+ * One incident runbook entry: detection, containment and recovery for
+ * an incident class. RUNBOOK LAW: every entry is exercised by at
+ * least one E2E failure-injection journey or marked unexercised.
+ */
+export interface IncidentRunbookEntry {
+  readonly id: OpaqueId;
+  readonly incidentClass: string;
+  readonly detection: string;
+  readonly containment: string;
+  readonly recovery: string;
+  readonly exercised: boolean;
   readonly simulated: boolean;
 }

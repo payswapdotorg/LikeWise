@@ -1525,3 +1525,27 @@ Workers never mark their own work DONE; they submit evidence to TL.
   ecosystem classes (try-on / VRM-GLB / AR / telepresence / customer
   compute / regional providers / styles) are researched REAL behind
   fail-closed seams (W10C).
+
+### W11 contract freeze + dispatch record (2026-10-14)
+
+- Frozen by the TL (this station) at the T10->W11 transition. Contract
+  freeze commit: THIS COMMIT. Machine authority:
+  `packages/shared/src/you/contract.ts` v11 (ADDITIVE —
+  ThreatModelEntry, SecurityReviewRecord, LoadTestReport,
+  ConformanceAuditRecord, E2eJourneyRecord, IncidentRunbookEntry;
+  events security-review-recorded / load-test-recorded /
+  conformance-audited / e2e-journey-recorded / runbook-entry-recorded;
+  error codes YOU_SECURITY_REVIEW_INVALID / YOU_LOAD_TEST_INVALID /
+  YOU_CONFORMANCE_AUDIT_INVALID / YOU_E2E_JOURNEY_INVALID /
+  YOU_RUNBOOK_INVALID).
+- Docs: CONTRACTS.md "Wave-11 contract freeze (v11)" (the SECURITY
+  REVIEW LAW + LOAD TEST LAW + CONFORMANCE LAW + JOURNEY LAW + RUNBOOK
+  LAW); WORK_ORDERS.md W11A/W11B/W11C authored to full binding orders
+  (the pre-launch hardening-verification wave; W12 = the launch gate).
+- Wave-11 lanes: W11A Security Authority (`you/w11a-security`), W11B
+  Conformance UX (`you/w11b-conformance`), W11C E2E Runbook
+  (`you/w11c-e2e`); branches pre-cut at the freeze.
+- Verified at freeze: shared tsc exit 0; shared battery 467/467
+  unchanged (additive-only).
+- Context: W10 completed 1670/1670 green in 90 minutes (completion
+  record 08c7327); T10 binding point disclosed.
