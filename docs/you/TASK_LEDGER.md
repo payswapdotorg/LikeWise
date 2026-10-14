@@ -1580,3 +1580,27 @@ Workers never mark their own work DONE; they submit evidence to TL.
   deterministically; W12 binds the gate: launch-gate acceptance
   records, the operator's final 20-point sign-off, the release
   declaration).
+
+### W12 contract freeze + dispatch record (2026-10-14)
+
+- Frozen by the TL (this station) at the T11->W12 transition — THE
+  FINAL WAVE. Contract freeze commit: THIS COMMIT. Machine authority:
+  `packages/shared/src/you/contract.ts` v12 (ADDITIVE —
+  LaunchGateChecklistPoint, LaunchGateChecklistRecord,
+  OperatorSignoffRecord, ReleaseDeclarationRecord; events
+  launch-gate-checked / operator-signoff-recorded / release-declared;
+  error codes YOU_LAUNCH_GATE_INVALID / YOU_OPERATOR_SIGNOFF_INVALID /
+  YOU_RELEASE_DECLARATION_INVALID).
+- Docs: CONTRACTS.md "Wave-12 contract freeze (v12)" (the LAUNCH GATE
+  LAW + OPERATOR SIGNOFF LAW + RELEASE DECLARATION LAW); WORK_ORDERS.md
+  W12A/W12B/W12C authored to full binding orders.
+- Wave-12 lanes: W12A Launch Gate Authority (`you/w12a-gate`), W12B
+  Release UX (`you/w12b-release`), W12C Gate Evidence
+  (`you/w12c-evidence`); branches pre-cut at the freeze.
+- Verified at freeze: shared tsc exit 0; shared battery 490/490
+  unchanged (additive-only).
+- Context: W11 completed 1787/1787 green (completion record 9d73535);
+  the 20-point journey table is test-pinned in exact order (W11C).
+  W12 binds the gate; the stage-12 exit (the 20-point journey verified
+  end-to-end + the operator's sign-off + the release declaration) is
+  the project's finish line.

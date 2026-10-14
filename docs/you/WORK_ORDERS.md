@@ -1418,3 +1418,97 @@ Acceptance:
   replay from seed), failure-injection coverage (every step has a
   recovery path), runbook exercising, golden journey scores, seam
   mapping validity.
+
+## W12A — Launch Gate Authority
+
+Branch: `you/w12a-gate`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch (the W12 contract-freeze commit on main).
+
+Objective:
+The launch-gate authority: the 20-point checklist, the operator
+sign-off, the release declaration on the frozen v12 contracts.
+
+Frozen write surface (wave 12):
+- `packages/shared/src/you/**` — EXCEPT `you/contract.ts` is TL-frozen;
+- `packages/services/src/you/**`.
+
+Zero edits to any other existing file; no new dependencies.
+
+Acceptance:
+- LaunchGateChecklistRecord: the 20-point checklist built from
+  E2eJourneyRecord evidence (a point passes ONLY with a successful
+  journey reference — the LAUNCH GATE LAW); typed
+  `YOU_LAUNCH_GATE_INVALID`;
+- OperatorSignoffRecord: references a COMPLETE passing checklist;
+  immutable; one release per signoff (the OPERATOR SIGNOFF LAW); typed
+  `YOU_OPERATOR_SIGNOFF_INVALID`;
+- ReleaseDeclarationRecord: evidence bundle + rollback evidence
+  required (the RELEASE DECLARATION LAW); typed
+  `YOU_RELEASE_DECLARATION_INVALID`;
+- deterministic fixtures: seeded scenarios (journeys run -> checklist
+  assembled -> gate passes -> operator signs -> release declared;
+  refusal paths: incomplete checklist, signoff without a passing gate,
+  declaration without rollback evidence) — injected clock/rng,
+  byte-identical replay, `simulated: true`;
+- event ledger integration: launch-gate-checked /
+  operator-signoff-recorded / release-declared;
+- tests (node:test) covering the 20-point gate, the signoff lifecycle,
+  the declaration refusals, error taxonomy.
+
+## W12B — Release UX
+
+Branch: `you/w12b-release`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch.
+
+Objective:
+The launch-gate surfaces on the W12A service seams: the 20-point
+checklist display, the sign-off state, the release declaration.
+
+Frozen write surface (wave 12):
+- `packages/ui/src/you/**` + the disclosed registration-only seams (the
+  same pre-expanded seam list as W2B-W11B).
+
+Zero edits to any other existing file; no new dependencies.
+
+Acceptance:
+- checklist surface: the 20 points with journey-evidence links and
+  pass states from controller projections — zero business logic in the
+  UI (W1B-W11B controller pattern; simulated controller until T12
+  binding);
+- signoff surface: the operator sign-off state (signed-by, signed-at,
+  the referenced checklist);
+- declaration surface: the release declaration (evidence bundle +
+  rollback links);
+- loading/error/empty states for every region; the v12 typed error
+  codes as typed error panels;
+- i18n: en-US + zh-CN strings for every visible label;
+- dedicated UX tests under the you subtree (node:test).
+
+## W12C — Gate Evidence
+
+Branch: `you/w12c-evidence`. Base SHA: recorded by the TL in
+`TASK_LEDGER.md` at dispatch.
+
+Objective:
+Binding the W11C journey harness outputs to the launch gate: the
+evidence bundle builder, the gate checklist derivation, the golden
+gate run.
+
+Frozen write surface (wave 12):
+- `packages/you-lab/**` ONLY. Zero edits outside.
+
+Acceptance:
+- evidence bundle builder: assembles the E2eJourneyRecord set (the
+  20-point golden journey + the failure-injection recovery runs) into
+  the content-addressed evidence bundle the declaration references;
+- gate checklist derivation: LaunchGateChecklistPoint derivation from
+  the journey harness outputs (point N passes only with point-N
+  journey evidence — the LAUNCH GATE LAW at the compute plane);
+- golden gate run: the deterministic full-gate scenario (all 20 points
+  green, signoff, declaration) — byte-identical replay from seed;
+- rollback evidence: the declaration's rollback reference derives from
+  the W10C production-eligibility machinery (carried forward);
+- seam mapping onto frozen v12 contracts (the contractSeam.ts
+  consolidation; only the seam module touches contract types);
+- tests (node:test) covering bundle determinism, checklist derivation
+  refusal paths, the golden gate run, seam mapping validity.

@@ -499,7 +499,10 @@ export type SolutionEventType =
   | "load-test-recorded"
   | "conformance-audited"
   | "e2e-journey-recorded"
-  | "runbook-entry-recorded";
+  | "runbook-entry-recorded"
+  | "launch-gate-checked"
+  | "operator-signoff-recorded"
+  | "release-declared";
 
 export interface SolutionEvent {
   readonly id: OpaqueId;
@@ -568,7 +571,10 @@ export type YouErrorCode =
   | "YOU_LOAD_TEST_INVALID"
   | "YOU_CONFORMANCE_AUDIT_INVALID"
   | "YOU_E2E_JOURNEY_INVALID"
-  | "YOU_RUNBOOK_INVALID";
+  | "YOU_RUNBOOK_INVALID"
+  | "YOU_LAUNCH_GATE_INVALID"
+  | "YOU_OPERATOR_SIGNOFF_INVALID"
+  | "YOU_RELEASE_DECLARATION_INVALID";
 
 // ---------------------------------------------------------------------------
 // Evidence / Capture / Consent — frozen v2 (wave 2, TL freeze at T1->W2)
@@ -1835,5 +1841,63 @@ export interface IncidentRunbookEntry {
   readonly containment: string;
   readonly recovery: string;
   readonly exercised: boolean;
+  readonly simulated: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Launch Gate — frozen v12 (wave 12, TL freeze at T11->W12; the final wave)
+//
+// Authority: docs/you/CONTRACTS.md "Wave-12 contract freeze (v12)".
+// Dispatched by: docs/you/WORK_ORDERS.md (W12A / W12B / W12C).
+// Additive only: no existing shape changes (the no-drift rule).
+// ---------------------------------------------------------------------------
+
+/**
+ * One point of the 20-point launch-gate checklist with its journey
+ * evidence reference. LAUNCH GATE LAW: a point passes ONLY with a
+ * successful E2eJourneyRecord reference — never a bare assertion.
+ */
+export interface LaunchGateChecklistPoint {
+  readonly point: number;
+  readonly description: string;
+  readonly journeyEvidenceRef: OpaqueId | null;
+  readonly passed: boolean;
+}
+
+/**
+ * The complete launch-gate checklist state. The gate passes ONLY when
+ * all 20 points carry journey evidence and passed=true.
+ */
+export interface LaunchGateChecklistRecord {
+  readonly id: OpaqueId;
+  readonly points: readonly LaunchGateChecklistPoint[];
+  readonly checkedAt: string;
+  readonly simulated: boolean;
+}
+
+/**
+ * The operator's final sign-off. OPERATOR SIGNOFF LAW: the signoff
+ * references a COMPLETE passing checklist; it is immutable; one
+ * release declaration per signoff.
+ */
+export interface OperatorSignoffRecord {
+  readonly id: OpaqueId;
+  readonly checklistRef: OpaqueId;
+  readonly signedBy: OpaqueId;
+  readonly signedAt: string;
+  readonly simulated: boolean;
+}
+
+/**
+ * The release declaration. RELEASE DECLARATION LAW: the declaration
+ * carries the full evidence bundle reference AND rollback evidence
+ * (the production-eligibility law carried to the release).
+ */
+export interface ReleaseDeclarationRecord {
+  readonly id: OpaqueId;
+  readonly signoffRef: OpaqueId;
+  readonly evidenceBundleRef: OpaqueId;
+  readonly rollbackEvidenceRef: OpaqueId;
+  readonly declaredAt: string;
   readonly simulated: boolean;
 }

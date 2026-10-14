@@ -737,3 +737,26 @@ W8C.
   stay labeled.
 - RUNBOOK LAW: every incident runbook entry is exercised by at least
   one failure-injection journey or explicitly marked unexercised.
+
+## Wave-12 contract freeze (v12) — THE LAUNCH GATE
+
+- Frozen by the TL at the T11->W12 transition (the W11 completion
+  record 9d73535 declared W12 next; this is the FINAL wave). Machine
+  authority: `packages/shared/src/you/contract.ts` v12 (ADDITIVE —
+  LaunchGateChecklistPoint, LaunchGateChecklistRecord,
+  OperatorSignoffRecord, ReleaseDeclarationRecord; events
+  launch-gate-checked / operator-signoff-recorded / release-declared;
+  error codes YOU_LAUNCH_GATE_INVALID / YOU_OPERATOR_SIGNOFF_INVALID /
+  YOU_RELEASE_DECLARATION_INVALID).
+- Wave-12 lanes: W12A Launch Gate Authority (`you/w12a-gate`), W12B
+  Release UX (`you/w12b-release`), W12C Gate Evidence
+  (`you/w12c-evidence`); branches pre-cut at the freeze.
+- LAUNCH GATE LAW: a checklist point passes ONLY with a successful
+  E2eJourneyRecord reference — never a bare assertion; the gate passes
+  ONLY when all 20 points pass (YOU_LAUNCH_GATE_INVALID).
+- OPERATOR SIGNOFF LAW: the signoff references a COMPLETE passing
+  checklist; it is immutable; one release declaration per signoff
+  (YOU_OPERATOR_SIGNOFF_INVALID).
+- RELEASE DECLARATION LAW: the declaration carries the full evidence
+  bundle AND rollback evidence — the production-eligibility law
+  carried to the release (YOU_RELEASE_DECLARATION_INVALID).
