@@ -25,3 +25,5 @@ import "./platformService.test.js";
 import "./platformFixtureScenario.test.js";
 import "./securityService.test.js";
 import "./securityFixtureScenario.test.js";
+import "./launchGateService.test.js";
+import "./launchGateFixtureScenario.test.js";

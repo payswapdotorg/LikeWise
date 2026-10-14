@@ -71,3 +71,7 @@ import "./threatModel.test.js";
 import "./securityReview.test.js";
 import "./loadTest.test.js";
 import "./securityLedger.test.js";
+import "./launchGate.test.js";
+import "./operatorSignoff.test.js";
+import "./releaseDeclaration.test.js";
+import "./launchGateLedger.test.js";
