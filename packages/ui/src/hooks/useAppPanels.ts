@@ -44,6 +44,7 @@ import {
   openEscalationStudioSidePane,
   openLabStudioSidePane,
   openHardeningStudioSidePane,
+  openConformanceStudioSidePane,
   openBrowserSidePane,
   openOrActivateBrowserSidePaneByUrl,
   findBrowserSidePaneTabByUrl,
@@ -936,6 +937,20 @@ export function useAppPanels(options: {
     });
   }, [commitOpenedSidePaneState, revealSidePaneForCurrentOwner, workspaceAbsPath]);
 
+  // YOU Conformance surface（W11B 注册点）：幂等打开/聚焦 native Conformance tab。
+  const handleOpenConformanceStudio = useCallback(() => {
+    revealSidePaneForCurrentOwner();
+    commitOpenedSidePaneState((current) => {
+      const next = openConformanceStudioSidePane(current, {
+        workspaceKey: activeWorkspaceKeyRef.current,
+      });
+      logger.info(
+        `[App] 打开右侧面板 mode=conformance workspace=${workspaceAbsPath} tabs=${next.tabs.length}`,
+      );
+      return next;
+    });
+  }, [commitOpenedSidePaneState, revealSidePaneForCurrentOwner, workspaceAbsPath]);
+
   const handleOpenTerminalTab = useCallback(() => {
     if (isOfficeMode) return;
     revealSidePaneForCurrentOwner();
@@ -1747,6 +1762,7 @@ export function useAppPanels(options: {
     handleOpenEscalationStudio,
     handleOpenLabStudio,
     handleOpenHardeningStudio,
+    handleOpenConformanceStudio,
     handleOpenTerminalTab,
     handleOpenModelTrajectory,
     handleOpenSubagentSession,

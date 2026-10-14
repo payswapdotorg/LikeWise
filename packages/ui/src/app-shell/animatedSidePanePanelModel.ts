@@ -15,7 +15,8 @@ export type OpenTabLauncherItemId =
   | "avatar"
   | "escalation"
   | "lab"
-  | "hardening";
+  | "hardening"
+  | "conformance";
 
 export function resolveOpenTabLauncherItemIds({
   developerToolsEnabled,
@@ -30,6 +31,7 @@ export function resolveOpenTabLauncherItemIds({
   hasEscalationTab = false,
   hasLabTab = false,
   hasHardeningTab = false,
+  hasConformanceTab = false,
   canOpenSelectionSideConversation = false,
   supportsEmbeddedBrowser = true,
 }: {
@@ -55,6 +57,8 @@ export function resolveOpenTabLauncherItemIds({
   hasLabTab?: boolean;
   /** YOU Hardening tab 已开时不再提供入口（W10B，同幂等聚焦语义）。缺省 false。 */
   hasHardeningTab?: boolean;
+  /** YOU Conformance tab 已开时不再提供入口（W11B，同幂等聚焦语义）。缺省 false。 */
+  hasConformanceTab?: boolean;
   canOpenSelectionSideConversation?: boolean;
   supportsEmbeddedBrowser?: boolean;
 }): OpenTabLauncherItemId[] {
@@ -116,6 +120,10 @@ export function resolveOpenTabLauncherItemIds({
 
   if (!hasHardeningTab) {
     itemIds.push("hardening");
+  }
+
+  if (!hasConformanceTab) {
+    itemIds.push("conformance");
   }
 
   return itemIds;

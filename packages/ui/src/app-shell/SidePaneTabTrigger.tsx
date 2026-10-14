@@ -15,6 +15,7 @@ import {
   LifeBuoyIcon,
   MicroscopeIcon,
   ShieldCheckIcon,
+  ClipboardCheckIcon,
   MapIcon,
   MessageSquareTextIcon,
   ListTreeIcon,
@@ -398,6 +399,13 @@ export function SidePaneTabIcon({ tab }: { tab: WorkspaceSidePaneTab }) {
     return <ShieldCheckIcon className="size-3.5" />;
   }
 
+  // YOU Conformance surface（W11B）：与 Solution/…/Hardening 同级的 workspace 表面，
+  // 固定剪贴板勾选（clipboard-check）图标——Conformance 是 hardening-verification
+  // 平面（安全审查/负载测试/一致性审计/旅程/手册）。
+  if (tab.type === "conformance") {
+    return <ClipboardCheckIcon className="size-3.5" />;
+  }
+
   if (tab.type === "terminal" || tab.type === "bash-output") {
     return <SquareTerminalIcon className="size-3.5" />;
   }
@@ -654,6 +662,11 @@ export function getSidePaneTabTitle(
   // YOU Hardening surface（W10B）：标题走中央文案表（you.hardening.tabTitle）。
   if (tab.type === "hardening") {
     return formatMessage({ id: "you.hardening.tabTitle" });
+  }
+
+  // YOU Conformance surface（W11B）：标题走中央文案表（you.conformance.tabTitle）。
+  if (tab.type === "conformance") {
+    return formatMessage({ id: "you.conformance.tabTitle" });
   }
 
   if (tab.type === "terminal" || tab.type === "bash-output") {

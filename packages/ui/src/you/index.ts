@@ -78,3 +78,10 @@ import "./hardeningStudioStore.test.js";
 import "./hardeningStudioProjection.test.js";
 import "./hardeningSimulatedController.test.js";
 import "./hardeningStudioDemo.test.js";
+// W11B — Conformance Studio 逻辑测试。
+import "./conformanceTabRegistration.test.js";
+import "./conformanceMessages.test.js";
+import "./conformanceStudioStore.test.js";
+import "./conformanceStudioProjection.test.js";
+import "./conformanceSimulatedController.test.js";
+import "./conformanceStudioDemo.test.js";
